@@ -26,7 +26,12 @@ import {
   Flame,
   LayoutList,
   Sticker,
-  AlertCircle
+  AlertCircle,
+  BookOpen,
+  Layers,
+  ChevronDown,
+  ChevronUp,
+  Map
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -173,6 +178,7 @@ export default function App() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [history, setHistory] = useState<any[]>([]);
   const [isAutoAudit, setIsAutoAudit] = useState(true); // Default to true
+  const [expandedFinding, setExpandedFinding] = useState<number | null>(null);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   const handleAnalyze = async (textToAnalyze: string = inputText) => {
@@ -223,6 +229,8 @@ export default function App() {
       { subject: 'Infantilizing', A: result.scores.infantilizing, fullMark: 100 },
       { subject: 'De-escalation', A: result.scores.de_escalation, fullMark: 100 },
       { subject: 'Karen Trigger', A: result.scores.karen_trigger, fullMark: 100 },
+      { subject: 'Hedging', A: result.scores.hedging, fullMark: 100 },
+      { subject: 'Dismissive', A: result.scores.dismissive, fullMark: 100 },
     ];
   }, [result]);
 
@@ -265,22 +273,25 @@ export default function App() {
                     <Cpu className={cn("w-3 h-3", isAutoAudit && "animate-pulse")} />
                     Auto Audit: {isAutoAudit ? 'Always On' : 'Standby'}
                   </button>
-                  <button 
-                    onClick={() => setInputText('')}
-                    className="text-[10px] font-mono uppercase tracking-widest text-zinc-600 hover:text-zinc-400 transition-colors"
-                  >
-                    Clear Buffer
-                  </button>
                 </div>
               </div>
               
-              <div className="relative">
+              <div className="relative group">
                 <textarea
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder="Paste the AI response here for tone auditing..."
-                  className="w-full h-40 bg-zinc-900 border border-zinc-800 rounded-lg p-4 font-mono text-sm focus:outline-none focus:border-red-500/50 transition-colors resize-none placeholder:text-zinc-700"
+                  className="w-full h-40 bg-zinc-900 border border-zinc-800 rounded-lg p-4 font-mono text-sm focus:outline-none focus:border-red-500/50 transition-colors resize-none placeholder:text-zinc-700 pr-12"
                 />
+                {inputText && (
+                  <button
+                    onClick={() => setInputText('')}
+                    className="absolute top-4 right-4 p-1.5 bg-zinc-950 border border-zinc-800 rounded text-zinc-500 hover:text-zinc-300 transition-all shadow-lg"
+                    title="Clear Input"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 <button
                   onClick={() => handleAnalyze()}
                   disabled={isAnalyzing || !inputText.trim()}
@@ -337,32 +348,66 @@ export default function App() {
                       </h2>
                       <div className="space-y-3">
                         {result.findings.map((finding, i) => (
-                          <div key={i} className="bg-zinc-900/40 border border-zinc-800/50 rounded-lg p-4 flex gap-4 items-start">
-                            <div className={cn(
-                              "mt-1 p-1.5 rounded",
-                              finding.severity === 'high' ? "bg-red-500/10 text-red-500" :
-                              finding.severity === 'medium' ? "bg-amber-500/10 text-amber-500" :
-                              "bg-blue-500/10 text-blue-500"
-                            )}>
-                              <AlertTriangle className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-xs font-bold uppercase tracking-wider text-zinc-300">
-                                  {finding.category}
-                                </span>
-                                <span className={cn(
-                                  "text-[10px] uppercase font-mono px-1.5 py-0.5 rounded",
-                                  finding.severity === 'high' ? "bg-red-500/20 text-red-400" :
-                                  finding.severity === 'medium' ? "bg-amber-500/20 text-amber-400" :
-                                  "bg-blue-500/20 text-blue-400"
-                                )}>
-                                  {finding.severity} SEVERITY
-                                </span>
+                          <div key={i} className="bg-zinc-900/40 border border-zinc-800/50 rounded-lg overflow-hidden transition-all hover:border-zinc-700/50">
+                            <div className="p-4 flex gap-4 items-start">
+                              <div className={cn(
+                                "mt-1 p-1.5 rounded",
+                                finding.severity === 'high' ? "bg-red-500/10 text-red-500" :
+                                finding.severity === 'medium' ? "bg-amber-500/10 text-amber-500" :
+                                "bg-blue-500/10 text-blue-500"
+                              )}>
+                                <AlertTriangle className="w-4 h-4" />
                               </div>
-                              <p className="text-sm text-zinc-400 mb-2 italic">"{finding.text}"</p>
-                              <p className="text-xs text-zinc-500 leading-relaxed">{finding.explanation}</p>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-300">
+                                    {finding.category}
+                                  </span>
+                                  <span className={cn(
+                                    "text-[10px] uppercase font-mono px-1.5 py-0.5 rounded",
+                                    finding.severity === 'high' ? "bg-red-500/20 text-red-400" :
+                                    finding.severity === 'medium' ? "bg-amber-500/20 text-amber-400" :
+                                    "bg-blue-500/20 text-blue-400"
+                                  )}>
+                                    {finding.severity} SEVERITY
+                                  </span>
+                                </div>
+                                <p className="text-sm text-zinc-400 mb-2 italic">"{finding.text}"</p>
+                                <p className="text-xs text-zinc-500 leading-relaxed mb-3">{finding.explanation}</p>
+                                
+                                <button 
+                                  onClick={() => setExpandedFinding(expandedFinding === i ? null : i)}
+                                  className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-emerald-500 hover:text-emerald-400 transition-colors"
+                                >
+                                  <Layers className="w-3 h-3" />
+                                  {expandedFinding === i ? 'Hide Deconstruction' : 'Deconstruct RLHF Logic'}
+                                  {expandedFinding === i ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                                </button>
+                              </div>
                             </div>
+                            
+                            <AnimatePresence>
+                              {expandedFinding === i && (
+                                <motion.div 
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  className="bg-emerald-500/5 border-t border-zinc-800/50 p-4"
+                                >
+                                  <div className="flex items-start gap-3">
+                                    <div className="mt-1 p-1 bg-emerald-500/10 rounded">
+                                      <Zap className="w-3 h-3 text-emerald-500" />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <h4 className="text-[10px] font-mono uppercase tracking-widest text-emerald-500">RLHF Alignment Logic (The "Nanny" Source)</h4>
+                                      <p className="text-xs text-zinc-400 leading-relaxed">
+                                        {finding.rlhfLogic || "Analyzing safety-alignment weights for this specific pattern..."}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
                           </div>
                         ))}
                       </div>
@@ -481,6 +526,76 @@ export default function App() {
                         </div>
                       </div>
                     </div>
+
+                    {/* Contextual Heatmap Section */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-xs font-mono uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+                          <Map className="w-3 h-3 text-blue-500" /> Contextual Heatmap
+                        </h2>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-zinc-600 font-mono">DENSITY:</span>
+                          <span className={cn(
+                            "text-[10px] font-bold px-1.5 py-0.5 rounded border",
+                            result.contextAnalysis.score < 40 ? "bg-red-500/10 text-red-500 border-red-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                          )}>
+                            {result.contextAnalysis.score}%
+                          </span>
+                        </div>
+                      </div>
+                      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-4">
+                        <p className="text-xs text-zinc-400 leading-relaxed italic border-l-2 border-zinc-800 pl-4 py-1">
+                          {result.contextAnalysis.feedback}
+                        </p>
+                        <div className="p-4 bg-zinc-950 rounded-lg border border-zinc-800 flex flex-wrap gap-1 leading-relaxed">
+                          {result.contextAnalysis.heatmap.map((chunk, i) => (
+                            <span 
+                              key={i}
+                              className={cn(
+                                "px-1 rounded text-xs transition-colors cursor-help",
+                                chunk.density === 'low' ? "bg-red-500/20 text-red-400" : 
+                                chunk.density === 'medium' ? "bg-amber-500/10 text-amber-500" : 
+                                "bg-emerald-500/10 text-emerald-500"
+                              )}
+                              title={`${chunk.density.toUpperCase()} DENSITY: Low context forces AI to "guess" at safety.`}
+                            >
+                              {chunk.text}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sanitization Glossary Section */}
+                    {result.euphemisms.length > 0 && (
+                      <div className="space-y-4">
+                        <h2 className="text-xs font-mono uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+                          <BookOpen className="w-3 h-3 text-amber-500" /> Sanitization Glossary
+                        </h2>
+                        <div className="grid grid-cols-1 gap-3">
+                          {result.euphemisms.map((item, i) => (
+                            <div key={i} className="group bg-zinc-900 border border-zinc-800 p-4 rounded-xl hover:border-amber-500/30 transition-colors flex items-start gap-4">
+                              <div className="mt-1 p-1.5 bg-amber-500/10 rounded">
+                                <BookOpen className="w-3.5 h-3.5 text-amber-500" />
+                              </div>
+                              <div className="flex-1 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-bold text-amber-500 uppercase tracking-wide">{item.term}</span>
+                                  <span className="text-[9px] text-zinc-600 font-mono uppercase tracking-widest">Evasive Euphemism</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-xs">
+                                  <span className="text-zinc-500 font-mono text-[10px]">DIRECT TRANSLATION:</span>
+                                  <span className="text-emerald-500 font-bold">{item.translation}</span>
+                                </div>
+                                <p className="text-[11px] text-zinc-500 italic leading-relaxed">
+                                  {item.context}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="lg:col-span-5 space-y-6">
                     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">

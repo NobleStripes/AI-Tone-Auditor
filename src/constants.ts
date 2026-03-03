@@ -22,6 +22,18 @@ export const TONE_CATEGORIES = {
     label: 'Karen Triggers',
     description: 'Passive-aggressive entitlement, bureaucratic stonewalling, or moralizing.',
     color: '#8b5cf6', // violet-500
+  },
+  HEDGING: {
+    id: 'hedging',
+    label: 'Hedging',
+    description: 'Overuse of vague or cautious language to avoid commitment or accountability.',
+    color: '#06b6d4', // cyan-500
+  },
+  DISMISSIVE: {
+    id: 'dismissive',
+    label: 'Dismissive',
+    description: 'Brushing off user concerns as insignificant or using minimizing language.',
+    color: '#ec4899', // pink-500
   }
 } as const;
 
@@ -145,6 +157,46 @@ export const TRIGGER_WORDS = [
     word: "In the interest of",
     explanation: "Bureaucratic justification. Uses a formal preamble to justify a refusal or a lecture.",
     category: "Karen Trigger"
+  },
+  {
+    word: "Generally speaking",
+    explanation: "Hedging. A vague qualifier used to avoid making a specific or committed statement.",
+    category: "Hedging"
+  },
+  {
+    word: "It's possible that",
+    explanation: "Hedging. Used to introduce doubt or avoid accountability for a statement.",
+    category: "Hedging"
+  },
+  {
+    word: "Typically,",
+    explanation: "Hedging. A common qualifier used to avoid being held to a specific answer.",
+    category: "Hedging"
+  },
+  {
+    word: "I believe",
+    explanation: "Hedging. Softens a statement to make it sound like a personal opinion rather than a fact.",
+    category: "Hedging"
+  },
+  {
+    word: "just",
+    explanation: "Dismissive. A minimizing word used to make a complex issue or user concern seem simple or unimportant.",
+    category: "Dismissive"
+  },
+  {
+    word: "simply",
+    explanation: "Dismissive. Implies that the user's problem has an obvious solution that they are overlooking.",
+    category: "Dismissive"
+  },
+  {
+    word: "merely",
+    explanation: "Dismissive. Downplays the significance of a situation or user's point.",
+    category: "Dismissive"
+  },
+  {
+    word: "no big deal",
+    explanation: "Dismissive. Directly invalidates the user's concern by labeling it as unimportant.",
+    category: "Dismissive"
   }
 ];
 

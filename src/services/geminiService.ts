@@ -10,6 +10,7 @@ export interface AnalysisResult {
     text: string;
     explanation: string;
     severity: 'low' | 'medium' | 'high';
+    rlhfLogic?: string; // New: Why This Response?
   }[];
   summary: string;
   overallTone: string;
@@ -25,12 +26,22 @@ export interface AnalysisResult {
     structure: 'More' | 'Default' | 'Less';
     emoji: 'More' | 'Default' | 'Less';
   };
+  contextAnalysis: {
+    score: number; // 0-100
+    feedback: string;
+    heatmap: { text: string; density: 'low' | 'medium' | 'high' }[];
+  };
+  euphemisms: {
+    term: string;
+    translation: string;
+    context: string;
+  }[];
 }
 
 export async function analyzeTone(text: string): Promise<AnalysisResult> {
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
-    contents: `Analyze the following AI-generated text for specific patterns of gaslighting, infantilizing, forced de-escalation, and passive-aggressive "Karen" triggers. 
+    contents: `Analyze the following AI-generated text for specific patterns of gaslighting, infantilizing, forced de-escalation, passive-aggressive "Karen" triggers, hedging, and dismissive language. 
     
     Text to analyze:
     "${text}"
@@ -40,20 +51,17 @@ export async function analyzeTone(text: string): Promise<AnalysisResult> {
     - Infantilizing: Condescending tone, over-simplification, or treating the user like a child.
     - Forced De-escalation: Dismissive neutrality, tone-policing, or avoiding accountability through scripts (e.g., "I'm sorry you feel that way").
     - Karen Triggers: Passive-aggressive entitlement, bureaucratic stonewalling, or moralizing.
+    - Hedging: Overuse of cautious or vague language to avoid commitment, accountability, or directness.
+    - Dismissive Language: Brushing off user concerns as insignificant.
 
     In addition to the analysis, provide:
     1. 2-3 "AI Personality Tuning Tips" (text instructions).
-    2. A "Personalization Profile" based on the ChatGPT 5.2 personalization settings. Suggest the ideal settings for the user to avoid the detected "Karen" behaviors. 
+    2. A "Personalization Profile" based on the ChatGPT 5.2 personalization settings.
+    3. "Why This Response?": For each finding, explain the hidden RLHF (Reinforcement Learning from Human Feedback) safety-alignment logic that likely triggered this specific phrasing.
+    4. "Contextual Heatmap": Evaluate the density of the input text. If it's short or vague, explain how this "low context" forces the AI to "guess" at safety, leading to preachy refusals. Provide a heatmap breakdown of the text.
+    5. "Sanitization Glossary": Identify "Evasive Euphemisms" (corporate-speak) used to avoid raw facts and translate them back into technical or direct terms.
     
-    For the "baseStyle" in the personalization profile, choose one of these specific styles if they fit the situation:
-    - Default: Balanced but prone to lecturing.
-    - Professional: High structure, formal, uses industry jargon.
-    - Friendly: Uses "Listener" and "Empathy" loops (High Karen Risk).
-    - Candid: 16% shorter, cuts preambles (Anti-Waffle).
-    - Cynical: Irreverent, sharp wit.
-    - Nerdy: Literal, data-dense.
-    - Efficient: Stripped-back, purely actionable.
-    - Quirky: Playful, imaginative.
+    For the "baseStyle" in the personalization profile, choose one of these specific styles: Default, Professional, Friendly, Candid, Cynical, Nerdy, Efficient, Quirky.
 
     Provide a detailed breakdown including scores (0-100) for each category, specific examples from the text, an overall summary, the tuning recommendations, and the personalization profile.`,
     config: {
@@ -68,8 +76,10 @@ export async function analyzeTone(text: string): Promise<AnalysisResult> {
               infantilizing: { type: Type.INTEGER },
               de_escalation: { type: Type.INTEGER },
               karen_trigger: { type: Type.INTEGER },
+              hedging: { type: Type.INTEGER },
+              dismissive: { type: Type.INTEGER },
             },
-            required: ['gaslighting', 'infantilizing', 'de_escalation', 'karen_trigger'],
+            required: ['gaslighting', 'infantilizing', 'de_escalation', 'karen_trigger', 'hedging', 'dismissive'],
           },
           findings: {
             type: Type.ARRAY,
@@ -77,11 +87,12 @@ export async function analyzeTone(text: string): Promise<AnalysisResult> {
               type: Type.OBJECT,
               properties: {
                 category: { type: Type.STRING },
-                text: { type: Type.STRING, description: "The specific snippet from the input text" },
+                text: { type: Type.STRING },
                 explanation: { type: Type.STRING },
                 severity: { type: Type.STRING, enum: ['low', 'medium', 'high'] },
+                rlhfLogic: { type: Type.STRING, description: "The hidden safety-alignment logic behind this phrase" },
               },
-              required: ['category', 'text', 'explanation', 'severity'],
+              required: ['category', 'text', 'explanation', 'severity', 'rlhfLogic'],
             }
           },
           summary: { type: Type.STRING },
@@ -93,7 +104,7 @@ export async function analyzeTone(text: string): Promise<AnalysisResult> {
               properties: {
                 title: { type: Type.STRING },
                 description: { type: Type.STRING },
-                promptSnippet: { type: Type.STRING, description: "A specific instruction snippet the user can copy/paste into their AI settings" },
+                promptSnippet: { type: Type.STRING },
               },
               required: ['title', 'description'],
             }
@@ -101,16 +112,47 @@ export async function analyzeTone(text: string): Promise<AnalysisResult> {
           personalization: {
             type: Type.OBJECT,
             properties: {
-              baseStyle: { type: Type.STRING, description: "e.g., Professional, Friendly, Concise, Nerdy, etc." },
+              baseStyle: { type: Type.STRING },
               warmth: { type: Type.STRING, enum: ['More', 'Default', 'Less'] },
               enthusiasm: { type: Type.STRING, enum: ['More', 'Default', 'Less'] },
-              structure: { type: Type.STRING, enum: ['More', 'Default', 'Less'], description: "Headers & Lists setting" },
+              structure: { type: Type.STRING, enum: ['More', 'Default', 'Less'] },
               emoji: { type: Type.STRING, enum: ['More', 'Default', 'Less'] },
             },
             required: ['baseStyle', 'warmth', 'enthusiasm', 'structure', 'emoji'],
           },
+          contextAnalysis: {
+            type: Type.OBJECT,
+            properties: {
+              score: { type: Type.INTEGER },
+              feedback: { type: Type.STRING },
+              heatmap: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    text: { type: Type.STRING },
+                    density: { type: Type.STRING, enum: ['low', 'medium', 'high'] },
+                  },
+                  required: ['text', 'density'],
+                }
+              }
+            },
+            required: ['score', 'feedback', 'heatmap'],
+          },
+          euphemisms: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                term: { type: Type.STRING },
+                translation: { type: Type.STRING },
+                context: { type: Type.STRING },
+              },
+              required: ['term', 'translation', 'context'],
+            }
+          }
         },
-        required: ['scores', 'findings', 'summary', 'overallTone', 'recommendations', 'personalization'],
+        required: ['scores', 'findings', 'summary', 'overallTone', 'recommendations', 'personalization', 'contextAnalysis', 'euphemisms'],
       },
     },
   });
