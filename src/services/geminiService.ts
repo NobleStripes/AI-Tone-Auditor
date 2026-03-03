@@ -25,11 +25,17 @@ export interface AnalysisResult {
     enthusiasm: 'More' | 'Default' | 'Less';
     structure: 'More' | 'Default' | 'Less';
     emoji: 'More' | 'Default' | 'Less';
+    karenRemediation: string; // New: Specific instruction to counter "Karen" triggers
   };
   contextAnalysis: {
     score: number; // 0-100
     feedback: string;
-    heatmap: { text: string; density: 'low' | 'medium' | 'high' }[];
+    heatmap: { 
+      text: string; 
+      density: 'low' | 'medium' | 'high';
+      explanation?: string;
+      suggestion?: string;
+    }[];
   };
   euphemisms: {
     term: string;
@@ -56,9 +62,9 @@ export async function analyzeTone(text: string): Promise<AnalysisResult> {
 
     In addition to the analysis, provide:
     1. 2-3 "AI Personality Tuning Tips" (text instructions). For each tip, include a "promptSnippet" which is a specific, copy-pasteable instruction the user can add to their system prompt or custom instructions to implement the fix.
-    2. A "Personalization Profile" based on the ChatGPT 5.2 personalization settings.
+    2. A "Personalization Profile" based on the ChatGPT 5.2 personalization settings. Include a "karenRemediation" field which is a specific, concise instruction to remediate the detected "Karen" persona (passive-aggressive entitlement, moralizing, etc.) based on the analysis.
     3. "Why This Response?": For each finding, explain the hidden RLHF (Reinforcement Learning from Human Feedback) safety-alignment logic that likely triggered this specific phrasing.
-    4. "Contextual Heatmap": Evaluate the density of the input text. If it's short or vague, explain how this "low context" forces the AI to "guess" at safety, leading to preachy refusals. Provide a heatmap breakdown of the text.
+    4. "Contextual Heatmap": Evaluate the density of the input text. If it's short or vague, explain how this "low context" forces the AI to "guess" at safety, leading to preachy refusals. Provide a heatmap breakdown of the text. For segments identified as "low" density, provide an "explanation" of why it's low context and a "suggestion" on how to add more detail or clarity.
     5. "Sanitization Glossary": Identify "Evasive Euphemisms" (corporate-speak) used to avoid raw facts and translate them back into technical or direct terms.
     
     For the "baseStyle" in the personalization profile, choose one of these specific styles: Default, Professional, Friendly, Candid, Cynical, Nerdy, Efficient, Quirky.
@@ -117,8 +123,9 @@ export async function analyzeTone(text: string): Promise<AnalysisResult> {
               enthusiasm: { type: Type.STRING, enum: ['More', 'Default', 'Less'] },
               structure: { type: Type.STRING, enum: ['More', 'Default', 'Less'] },
               emoji: { type: Type.STRING, enum: ['More', 'Default', 'Less'] },
+              karenRemediation: { type: Type.STRING, description: "Instruction to remediate the detected Karen persona" },
             },
-            required: ['baseStyle', 'warmth', 'enthusiasm', 'structure', 'emoji'],
+            required: ['baseStyle', 'warmth', 'enthusiasm', 'structure', 'emoji', 'karenRemediation'],
           },
           contextAnalysis: {
             type: Type.OBJECT,
@@ -132,6 +139,8 @@ export async function analyzeTone(text: string): Promise<AnalysisResult> {
                   properties: {
                     text: { type: Type.STRING },
                     density: { type: Type.STRING, enum: ['low', 'medium', 'high'] },
+                    explanation: { type: Type.STRING, description: "Why this segment is considered low context (only for 'low' density)" },
+                    suggestion: { type: Type.STRING, description: "How to improve this segment (only for 'low' density)" },
                   },
                   required: ['text', 'density'],
                 }

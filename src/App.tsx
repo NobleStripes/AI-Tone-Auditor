@@ -180,6 +180,67 @@ const TriggerHighlighter = ({ text }: { text: string }) => {
   );
 };
 
+const HeatmapChunk = ({ chunk }: { chunk: any }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <div 
+      className="relative inline-block"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <span 
+        className={cn(
+          "px-1 rounded text-xs transition-colors cursor-help inline-block",
+          chunk.density === 'low' ? "bg-red-500/20 text-red-400" : 
+          chunk.density === 'medium' ? "bg-amber-500/10 text-amber-500" : 
+          "bg-emerald-500/10 text-emerald-500"
+        )}
+      >
+        {chunk.text}
+      </span>
+      
+      <AnimatePresence>
+        {isHovered && (chunk.explanation || chunk.suggestion) && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 5, scale: 0.95 }}
+            className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-zinc-900 border border-zinc-800 rounded-lg shadow-2xl pointer-events-none"
+          >
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 border-b border-zinc-800 pb-1.5 mb-1.5">
+                <div className={cn(
+                  "w-1.5 h-1.5 rounded-full",
+                  chunk.density === 'low' ? "bg-red-500" : "bg-amber-500"
+                )} />
+                <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-400">
+                  {chunk.density} Context
+                </span>
+              </div>
+              
+              {chunk.explanation && (
+                <div className="space-y-1">
+                  <p className="text-[9px] font-mono uppercase tracking-widest text-zinc-600">Issue</p>
+                  <p className="text-[11px] text-zinc-300 leading-relaxed">{chunk.explanation}</p>
+                </div>
+              )}
+              
+              {chunk.suggestion && (
+                <div className="space-y-1">
+                  <p className="text-[9px] font-mono uppercase tracking-widest text-zinc-600">Suggestion</p>
+                  <p className="text-[11px] text-emerald-500/90 leading-relaxed italic">"{chunk.suggestion}"</p>
+                </div>
+              )}
+            </div>
+            <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-zinc-900" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 const RecommendationCard = ({ tip, index }: { tip: any, index: number }) => {
   const [copied, setCopied] = useState(false);
 
@@ -578,6 +639,28 @@ export default function App() {
                             </div>
                           </div>
                         </div>
+
+                        {/* Karen Remediation Strategy */}
+                        <div className="pt-4 border-t border-zinc-800">
+                          <div className="flex items-start gap-3 bg-red-500/5 border border-red-500/10 p-4 rounded-lg">
+                            <div className="mt-1 p-1.5 bg-red-500/10 rounded">
+                              <ShieldAlert className="w-3.5 h-3.5 text-red-500" />
+                            </div>
+                            <div className="space-y-2 flex-1">
+                              <div className="flex items-center justify-between">
+                                <h4 className="text-[10px] font-mono uppercase tracking-widest text-red-500">Anti-Karen Remediation Strategy</h4>
+                                <span className="text-[9px] text-zinc-600 font-mono uppercase tracking-widest">Active Counter-Measure</span>
+                              </div>
+                              <p className="text-xs text-zinc-300 leading-relaxed">
+                                {result.personalization.karenRemediation}
+                              </p>
+                              <div className="flex items-center gap-2 pt-1">
+                                <div className="h-px flex-1 bg-zinc-800" />
+                                <span className="text-[9px] text-zinc-600 font-mono italic">Apply to Custom Instructions</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -603,18 +686,7 @@ export default function App() {
                         </p>
                         <div className="p-4 bg-zinc-950 rounded-lg border border-zinc-800 flex flex-wrap gap-1 leading-relaxed">
                           {result.contextAnalysis.heatmap.map((chunk, i) => (
-                            <span 
-                              key={i}
-                              className={cn(
-                                "px-1 rounded text-xs transition-colors cursor-help",
-                                chunk.density === 'low' ? "bg-red-500/20 text-red-400" : 
-                                chunk.density === 'medium' ? "bg-amber-500/10 text-amber-500" : 
-                                "bg-emerald-500/10 text-emerald-500"
-                              )}
-                              title={`${chunk.density.toUpperCase()} DENSITY: Low context forces AI to "guess" at safety.`}
-                            >
-                              {chunk.text}
-                            </span>
+                            <HeatmapChunk key={i} chunk={chunk} />
                           ))}
                         </div>
                       </div>
