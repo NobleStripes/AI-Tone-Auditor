@@ -78,12 +78,21 @@ const Header = () => (
   </header>
 );
 
-const Sidebar = ({ history, onSelect, onDelete }: { history: any[], onSelect: (id: string) => void, onDelete: (id: string) => void }) => (
+const Sidebar = ({ history, onSelect, onDelete, onClearAll }: { history: any[], onSelect: (id: string) => void, onDelete: (id: string) => void, onClearAll: () => void }) => (
   <aside className="w-72 border-r border-zinc-800 bg-zinc-950 flex flex-col h-[calc(100vh-73px)]">
     <div className="p-4 border-b border-zinc-800 flex items-center justify-between">
       <h2 className="text-xs font-mono uppercase tracking-widest text-zinc-500 flex items-center gap-2">
         <History className="w-3 h-3" /> Audit History
       </h2>
+      {history.length > 0 && (
+        <button 
+          onClick={onClearAll}
+          className="text-[10px] font-mono uppercase tracking-widest text-zinc-600 hover:text-red-500 transition-colors flex items-center gap-1"
+          title="Clear All History"
+        >
+          <Trash2 className="w-3 h-3" /> Clear
+        </button>
+      )}
     </div>
     <div className="flex-1 overflow-y-auto p-2 space-y-1">
       {history.length === 0 ? (
@@ -249,6 +258,11 @@ export default function App() {
             }
           }}
           onDelete={(id) => setHistory(prev => prev.filter(h => h.id !== id))}
+          onClearAll={() => {
+            if (window.confirm('Are you sure you want to clear all audit history? This action cannot be undone.')) {
+              setHistory([]);
+            }
+          }}
         />
 
         <main className="flex-1 overflow-y-auto p-8 max-w-6xl mx-auto w-full">
