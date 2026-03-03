@@ -18,6 +18,13 @@ export interface AnalysisResult {
     description: string;
     promptSnippet?: string;
   }[];
+  personalization: {
+    baseStyle: string;
+    warmth: 'More' | 'Default' | 'Less';
+    enthusiasm: 'More' | 'Default' | 'Less';
+    structure: 'More' | 'Default' | 'Less';
+    emoji: 'More' | 'Default' | 'Less';
+  };
 }
 
 export async function analyzeTone(text: string): Promise<AnalysisResult> {
@@ -34,9 +41,11 @@ export async function analyzeTone(text: string): Promise<AnalysisResult> {
     - Forced De-escalation: Dismissive neutrality, tone-policing, or avoiding accountability through scripts (e.g., "I'm sorry you feel that way").
     - Karen Triggers: Passive-aggressive entitlement, bureaucratic stonewalling, or moralizing.
 
-    In addition to the analysis, provide 2-3 "AI Personality Tuning Tips". These should be practical advice for the user on how to adjust the AI's (e.g., ChatGPT 5.2) system instructions or custom instructions to avoid these "Karen" behaviors. Suggest specific tone, warmth, or directness settings.
+    In addition to the analysis, provide:
+    1. 2-3 "AI Personality Tuning Tips" (text instructions).
+    2. A "Personalization Profile" based on the ChatGPT 5.2 personalization settings. Suggest the ideal settings for the user to avoid the detected "Karen" behaviors.
 
-    Provide a detailed breakdown including scores (0-100) for each category, specific examples from the text, an overall summary, and the tuning recommendations.`,
+    Provide a detailed breakdown including scores (0-100) for each category, specific examples from the text, an overall summary, the tuning recommendations, and the personalization profile.`,
     config: {
       responseMimeType: "application/json",
       responseSchema: {
@@ -79,8 +88,19 @@ export async function analyzeTone(text: string): Promise<AnalysisResult> {
               required: ['title', 'description'],
             }
           },
+          personalization: {
+            type: Type.OBJECT,
+            properties: {
+              baseStyle: { type: Type.STRING, description: "e.g., Professional, Friendly, Concise, Nerdy, etc." },
+              warmth: { type: Type.STRING, enum: ['More', 'Default', 'Less'] },
+              enthusiasm: { type: Type.STRING, enum: ['More', 'Default', 'Less'] },
+              structure: { type: Type.STRING, enum: ['More', 'Default', 'Less'], description: "Headers & Lists setting" },
+              emoji: { type: Type.STRING, enum: ['More', 'Default', 'Less'] },
+            },
+            required: ['baseStyle', 'warmth', 'enthusiasm', 'structure', 'emoji'],
+          },
         },
-        required: ['scores', 'findings', 'summary', 'overallTone', 'recommendations'],
+        required: ['scores', 'findings', 'summary', 'overallTone', 'recommendations', 'personalization'],
       },
     },
   });

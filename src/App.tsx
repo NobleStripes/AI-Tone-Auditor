@@ -20,7 +20,12 @@ import {
   XCircle,
   Cpu,
   Lightbulb,
-  Copy
+  Copy,
+  Settings2,
+  Smile,
+  Flame,
+  LayoutList,
+  Sticker
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -381,9 +386,83 @@ export default function App() {
                         ))}
                       </div>
                     </div>
-                  </div>
 
-                  {/* Visualization Card */}
+                    {/* Personalization Profile Section */}
+                    <div className="space-y-4">
+                      <h2 className="text-xs font-mono uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+                        <Settings2 className="w-3 h-3 text-blue-500" /> Personalization Profile
+                      </h2>
+                      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-6">
+                        <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+                          <div>
+                            <h4 className="text-sm font-bold text-zinc-200">Base style and tone</h4>
+                            <p className="text-[10px] text-zinc-500">Set the style and tone of how the AI responds to you.</p>
+                          </div>
+                          <div className="bg-zinc-950 border border-zinc-800 px-3 py-1.5 rounded text-xs font-mono text-blue-400">
+                            {result.personalization.baseStyle}
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <h4 className="text-[10px] font-mono uppercase tracking-widest text-zinc-600">Characteristics</h4>
+                          
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="flex items-center justify-between bg-zinc-950/50 border border-zinc-800 p-3 rounded-lg">
+                              <div className="flex items-center gap-2">
+                                <Flame className="w-3.5 h-3.5 text-orange-500" />
+                                <span className="text-xs text-zinc-400">Warm</span>
+                              </div>
+                              <span className={cn(
+                                "text-[10px] font-mono px-2 py-0.5 rounded",
+                                result.personalization.warmth === 'More' ? "bg-orange-500/10 text-orange-500" : "bg-zinc-800 text-zinc-500"
+                              )}>
+                                {result.personalization.warmth}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center justify-between bg-zinc-950/50 border border-zinc-800 p-3 rounded-lg">
+                              <div className="flex items-center gap-2">
+                                <Smile className="w-3.5 h-3.5 text-yellow-500" />
+                                <span className="text-xs text-zinc-400">Enthusiastic</span>
+                              </div>
+                              <span className={cn(
+                                "text-[10px] font-mono px-2 py-0.5 rounded",
+                                result.personalization.enthusiasm === 'More' ? "bg-yellow-500/10 text-yellow-500" : "bg-zinc-800 text-zinc-500"
+                              )}>
+                                {result.personalization.enthusiasm}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center justify-between bg-zinc-950/50 border border-zinc-800 p-3 rounded-lg">
+                              <div className="flex items-center gap-2">
+                                <LayoutList className="w-3.5 h-3.5 text-blue-500" />
+                                <span className="text-xs text-zinc-400">Headers & Lists</span>
+                              </div>
+                              <span className={cn(
+                                "text-[10px] font-mono px-2 py-0.5 rounded",
+                                result.personalization.structure === 'More' ? "bg-blue-500/10 text-blue-500" : "bg-zinc-800 text-zinc-500"
+                              )}>
+                                {result.personalization.structure}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center justify-between bg-zinc-950/50 border border-zinc-800 p-3 rounded-lg">
+                              <div className="flex items-center gap-2">
+                                <Sticker className="w-3.5 h-3.5 text-emerald-500" />
+                                <span className="text-xs text-zinc-400">Emoji</span>
+                              </div>
+                              <span className={cn(
+                                "text-[10px] font-mono px-2 py-0.5 rounded",
+                                result.personalization.emoji === 'More' ? "bg-emerald-500/10 text-emerald-500" : "bg-zinc-800 text-zinc-500"
+                              )}>
+                                {result.personalization.emoji}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                   <div className="lg:col-span-5 space-y-6">
                     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
                       <h3 className="text-xs font-mono uppercase tracking-widest text-zinc-500 mb-6">Tone Distribution Profile</h3>
