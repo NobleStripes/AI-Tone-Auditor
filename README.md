@@ -34,5 +34,41 @@ The core intent of this tool is to:
 - **Visualizations**: Recharts
 - **Icons**: Lucide React
 
+## Run and deploy your AI Studio app
+
+This application is built as an AI Studio applet. To run it locally or deploy it, follow these steps:
+
+### Prerequisites
+
+- Node.js (v18 or later)
+- npm or yarn
+
+### Local Development
+
+1. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+2. **Set up environment variables**:
+   Create a `.env` file in the root directory and add your Gemini API key:
+   ```env
+   GEMINI_API_KEY=your_api_key_here
+   ```
+
+3. **Start the development server**:
+   ```bash
+   npm run dev
+   ```
+   The app will be available at `http://localhost:3000`.
+
+### Deployment
+
+AI Studio apps are designed to be deployed seamlessly within the AI Studio environment. To share your app:
+
+1. Ensure all changes are committed.
+2. Use the **Share** button in the AI Studio interface to generate a public URL.
+3. Your app will be hosted on a `.run.app` subdomain, ready for use by others.
+
 ---
 *Built to make AI interactions more human, one audit at a time.*
