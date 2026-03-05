@@ -7,10 +7,10 @@ AI Tone Auditor is a specialized diagnostic tool designed to help users identify
 Many Large Language Models (LLMs) default to a personality that can come across as overly formal, evasive, or "Karen-like"—characterized by passive-aggressive helpfulness, bureaucratic jargon, and a lack of genuine empathy. 
 
 The core intent of this tool is to:
-1. **Detect Default Bias**: Identify when an LLM is slipping into its default, often robotic or condescending, personality.
+1. **Detect Default Bias**: Identify when an LLM is slipping into its default, overly robotic or quietly condescending personality.
 2. **Prevent the "Karen" Persona**: Flag specific phrases and tones that contribute to a negative user experience.
 3. **Customize AI Personality**: Provide actionable feedback and prompt snippets to help users tune their AI's personality to be more authentic and effective.
-4. **Remediate with RLHF Logic**: Offer specific strategies to "un-learn" negative patterns through better custom instructions and prompt engineering.
+4. **RLHF-inspired feedback**: Offer specific strategies to "un-learn" negative patterns through better custom instructions and prompt engineering.
 
 ## Examples of "Karen" Patterns
 
