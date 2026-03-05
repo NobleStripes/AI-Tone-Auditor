@@ -177,6 +177,7 @@ const Sidebar = ({
 );
 
 const TriggerHighlighter = ({ text }: { text: string }) => {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const parts = useMemo(() => {
     if (!text) return [];
     // Sort trigger words by length descending to match longest phrases first
@@ -209,19 +210,31 @@ const TriggerHighlighter = ({ text }: { text: string }) => {
         part.isTrigger ? (
           <span 
             key={i} 
-            className="group relative inline-block"
+            className="relative inline-block"
+            onMouseEnter={() => setActiveIndex(i)}
+            onMouseLeave={() => setActiveIndex(null)}
+            onClick={() => setActiveIndex(activeIndex === i ? null : i)}
           >
             <span className="bg-red-500/20 text-red-400 border-b border-red-500/50 px-0.5 rounded-sm font-bold cursor-help">
               {part.text}
             </span>
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-zinc-950 border border-zinc-800 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all z-50">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-red-500">{part.info?.category}</span>
-                <AlertCircle className="w-3 h-3 text-red-500" />
-              </div>
-              <p className="text-[11px] text-zinc-300 leading-normal font-sans normal-case">{part.info?.explanation}</p>
-              <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-zinc-950" />
-            </div>
+            <AnimatePresence>
+              {activeIndex === i && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 5, scale: 0.95 }}
+                  className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-zinc-950 border border-zinc-800 rounded-lg shadow-xl z-50 pointer-events-none"
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-red-500">{part.info?.category}</span>
+                    <AlertCircle className="w-3 h-3 text-red-500" />
+                  </div>
+                  <p className="text-[11px] text-zinc-300 leading-normal font-sans normal-case">{part.info?.explanation}</p>
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-zinc-950" />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </span>
         ) : (
           <span key={i}>{part.text}</span>
@@ -232,13 +245,14 @@ const TriggerHighlighter = ({ text }: { text: string }) => {
 };
 
 const HeatmapChunk = ({ chunk }: { chunk: any }) => {
-  const [isHovered, setIsHovered] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
 
   return (
     <div 
       className="relative inline-block"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+      onClick={() => setShowTooltip(!showTooltip)}
     >
       <span 
         className={cn(
@@ -252,7 +266,7 @@ const HeatmapChunk = ({ chunk }: { chunk: any }) => {
       </span>
       
       <AnimatePresence>
-        {isHovered && (chunk.explanation || chunk.suggestion) && (
+        {showTooltip && (chunk.explanation || chunk.suggestion) && (
           <motion.div
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
