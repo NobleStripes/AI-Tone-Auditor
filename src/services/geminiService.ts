@@ -21,15 +21,12 @@ export interface AnalysisResult {
   }[];
   personalization: {
     baseStyle: string;
-    warmth: 'More' | 'Default' | 'Less';
-    enthusiasm: 'More' | 'Default' | 'Less';
-    structure: 'More' | 'Default' | 'Less';
-    emoji: 'More' | 'Default' | 'Less';
     directness: 'More' | 'Default' | 'Less';
     neutrality: 'More' | 'Default' | 'Less';
     brevity: 'More' | 'Default' | 'Less';
     humility: 'More' | 'Default' | 'Less';
-    karenRemediation: string; // New: Specific instruction to counter "Karen" triggers
+    karenRemediation: string; // Specific instruction to counter "Karen" triggers
+    customInstructions: string[]; // New: List of specific instructions to add to system prompt
   };
   contextAnalysis: {
     score: number; // 0-100
@@ -66,8 +63,9 @@ export async function analyzeTone(text: string): Promise<AnalysisResult> {
 
     In addition to the analysis, provide:
     1. 2-3 "AI Personality Tuning Tips" (text instructions). For each tip, include a "promptSnippet" which is a specific, copy-pasteable instruction the user can add to their system prompt or custom instructions to implement the fix.
-    2. A "Personalization Profile" based on the ChatGPT 5.2 personalization settings. Include a "karenRemediation" field which is a specific, concise instruction to remediate the detected "Karen" persona (passive-aggressive entitlement, moralizing, etc.) based on the analysis. Also include specific tuning for "directness", "neutrality", "brevity", and "humility".
-    3. "Why This Response?": For each finding, explain the hidden RLHF (Reinforcement Learning from Human Feedback) safety-alignment logic that likely triggered this specific phrasing.
+    2. A "Personalization Profile" based on Universal LLM Customization Instructions. Include a "karenRemediation" field which is a specific, concise instruction to remediate the detected "Karen" persona (passive-aggressive entitlement, moralizing, etc.) based on the analysis. Also include specific tuning for "directness", "neutrality", "brevity", and "humility".
+    3. "Custom Instructions": Provide a list of 3-5 specific, actionable instructions (one-liners) that the user can add to their LLM's system prompt or custom instructions to prevent the detected negative patterns.
+    4. "Why This Response?": For each finding, explain the hidden RLHF (Reinforcement Learning from Human Feedback) safety-alignment logic that likely triggered this specific phrasing.
     4. "Contextual Heatmap": Evaluate the density of the input text. If it's short or vague, explain how this "low context" forces the AI to "guess" at safety, leading to preachy refusals. Provide a heatmap breakdown of the text. For segments identified as "low" density, provide an "explanation" of why it's low context and a "suggestion" on how to add more detail or clarity.
     5. "Sanitization Glossary": Identify "Evasive Euphemisms" (corporate-speak) used to avoid raw facts and translate them back into technical or direct terms.
     
@@ -123,17 +121,18 @@ export async function analyzeTone(text: string): Promise<AnalysisResult> {
             type: Type.OBJECT,
             properties: {
               baseStyle: { type: Type.STRING },
-              warmth: { type: Type.STRING, enum: ['More', 'Default', 'Less'] },
-              enthusiasm: { type: Type.STRING, enum: ['More', 'Default', 'Less'] },
-              structure: { type: Type.STRING, enum: ['More', 'Default', 'Less'] },
-              emoji: { type: Type.STRING, enum: ['More', 'Default', 'Less'] },
               directness: { type: Type.STRING, enum: ['More', 'Default', 'Less'] },
               neutrality: { type: Type.STRING, enum: ['More', 'Default', 'Less'] },
               brevity: { type: Type.STRING, enum: ['More', 'Default', 'Less'] },
               humility: { type: Type.STRING, enum: ['More', 'Default', 'Less'] },
               karenRemediation: { type: Type.STRING, description: "Instruction to remediate the detected Karen persona" },
+              customInstructions: { 
+                type: Type.ARRAY, 
+                items: { type: Type.STRING },
+                description: "List of specific instructions to add to system prompt"
+              },
             },
-            required: ['baseStyle', 'warmth', 'enthusiasm', 'structure', 'emoji', 'directness', 'neutrality', 'brevity', 'humility', 'karenRemediation'],
+            required: ['baseStyle', 'directness', 'neutrality', 'brevity', 'humility', 'karenRemediation', 'customInstructions'],
           },
           contextAnalysis: {
             type: Type.OBJECT,

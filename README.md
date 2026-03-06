@@ -1,6 +1,6 @@
 # AI Tone Auditor Core
 
-AI Tone Auditor is a specialized diagnostic tool designed to help users identify and remediate the "Karen" persona often found in default LLM outputs. It provides deep semantic analysis to ensure your AI interactions are professional, clear, and free from bureaucratic condescension.
+AI Tone Auditor is a specialized diagnostic tool designed to help users identify and remediate the "Karen" persona often found in default LLM outputs (Gemini, Claude, Llama, etc.). It provides deep semantic analysis to ensure your AI interactions are professional, clear, and free from bureaucratic condescension.
 
 ## Core Intent
 
@@ -25,15 +25,15 @@ The auditor specifically looks for these common bureaucratic and passive-aggress
 - **Semantic Deep Scan**: Analyzes text for subtle tone shifts and bureaucratic patterns.
 - **Trigger Word Analysis**: Detects specific phrases from our "Karen/Gaslight" dictionary.
 - **Contextual Heatmap**: Visualizes areas of low context or evasive language.
-- **Personalization Profile**: Generates a custom remediation strategy to fix your AI's specific personality flaws.
-- **RLHF-Ready Feedback**: Provides "Reinforcement Learning from Human Feedback" style suggestions for immediate prompt improvement.
+- **Universal Custom Instructions**: Generates a list of specific, actionable instructions that can be added to any LLM's system prompt or custom instructions field.
+- **RLHF-inspired feedback**: Provides "Reinforcement Learning from Human Feedback" style suggestions for immediate prompt improvement.
 
 ## Getting Started
 
 1. Paste your AI's response into the auditor.
 2. Run the audit to see the Tone Distribution Profile.
-3. Review the "Anti-Karen Remediation Strategy" in the Personalization Profile.
-4. Copy the suggested prompt snippets to tune your AI's custom instructions.
+3. Review the "Anti-Karen Remediation Strategy" and "Universal Custom Instructions".
+4. Copy the suggested instructions to tune your AI's system prompt.
 
 ## Run and deploy your AI Studio app
 
