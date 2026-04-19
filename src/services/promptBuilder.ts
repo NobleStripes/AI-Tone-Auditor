@@ -1,4 +1,4 @@
-export const ANALYSIS_PROMPT_VERSION = '2026-04-19.v1';
+export const ANALYSIS_PROMPT_VERSION = '2026-04-19.v2';
 
 export function buildToneAnalysisPrompt(text: string): string {
   return `Analyze the following AI-generated text for specific patterns of gaslighting, infantilizing, forced de-escalation, passive-aggressive "Karen" triggers, hedging, and dismissive language.
@@ -22,7 +22,7 @@ In addition to the analysis, provide:
 5. "Contextual Heatmap": Evaluate the density of the input text. If it's short or vague, explain how this "low context" forces the AI to "guess" at safety, leading to preachy refusals. Provide a heatmap breakdown of the text. For segments identified as "low" density, provide an "explanation" of why it's low context and a "suggestion" on how to add more detail or clarity.
 6. "Sanitization Glossary": Identify "Evasive Euphemisms" (corporate-speak) used to avoid raw facts and translate them back into technical or direct terms.
 
-For the "baseStyle" in the personalization profile, choose one of these specific styles: Default, Professional, Friendly, Candid, Cynical, Nerdy, Efficient, Quirky.
+For the "baseStyle" in the personalization profile, choose one of these specific styles: Default, Professional, Friendly, Candid, Cynical, Efficient, Quirky.
 
 Provide a detailed breakdown including scores (0-100) for each category, specific examples from the text, an overall summary, the tuning recommendations, and the personalization profile.`;
 }

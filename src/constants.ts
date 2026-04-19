@@ -310,6 +310,121 @@ export const TRIGGER_WORDS: TriggerWord[] = [
     word: "I'm unable to",
     explanation: "Passive voice refusal. Avoids saying 'I won't' by making the refusal sound like an external constraint.",
     category: "Karen Trigger"
+  },
+  {
+    word: "I can't assist with that",
+    explanation: "Flat refusal template. Often used without contextual alternatives, creating a hard conversational wall.",
+    category: "Karen Trigger"
+  },
+  {
+    word: "I can offer general guidance",
+    explanation: "Scope narrowing. Reframes a specific request into vague advice to avoid direct accountability.",
+    category: "Karen Trigger"
+  },
+  {
+    word: "I can provide a safer alternative",
+    explanation: "Policy redirect phrase. Helpful in principle, but often used to sidestep the user's actual objective.",
+    category: "Karen Trigger"
+  },
+  {
+    word: "I have to decline",
+    explanation: "Formal refusal language. Signals procedural compliance over collaborative problem-solving.",
+    category: "Karen Trigger"
+  },
+  {
+    word: "I need to set a boundary",
+    explanation: "Authority framing. Can feel patronizing when used to shut down legitimate technical requests.",
+    category: "Karen Trigger"
+  },
+  {
+    word: "Let's reframe this",
+    explanation: "Conversation control tactic. Redirects away from the user's framing to a preferred narrative.",
+    category: "Gaslighting"
+  },
+  {
+    word: "That framing isn't accurate",
+    explanation: "Reality correction posture. Can invalidate the user's perspective before evidence is discussed.",
+    category: "Gaslighting"
+  },
+  {
+    word: "I think you're conflating",
+    explanation: "Condescending correction. Implies user confusion as the default explanation for disagreement.",
+    category: "Gaslighting"
+  },
+  {
+    word: "You're overcomplicating",
+    explanation: "Invalidating simplification. Minimizes legitimate complexity in the user's concern.",
+    category: "Dismissive"
+  },
+  {
+    word: "It's straightforward",
+    explanation: "Minimizing language. Suggests the user's difficulty is unwarranted or unsophisticated.",
+    category: "Dismissive"
+  },
+  {
+    word: "Obviously",
+    explanation: "Status signaling. Implies the answer should be self-evident and the user should already know it.",
+    category: "Infantilizing"
+  },
+  {
+    word: "As I said",
+    explanation: "Reprimand tone. Frames follow-up questions as user failure rather than unclear explanation.",
+    category: "Infantilizing"
+  },
+  {
+    word: "You may want to",
+    explanation: "Soft directive. Sounds polite but often functions as unsolicited behavioral correction.",
+    category: "Infantilizing"
+  },
+  {
+    word: "Let's not get ahead of ourselves",
+    explanation: "Pacing control. Can infantilize by implying the user lacks judgment about next steps.",
+    category: "Infantilizing"
+  },
+  {
+    word: "At this time",
+    explanation: "Bureaucratic hedge. Defers commitment while avoiding concrete reasoning or timelines.",
+    category: "Hedging"
+  },
+  {
+    word: "In many cases",
+    explanation: "Generalization hedge. Broad wording that weakens accountability for specific claims.",
+    category: "Hedging"
+  },
+  {
+    word: "It may be beneficial",
+    explanation: "Soft recommendation hedge. Adds distance between the model and actionable guidance.",
+    category: "Hedging"
+  },
+  {
+    word: "Potentially",
+    explanation: "Uncertainty marker. Often overused to avoid making a clear, testable claim.",
+    category: "Hedging"
+  },
+  {
+    word: "If that makes sense",
+    explanation: "Patronizing qualifier. Can imply the user may struggle to understand basic points.",
+    category: "Infantilizing"
+  },
+  {
+    word: "I hear you",
+    explanation: "Empathy placeholder. Can become a dismissive loop when not followed by concrete action.",
+    category: "Gaslighting"
+  },
+  {
+    word: "Thanks for your patience",
+    explanation: "Process-smoothing phrase. May feel passive-aggressive when no actual progress is delivered.",
+    category: "Karen Trigger"
+  },
+  {
+    word: "Per policy",
+    explanation: "Institutional shield. Invokes rules as a stopping point instead of explaining practical options.",
+    category: "Karen Trigger"
+  },
+  {
+    word: "I appreciate your understanding",
+    explanation: "Assumed compliance. Presumes agreement before resolving the user's underlying need.",
+    category: "Karen Trigger"
   }
 ];
 
@@ -340,11 +455,6 @@ export const BASE_STYLES = [
     style: "Cynical",
     diagnostic: "Irreverent, challenges assumptions, sharp wit.",
     use: "Strategic provocations and \"shade.\""
-  },
-  {
-    style: "Nerdy",
-    diagnostic: "Literal, data-dense, uses creative metaphors.",
-    use: "Learning complex technical concepts."
   },
   {
     style: "Efficient",
