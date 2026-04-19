@@ -93,6 +93,8 @@ Deploy using your preferred static hosting or web platform. Typical flow:
 - `AI_FALLBACK_PROVIDER`: Secondary provider used if primary fails.
 - `OPENAI_MODEL`: Optional model override for OpenAI provider. Defaults to `gpt-4o-mini`.
 - `ANTHROPIC_MODEL`: Optional model override for Anthropic provider. Defaults to `claude-3-5-haiku-latest`.
+- `AI_PROVIDER_TIMEOUT_MS`: Per-attempt timeout in milliseconds for provider requests. Defaults to `15000`.
+- `AI_PROVIDER_RETRIES`: Retry count per provider for transient failures (timeouts, network errors, 429/5xx). Defaults to `1`.
 - Footer status bar displays `FALLBACK_RATE` and fallback activation count for live deprecation telemetry.
 
 ## Trigger weight tuning guide
@@ -136,6 +138,13 @@ The parity suite validates:
 - Score categories remain in range `0-100`.
 - Top-risk category is consistent for fixture pairs across providers.
 - Per-category score deltas stay within tolerance.
+
+## Disclaimer
+
+- This tool is a diagnostic assistant for tone analysis, not a legal, compliance, HR, or safety adjudication system.
+- Scores and findings are heuristic/model-derived signals and may produce false positives or false negatives.
+- Always review critical outcomes with human judgment before taking policy, moderation, or operational action.
+- If you send real user data to external providers, ensure your deployment and data handling comply with your privacy and security requirements.
 
 ## Provider migration checklist
 

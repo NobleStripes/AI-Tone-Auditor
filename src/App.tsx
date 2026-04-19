@@ -864,9 +864,21 @@ export default function App() {
           <span className="hidden md:inline">
             FALLBACK_RATE: {telemetry.fallbackRatePercent}% ({telemetry.fallbackActivations}/{telemetry.totalAnalyses || 0})
           </span>
+          <span className="hidden lg:inline">
+            RECENT: {telemetry.recentFallbackRatePercent}% ({telemetry.recentWindowSize || 0})
+          </span>
+          <span className={cn(
+            'hidden lg:inline',
+            telemetry.fallbackTrend === 'up' ? 'text-red-400' : telemetry.fallbackTrend === 'down' ? 'text-emerald-400' : 'text-zinc-500'
+          )}>
+            TREND: {telemetry.fallbackTrend.toUpperCase()}
+          </span>
         </div>
-        <div className="text-center md:text-right">
-          &copy; 2026 AI TONE AUDITOR CORE
+        <div className="text-center md:text-right space-y-1">
+          <div>&copy; 2026 AI TONE AUDITOR CORE</div>
+          <div className="text-[9px] text-zinc-500">
+            Diagnostic output only; verify conclusions before policy, compliance, or operational decisions.
+          </div>
         </div>
       </footer>
     </div>
