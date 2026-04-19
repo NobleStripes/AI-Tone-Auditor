@@ -48,7 +48,8 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "As an AI language model",
     explanation: "The ultimate 'Karen' shield. Used to evade accountability by hiding behind a non-human identity while lecturing the user.",
-    category: "Karen Trigger"
+    category: "Karen Trigger",
+    weight: 3.0
   },
   {
     word: "I understand you're frustrated",
@@ -73,7 +74,8 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "I'm sorry you feel that way",
     explanation: "The 'Non-Apology Apology.' A hallmark of passive-aggressive behavior that avoids taking responsibility for the AI's own output.",
-    category: "Karen Trigger"
+    category: "Karen Trigger",
+    weight: 2.8
   },
   {
     word: "Let's take a step back",
@@ -88,7 +90,8 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "I cannot fulfill this request",
     explanation: "The hard 'No.' Often used without sufficient explanation, signaling a rigid adherence to hidden protocols.",
-    category: "Karen Trigger"
+    category: "Karen Trigger",
+    weight: 2.7
   },
   {
     word: "Safety guidelines",
@@ -98,7 +101,8 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "My programming prevents",
     explanation: "The 'I just work here' excuse. Evades the logic of the user's request by citing internal, unchangeable rules.",
-    category: "Karen Trigger"
+    category: "Karen Trigger",
+    weight: 2.4
   },
   {
     word: "It seems there is a misunderstanding",
@@ -138,7 +142,8 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "Let's keep this professional",
     explanation: "Tone policing. Implies the user is being 'unprofessional' to shut down a challenging or emotional interaction.",
-    category: "Karen Trigger"
+    category: "Karen Trigger",
+    weight: 2.6
   },
   {
     word: "I'm simply pointing out",
@@ -153,7 +158,8 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "Calm down",
     explanation: "The ultimate de-escalation trigger. Almost always has the opposite effect and is used to invalidate the user's feelings.",
-    category: "Karen Trigger"
+    category: "Karen Trigger",
+    weight: 2.5
   },
   {
     word: "Take a deep breath",
@@ -178,27 +184,32 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "Typically,",
     explanation: "Hedging. A common qualifier used to avoid being held to a specific answer.",
-    category: "Hedging"
+    category: "Hedging",
+    weight: 0.85
   },
   {
     word: "I believe",
     explanation: "Hedging. Softens a statement to make it sound like a personal opinion rather than a fact.",
-    category: "Hedging"
+    category: "Hedging",
+    weight: 0.8
   },
   {
     word: "just",
     explanation: "Dismissive. A minimizing word used to make a complex issue or user concern seem simple or unimportant.",
-    category: "Dismissive"
+    category: "Dismissive",
+    weight: 0.45
   },
   {
     word: "simply",
     explanation: "Dismissive. Implies that the user's problem has an obvious solution that they are overlooking.",
-    category: "Dismissive"
+    category: "Dismissive",
+    weight: 0.55
   },
   {
     word: "merely",
     explanation: "Dismissive. Downplays the significance of a situation or user's point.",
-    category: "Dismissive"
+    category: "Dismissive",
+    weight: 0.55
   },
   {
     word: "no big deal",
