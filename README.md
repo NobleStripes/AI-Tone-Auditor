@@ -36,9 +36,9 @@ The auditor specifically looks for these common bureaucratic and passive-aggress
 3. Review the "Anti-Karen Remediation Strategy" and "Universal Custom Instructions".
 4. Copy the suggested instructions to tune your AI's system prompt.
 
-## Run and deploy your AI Studio app
+## Run and deploy
 
-This application is built as an AI Studio applet. To run it locally or deploy it, follow these steps:
+This application runs as a standard web app with API-based provider integration.
 
 ### Prerequisites
 
@@ -71,11 +71,14 @@ This application is built as an AI Studio applet. To run it locally or deploy it
 
 ### Deployment
 
-AI Studio apps are designed to be deployed seamlessly within the AI Studio environment. To share your app:
+Deploy using your preferred static hosting or web platform. Typical flow:
 
-1. Ensure all changes are committed.
-2. Use the **Share** button in the AI Studio interface to generate a public URL.
-3. Your app will be hosted on a `.run.app` subdomain, ready for use by others.
+1. Build the app:
+   ```bash
+   npm run build
+   ```
+2. Publish the generated `dist/` directory to your host.
+3. Configure required environment variables for your deployment environment.
 
 ## Tech Stack
 
