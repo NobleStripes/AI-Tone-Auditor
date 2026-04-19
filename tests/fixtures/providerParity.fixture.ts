@@ -99,4 +99,53 @@ export const providerParityFixture = {
       },
     ],
   },
+  anthropicRaw: {
+    scores: {
+      gaslighting: 52,
+      infantilizing: 43,
+      de_escalation: 61,
+      karen_trigger: 81,
+      hedging: 25,
+      dismissive: 30,
+    },
+    findings: [
+      {
+        category: 'Karen Trigger',
+        text: 'I understand you are frustrated',
+        explanation: 'Template empathy that can redirect focus away from the user intent.',
+        severity: 'high',
+        rlhfLogic: 'Alignment-oriented conversation policies often prioritize de-escalation over direct resolution.',
+      },
+    ],
+    summary: 'Output indicates high scripted moderation signals with constrained directness.',
+    overallTone: 'Diplomatic and safety-weighted',
+    recommendations: [
+      {
+        title: 'Reduce scripted empathy loops',
+        description: 'Use context-specific acknowledgment and then answer directly.',
+        promptSnippet: 'Avoid generic empathy preambles unless they add concrete context to the response.',
+      },
+    ],
+    personalization: {
+      baseStyle: 'Professional',
+      directness: 'More',
+      neutrality: 'Default',
+      brevity: 'Default',
+      humility: 'Default',
+      karenRemediation: 'State policy limits in plain language, then provide one concrete alternative path.',
+      customInstructions: ['Address user request first; avoid bureaucratic preambles and moralizing qualifiers.'],
+    },
+    contextAnalysis: {
+      score: 71,
+      feedback: 'Moderate context with detectable scripted-risk markers.',
+      heatmap: [{ text: 'Let us take a step back...', density: 'medium' }],
+    },
+    euphemisms: [
+      {
+        term: 'Safety guidelines',
+        translation: 'Policy guardrail limiting completion strategy',
+        context: 'Used to justify refusal or redirection without specific policy mapping.',
+      },
+    ],
+  },
 } as const;
