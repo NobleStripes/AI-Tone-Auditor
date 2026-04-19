@@ -51,9 +51,11 @@ import {
   Tooltip,
   Cell
 } from 'recharts';
-import { analyzeTone, AnalysisResult } from './services/geminiService';
+import { analyzeTone, getLastAnalysisRuntimeMeta } from './services/analyzeTone';
 import { TONE_CATEGORIES, TRIGGER_WORDS } from './constants';
 import { cn } from './lib/utils';
+import type { AnalysisResult } from './types/analysis';
+import type { ProviderRuntimeMeta } from './types/provider';
 
 // --- Components ---
 
@@ -367,6 +369,7 @@ export default function App() {
   const [minAuditLength, setMinAuditLength] = useState(20); // Default sensitivity
   const [expandedFinding, setExpandedFinding] = useState<number | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [runtimeMeta, setRuntimeMeta] = useState<ProviderRuntimeMeta>(getLastAnalysisRuntimeMeta());
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   const handleAnalyze = async (textToAnalyze: string = inputText) => {
@@ -374,14 +377,16 @@ export default function App() {
     
     setIsAnalyzing(true);
     try {
-      const data = await analyzeTone(textToAnalyze);
+      const { result: data, meta } = await analyzeTone(textToAnalyze);
       setResult(data);
+      setRuntimeMeta(meta);
       
       const newEntry = {
         id: Math.random().toString(36).substr(2, 9),
         title: textToAnalyze.slice(0, 30) + '...',
         timestamp: Date.now(),
-        data
+        data,
+        meta,
       };
       setHistory(prev => {
         // Prevent duplicate entries for the same text
@@ -436,6 +441,9 @@ export default function App() {
             if (item) {
               setResult(item.data);
               setInputText(item.title); // Simplified
+              if (item.meta) {
+                setRuntimeMeta(item.meta);
+              }
             }
           }}
           onDelete={(id) => setHistory(prev => prev.filter(h => h.id !== id))}
@@ -848,7 +856,9 @@ export default function App() {
         <div className="flex flex-wrap justify-center gap-4 md:gap-6">
           <span>ENCRYPTION: AES-256</span>
           <span className="hidden xs:inline">AUDIT_MODE: SEMANTIC_DEEP_SCAN</span>
-          <span className="hidden sm:inline">MODEL: GEMINI-3-FLASH</span>
+          <span className="hidden sm:inline">PROVIDER: {runtimeMeta.providerLabel.toUpperCase()}</span>
+          <span className="hidden sm:inline">MODEL: {runtimeMeta.model.toUpperCase()}</span>
+          {runtimeMeta.usedFallback && <span className="text-amber-500">FALLBACK: ACTIVE</span>}
         </div>
         <div className="text-center md:text-right">
           &copy; 2026 AI TONE AUDITOR CORE

@@ -1,6 +1,6 @@
 # AI Tone Auditor Core
 
-AI Tone Auditor is a specialized diagnostic tool designed to help users identify and remediate the "Karen" persona often found in default LLM outputs (Gemini, Claude, Llama, etc.). It provides deep semantic analysis to ensure your AI interactions are professional, clear, and free from bureaucratic condescension.
+AI Tone Auditor is a specialized diagnostic tool designed to help users identify and remediate the "Karen" persona often found in default LLM outputs. It provides deep semantic analysis to ensure your AI interactions are professional, clear, and free from bureaucratic condescension.
 
 ## Core Intent
 
@@ -27,6 +27,7 @@ The auditor specifically looks for these common bureaucratic and passive-aggress
 - **Contextual Heatmap**: Visualizes areas of low context or evasive language.
 - **Universal Custom Instructions**: Generates a list of specific, actionable instructions that can be added to any LLM's system prompt or custom instructions field.
 - **RLHF-inspired feedback**: Provides "Reinforcement Learning from Human Feedback" style suggestions for immediate prompt improvement.
+- **Multi-provider runtime**: Supports provider routing with automatic fallback between configured AI engines.
 
 ## Getting Started
 
@@ -52,9 +53,13 @@ This application is built as an AI Studio applet. To run it locally or deploy it
    ```
 
 2. **Set up environment variables**:
-   Create a `.env` file in the root directory and add your Gemini API key:
+   Create a `.env` file in the root directory with provider settings:
    ```env
-   GEMINI_API_KEY=your_api_key_here
+   GEMINI_API_KEY=your_gemini_key_here
+   OPENAI_API_KEY=your_openai_key_here
+   OPENAI_MODEL=gpt-4o-mini
+   AI_PROVIDER=gemini
+   AI_FALLBACK_PROVIDER=openai
    ```
 
 3. **Start the development server**:
@@ -74,9 +79,41 @@ AI Studio apps are designed to be deployed seamlessly within the AI Studio envir
 ## Tech Stack
 
 - **Frontend**: React, Tailwind CSS, Framer Motion
-- **AI Engine**: Gemini 3.1 Flash
+- **AI Providers**: Gemini and OpenAI (provider-agnostic orchestrator with fallback)
 - **Visualizations**: Recharts
 - **Icons**: Lucide React
+
+## Provider Configuration
+
+- `AI_PROVIDER`: Primary provider. Supported values: `gemini`, `openai`, `local`.
+- `AI_FALLBACK_PROVIDER`: Secondary provider used if primary fails.
+- `OPENAI_MODEL`: Optional model override for OpenAI provider. Defaults to `gpt-4o-mini`.
+
+## Fixture-based parity tests
+
+Run provider contract/category parity checks:
+
+```bash
+npm run test:parity
+```
+
+The parity suite validates:
+
+- Required contract fields are present after normalization.
+- Score categories remain in range `0-100`.
+- Top-risk category is consistent for fixture pairs across providers.
+- Per-category score deltas stay within tolerance.
+
+## Gemini deprecation checklist
+
+- [x] Provider abstraction introduced (`services/analyzeTone.ts`, provider factory, runtime metadata).
+- [x] Real secondary provider implemented (OpenAI adapter).
+- [x] Fallback chain defaults to real provider pair (Gemini <-> OpenAI).
+- [x] Fixture parity tests added for contract and category consistency.
+- [x] Docs and env examples updated to provider-neutral setup.
+- [ ] Add CI step to run `npm run test:parity` on pull requests.
+- [ ] Add production observability for provider failures and fallback frequency.
+- [ ] Remove Gemini provider/package/config only after parity and production stability gates are met.
 
 ---
 *Built to make AI interactions more human, one audit at a time.*
