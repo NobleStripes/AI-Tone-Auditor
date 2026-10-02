@@ -59,6 +59,10 @@ This application runs as a standard web app with API-based provider integration.
    OPENAI_MODEL=gpt-6-luna
    ANTHROPIC_API_KEY=your_anthropic_key_here
    ANTHROPIC_MODEL=claude-sonnet-5-5
+   GEMINI_API_KEY=your_gemini_key_here
+   GEMINI_MODEL=gemini-3.8-flash
+   XAI_API_KEY=your_xai_key_here
+   GROK_MODEL=grok-4.7
    AI_PROVIDER=openai
    AI_FALLBACK_PROVIDER=anthropic
    ```
@@ -83,17 +87,21 @@ Deploy using your preferred static hosting or web platform. Typical flow:
 ## Tech Stack
 
 - **Frontend**: React, Tailwind CSS, Framer Motion
-- **AI Providers**: OpenAI and Anthropic (provider-agnostic orchestrator with fallback)
+- **AI Providers**: OpenAI, Anthropic, Gemini, and Grok (provider-agnostic orchestrator with fallback)
 - **Visualizations**: Recharts
 - **Icons**: Lucide React
 
 ## Provider Configuration
 
-- `AI_PROVIDER`: Primary provider. Supported values: `openai`, `anthropic`, `local`.
+- `AI_PROVIDER`: Primary provider. Supported values: `openai`, `anthropic`, `gemini`, `grok`, `local`.
 - `AI_FALLBACK_PROVIDER`: Secondary provider used if primary fails.
 - `OPENAI_MODEL`: Optional model override for OpenAI provider. Defaults to `gpt-6-luna`.
 - `ANTHROPIC_MODEL`: Optional model override for Anthropic provider. Defaults to `claude-sonnet-5-5`.
-- OpenAI requests use the Responses API; both providers use schema-constrained JSON output and are checked by the shared analysis validator.
+- `GEMINI_API_KEY`: Required when Gemini is selected as primary or fallback.
+- `GEMINI_MODEL`: Optional Gemini model override. Defaults to `gemini-3.8-flash`.
+- `XAI_API_KEY`: Required when Grok is selected as primary or fallback.
+- `GROK_MODEL`: Optional Grok model override. Defaults to `grok-4.7`.
+- OpenAI and Grok use the Responses API; Gemini uses the Interactions API. All providers use schema-constrained JSON output and the shared analysis validator.
 - Model availability changes over time. Check the providers' lifecycle notices before pinning an override; the defaults are selected for current availability and analysis cost/quality.
 - `AI_PROVIDER_TIMEOUT_MS`: Per-attempt timeout in milliseconds for provider requests. Defaults to `15000`.
 - `AI_PROVIDER_RETRIES`: Retry count per provider for transient failures (timeouts, network errors, 429/5xx). Defaults to `1`.

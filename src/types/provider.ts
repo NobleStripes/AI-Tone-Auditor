@@ -1,6 +1,6 @@
 import { AnalysisResult } from './analysis';
 
-export type ProviderId = 'openai' | 'anthropic' | 'local';
+export type ProviderId = 'openai' | 'anthropic' | 'gemini' | 'grok' | 'local';
 
 export interface ProviderContext {
   promptVersion: string;

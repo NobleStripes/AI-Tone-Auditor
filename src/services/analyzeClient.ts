@@ -19,6 +19,8 @@ const DEFAULT_TELEMETRY: ProviderTelemetrySnapshot = {
   providers: {
     openai: { attempts: 0, successes: 0, failures: 0 },
     anthropic: { attempts: 0, successes: 0, failures: 0 },
+    gemini: { attempts: 0, successes: 0, failures: 0 },
+    grok: { attempts: 0, successes: 0, failures: 0 },
     local: { attempts: 0, successes: 0, failures: 0 },
   },
 };

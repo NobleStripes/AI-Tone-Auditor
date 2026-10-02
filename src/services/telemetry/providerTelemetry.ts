@@ -38,6 +38,8 @@ export interface ProviderTelemetrySnapshot {
 const initialProviderCounters = (): Record<ProviderId, ProviderCounters> => ({
   openai: { attempts: 0, successes: 0, failures: 0 },
   anthropic: { attempts: 0, successes: 0, failures: 0 },
+  gemini: { attempts: 0, successes: 0, failures: 0 },
+  grok: { attempts: 0, successes: 0, failures: 0 },
   local: { attempts: 0, successes: 0, failures: 0 },
 });
 
@@ -141,6 +143,8 @@ export function getProviderTelemetrySnapshot(): ProviderTelemetrySnapshot {
     providers: {
       openai: { ...state.providers.openai },
       anthropic: { ...state.providers.anthropic },
+      gemini: { ...state.providers.gemini },
+      grok: { ...state.providers.grok },
       local: { ...state.providers.local },
     },
   };
