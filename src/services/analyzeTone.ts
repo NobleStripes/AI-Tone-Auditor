@@ -65,6 +65,7 @@ async function runProviderWithPolicy(
   provider: ReturnType<typeof resolveProvider>,
   text: string,
   sourceModel: AnalysisSource,
+  auditContext: string,
   timeoutMs: number,
   retries: number,
 ): Promise<AnalysisResult> {
@@ -80,6 +81,7 @@ async function runProviderWithPolicy(
           context: {
             promptVersion: ANALYSIS_PROMPT_VERSION,
             sourceModel,
+            auditContext,
           },
         }),
         timeoutMs,
@@ -128,7 +130,11 @@ export function getLastAnalysisRuntimeMeta(): ProviderRuntimeMeta {
 
 export { getProviderTelemetrySnapshot };
 
-export async function analyzeTone(text: string, sourceModel: AnalysisSource = 'unknown'): Promise<AnalyzeToneOutput> {
+export async function analyzeTone(
+  text: string,
+  sourceModel: AnalysisSource = 'unknown',
+  auditContext = '',
+): Promise<AnalyzeToneOutput> {
   const selectedProviderId = process.env.AI_PROVIDER;
   const primaryProvider = resolveProvider(selectedProviderId);
   const fallbackProvider = resolveFallbackProvider(primaryProvider.id);
@@ -136,7 +142,7 @@ export async function analyzeTone(text: string, sourceModel: AnalysisSource = 'u
   const retries = readIntEnv('AI_PROVIDER_RETRIES', DEFAULT_PROVIDER_RETRIES);
 
   try {
-    const result = await runProviderWithPolicy(primaryProvider, text, sourceModel, timeoutMs, retries);
+    const result = await runProviderWithPolicy(primaryProvider, text, sourceModel, auditContext, timeoutMs, retries);
 
     const meta = buildMeta(primaryProvider.id, primaryProvider.label, primaryProvider.model, false);
     lastRuntimeMeta = meta;
@@ -149,7 +155,7 @@ export async function analyzeTone(text: string, sourceModel: AnalysisSource = 'u
     return { result, meta };
   } catch (primaryError) {
     console.warn(`Primary provider ${primaryProvider.id} failed, attempting fallback`, primaryError);
-    const result = await runProviderWithPolicy(fallbackProvider, text, sourceModel, timeoutMs, retries);
+    const result = await runProviderWithPolicy(fallbackProvider, text, sourceModel, auditContext, timeoutMs, retries);
 
     const meta = buildMeta(fallbackProvider.id, fallbackProvider.label, fallbackProvider.model, true);
     lastRuntimeMeta = meta;

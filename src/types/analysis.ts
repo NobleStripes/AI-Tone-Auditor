@@ -62,6 +62,7 @@ export function emptyAnalysisResult(): AnalysisResult {
       sycophancy: 0,
       over_apologizing: 0,
       repetitive_filler: 0,
+      unsupported_certainty: 0,
     },
     findings: [],
     summary: 'No analysis available.',

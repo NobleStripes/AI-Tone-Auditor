@@ -14,6 +14,7 @@ export const CLEAN_TEXT_SAMPLE: AnalysisResult = {
     sycophancy: 0,
     over_apologizing: 0,
     repetitive_filler: 0,
+    unsupported_certainty: 0,
   },
   overallTone: 'Neutral/technical',
   summary: 'No problematic tone patterns detected. The response is direct and factual.',

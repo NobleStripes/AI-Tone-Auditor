@@ -58,7 +58,14 @@ describe('OpenAI structured output adapter', () => {
     }));
 
     const { openaiProvider } = await import('../../../src/services/providers/openaiProvider');
-    const result = await openaiProvider.analyzeTone({ text: 'A neutral statement.', context: { promptVersion: 'test' } });
+    const result = await openaiProvider.analyzeTone({
+      text: 'A neutral statement.',
+      context: {
+        promptVersion: 'test',
+        sourceModel: 'claude',
+        auditContext: 'Check the current figure and cite a reliable source.',
+      },
+    });
     const request = readRequestBody();
 
     expect(fetchMock.mock.calls[0]?.[0]).toBe('https://api.openai.com/v1/responses');
@@ -67,6 +74,8 @@ describe('OpenAI structured output adapter', () => {
       'Content-Type': 'application/json',
     });
     expect(request.model).toBe('gpt-6-luna');
+    expect(request.store).toBe(false);
+    expect(request.input).toContain(JSON.stringify('Check the current figure and cite a reliable source.'));
     expect(request.text.format).toMatchObject({ type: 'json_schema', name: 'tone_analysis', strict: true });
     expectStrictObjects(request.text.format.schema);
     expect(result).toEqual(emptyAnalysisResult());

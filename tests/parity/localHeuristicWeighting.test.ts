@@ -32,3 +32,12 @@ test('scores newly added AI tic categories from explicit phrase markers', async 
   assert.ok(result.scores.over_apologizing > 0, 'expected apology loop markers to score');
   assert.ok(result.scores.repetitive_filler > 0, 'expected stock filler markers to score');
 });
+
+test('does not infer unsupported certainty without verification context or external sources', async () => {
+  const result = await localHeuristicProvider.analyzeTone({
+    text: 'The current rate is definitely 42.',
+    context: { promptVersion: 'test' },
+  });
+
+  assert.equal(result.scores.unsupported_certainty, 0);
+});

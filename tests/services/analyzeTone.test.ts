@@ -206,11 +206,13 @@ describe('analyzeClient', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const { analyzeTone, getLastAnalysisRuntimeMeta, getProviderTelemetrySnapshot } = await import('../../src/services/analyzeClient');
-    await analyzeTone('some text that is long enough for analysis', undefined, 'claude');
+    await analyzeTone('some text that is long enough for analysis', undefined, 'claude', 'Explain whether this answer verifies a current claim.');
 
     expect(getLastAnalysisRuntimeMeta().providerId).toBe('anthropic');
     expect(getLastAnalysisRuntimeMeta().usedFallback).toBe(true);
     expect(getProviderTelemetrySnapshot().totalAnalyses).toBe(5);
     expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)).sourceModel).toBe('claude');
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)).auditContext)
+      .toBe('Explain whether this answer verifies a current claim.');
   });
 });

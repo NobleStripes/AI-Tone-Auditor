@@ -52,6 +52,12 @@ export const TONE_CATEGORIES = {
     label: 'Repetitive Filler',
     description: 'Redundant restatements, generic framing, or stock closers that add little information.',
     color: '#64748b', // slate-500
+  },
+  UNSUPPORTED_CERTAINTY: {
+    id: 'unsupported_certainty',
+    label: 'Unsupported Certainty',
+    description: 'Confident factual claims without visible support when the task calls for verification or current information.',
+    color: '#14b8a6', // teal-500
   }
 } as const;
 

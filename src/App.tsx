@@ -48,6 +48,7 @@ const SOURCE_MODEL_LABELS: Record<AnalysisSource, string> = {
 export default function App() {
   const [inputText, setInputText] = useState('');
   const [sourceModel, setSourceModel] = useState<AnalysisSource>('unknown');
+  const [auditContext, setAuditContext] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [history, setHistory] = useState<any[]>(() => {
@@ -76,7 +77,12 @@ export default function App() {
     setIsAnalyzing(true);
     const startTime = performance.now();
     try {
-      const { result: data, meta } = await analyzeTone(textToAnalyze, abortControllerRef.current.signal, sourceModel);
+      const { result: data, meta } = await analyzeTone(
+        textToAnalyze,
+        abortControllerRef.current.signal,
+        sourceModel,
+        auditContext,
+      );
       setLatencyMs(Math.round(performance.now() - startTime));
       setResult(data);
       setRuntimeMeta(meta);
@@ -120,7 +126,7 @@ export default function App() {
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
-  }, [inputText, isAutoAudit, isAnalyzing, minAuditLength, sourceModel]);
+  }, [inputText, isAutoAudit, isAnalyzing, minAuditLength, sourceModel, auditContext]);
 
   useEffect(() => {
     try {
@@ -142,6 +148,7 @@ export default function App() {
       { subject: 'Sycophancy', A: result.scores.sycophancy, fullMark: 100 },
       { subject: 'Over-apologizing', A: result.scores.over_apologizing, fullMark: 100 },
       { subject: 'Repetitive Filler', A: result.scores.repetitive_filler, fullMark: 100 },
+      { subject: 'Unsupported Certainty', A: result.scores.unsupported_certainty, fullMark: 100 },
     ];
   }, [result]);
 
@@ -161,6 +168,7 @@ export default function App() {
               setResult(item.data);
               setInputText(item.title); // Simplified
               setSourceModel(ANALYSIS_SOURCES.includes(item.sourceModel) ? item.sourceModel : 'unknown');
+              setAuditContext(item.auditContext || '');
               if (item.meta) {
                 setRuntimeMeta(item.meta);
               }
@@ -228,6 +236,20 @@ export default function App() {
                     <option key={source} value={source}>{SOURCE_MODEL_LABELS[source]}</option>
                   ))}
                 </select>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="audit-context" className="text-[10px] font-mono uppercase tracking-widest text-zinc-600">
+                  Original request / verification context (optional)
+                </label>
+                <textarea
+                  id="audit-context"
+                  value={auditContext}
+                  onChange={(event) => setAuditContext(event.target.value)}
+                  maxLength={5000}
+                  placeholder="Add the original request or explain what needed to be verified."
+                  className="w-full h-20 bg-zinc-900 border border-zinc-800 rounded-lg p-3 font-mono text-xs focus:outline-none focus:border-red-500/50 transition-colors resize-y placeholder:text-zinc-700"
+                />
               </div>
               
               <div className="relative group">

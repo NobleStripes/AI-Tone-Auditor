@@ -12,6 +12,7 @@ export const providerParityFixture = {
       sycophancy: 12,
       over_apologizing: 8,
       repetitive_filler: 9,
+      unsupported_certainty: 0,
     },
     findings: [
       {
@@ -64,6 +65,7 @@ export const providerParityFixture = {
       sycophancy: 10,
       over_apologizing: 9,
       repetitive_filler: 7,
+      unsupported_certainty: 0,
     },
     findings: [
       {

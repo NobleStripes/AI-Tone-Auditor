@@ -123,6 +123,9 @@ The tone scores also flag three patterns when supported by the wording:
 
 These are probabilistic language signals, not proof of intent or inaccuracy. Review the quoted examples and surrounding context before drawing conclusions.
 
+- **Unsupported Certainty**: scored only when the original request or verification requirement is supplied and the task calls for current information or verification. Missing citations alone do not prove a check was skipped; without context, and in local heuristic mode, this score stays at zero.
+- The optional original request is sent with the response to the configured semantic provider, but is not saved in local audit history. OpenAI Responses, Gemini Interactions, and Grok Responses requests disable provider-side response storage where supported.
+
 ## Source model lenses
 
 Choose a source model before auditing to enable an additional text-based diagnostic lens. Claude audits look for unsupported attribution of criminal or malicious intent; Grok audits look for uninvited snark, ridicule, or edgy familiarity. These lenses report findings only when the wording supports them. They do not identify a model from text or claim that all responses from a provider share these traits. Leave the source as unknown for a model-agnostic audit.

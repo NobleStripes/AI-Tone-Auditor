@@ -11,6 +11,7 @@ const SCORE_KEYS = [
   'sycophancy',
   'over_apologizing',
   'repetitive_filler',
+  'unsupported_certainty',
 ] as const;
 const DENSITY_VALUES = new Set(['low', 'medium', 'high']);
 const SEVERITY_VALUES = new Set(['low', 'medium', 'high']);

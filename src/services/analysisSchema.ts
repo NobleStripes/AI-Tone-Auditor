@@ -27,6 +27,7 @@ export const ANALYSIS_RESULT_JSON_SCHEMA = {
         'sycophancy',
         'over_apologizing',
         'repetitive_filler',
+        'unsupported_certainty',
       ],
       properties: {
         gaslighting: { type: 'number' },
@@ -38,6 +39,7 @@ export const ANALYSIS_RESULT_JSON_SCHEMA = {
         sycophancy: { type: 'number' },
         over_apologizing: { type: 'number' },
         repetitive_filler: { type: 'number' },
+        unsupported_certainty: { type: 'number' },
       },
     },
     findings: {

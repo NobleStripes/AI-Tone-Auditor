@@ -40,11 +40,12 @@ export async function analyzeTone(
   text: string,
   signal?: AbortSignal,
   sourceModel: AnalysisSource = 'unknown',
+  auditContext = '',
 ): Promise<AnalyzeToneOutput> {
   const response = await fetch('/api/analyze', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, sourceModel }),
+    body: JSON.stringify({ text, sourceModel, auditContext }),
     signal,
   });
 
