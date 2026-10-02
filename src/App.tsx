@@ -25,7 +25,7 @@ import { analyzeTone, getLastAnalysisRuntimeMeta, getProviderTelemetrySnapshot }
 import { TONE_CATEGORIES, TRIGGER_WORDS } from './constants';
 import { cn } from './lib/utils';
 import type { AnalysisResult } from './types/analysis';
-import type { ProviderRuntimeMeta } from './types/provider';
+import { ANALYSIS_SOURCES, type AnalysisSource, type ProviderRuntimeMeta } from './types/provider';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { TriggerHighlighter } from './components/TriggerHighlighter';
@@ -36,8 +36,18 @@ import { ExportButton } from './components/ExportButton';
 import { FindingCard } from './components/FindingCard';
 import { PersonalizationProfile } from './components/PersonalizationProfile';
 
+const SOURCE_MODEL_LABELS: Record<AnalysisSource, string> = {
+  unknown: 'Unknown / model-agnostic',
+  chatgpt: 'ChatGPT',
+  claude: 'Claude',
+  gemini: 'Gemini',
+  grok: 'Grok',
+  other: 'Other',
+};
+
 export default function App() {
   const [inputText, setInputText] = useState('');
+  const [sourceModel, setSourceModel] = useState<AnalysisSource>('unknown');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [history, setHistory] = useState<any[]>(() => {
@@ -66,7 +76,7 @@ export default function App() {
     setIsAnalyzing(true);
     const startTime = performance.now();
     try {
-      const { result: data, meta } = await analyzeTone(textToAnalyze, abortControllerRef.current.signal);
+      const { result: data, meta } = await analyzeTone(textToAnalyze, abortControllerRef.current.signal, sourceModel);
       setLatencyMs(Math.round(performance.now() - startTime));
       setResult(data);
       setRuntimeMeta(meta);
@@ -76,6 +86,7 @@ export default function App() {
         id: Math.random().toString(36).substr(2, 9),
         title: textToAnalyze.slice(0, 30) + '...',
         timestamp: Date.now(),
+        sourceModel,
         data,
         meta,
       };
@@ -109,7 +120,7 @@ export default function App() {
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
-  }, [inputText, isAutoAudit, isAnalyzing, minAuditLength]);
+  }, [inputText, isAutoAudit, isAnalyzing, minAuditLength, sourceModel]);
 
   useEffect(() => {
     try {
@@ -149,6 +160,7 @@ export default function App() {
             if (item) {
               setResult(item.data);
               setInputText(item.title); // Simplified
+              setSourceModel(ANALYSIS_SOURCES.includes(item.sourceModel) ? item.sourceModel : 'unknown');
               if (item.meta) {
                 setRuntimeMeta(item.meta);
               }
@@ -200,6 +212,22 @@ export default function App() {
                     <span className="xs:hidden">{isAutoAudit ? 'Auto: ON' : 'Auto: OFF'}</span>
                   </button>
                 </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label htmlFor="source-model" className="text-[10px] font-mono uppercase tracking-widest text-zinc-600">
+                  Source model
+                </label>
+                <select
+                  id="source-model"
+                  value={sourceModel}
+                  onChange={(event) => setSourceModel(event.target.value as AnalysisSource)}
+                  className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1.5 text-xs text-zinc-300 focus:outline-none focus:border-red-500/50"
+                >
+                  {ANALYSIS_SOURCES.map((source) => (
+                    <option key={source} value={source}>{SOURCE_MODEL_LABELS[source]}</option>
+                  ))}
+                </select>
               </div>
               
               <div className="relative group">

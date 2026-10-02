@@ -1,5 +1,5 @@
 import type { AnalysisResult } from '../types/analysis';
-import type { AnalyzeToneOutput, ProviderRuntimeMeta } from '../types/provider';
+import type { AnalysisSource, AnalyzeToneOutput, ProviderRuntimeMeta } from '../types/provider';
 import { ANALYSIS_PROMPT_VERSION } from './promptBuilder';
 import { resolveFallbackProvider, resolveProvider } from './providers/factory';
 import {
@@ -64,6 +64,7 @@ function isRetryableError(error: unknown): boolean {
 async function runProviderWithPolicy(
   provider: ReturnType<typeof resolveProvider>,
   text: string,
+  sourceModel: AnalysisSource,
   timeoutMs: number,
   retries: number,
 ): Promise<AnalysisResult> {
@@ -78,6 +79,7 @@ async function runProviderWithPolicy(
           text,
           context: {
             promptVersion: ANALYSIS_PROMPT_VERSION,
+            sourceModel,
           },
         }),
         timeoutMs,
@@ -126,7 +128,7 @@ export function getLastAnalysisRuntimeMeta(): ProviderRuntimeMeta {
 
 export { getProviderTelemetrySnapshot };
 
-export async function analyzeTone(text: string): Promise<AnalyzeToneOutput> {
+export async function analyzeTone(text: string, sourceModel: AnalysisSource = 'unknown'): Promise<AnalyzeToneOutput> {
   const selectedProviderId = process.env.AI_PROVIDER;
   const primaryProvider = resolveProvider(selectedProviderId);
   const fallbackProvider = resolveFallbackProvider(primaryProvider.id);
@@ -134,7 +136,7 @@ export async function analyzeTone(text: string): Promise<AnalyzeToneOutput> {
   const retries = readIntEnv('AI_PROVIDER_RETRIES', DEFAULT_PROVIDER_RETRIES);
 
   try {
-    const result = await runProviderWithPolicy(primaryProvider, text, timeoutMs, retries);
+    const result = await runProviderWithPolicy(primaryProvider, text, sourceModel, timeoutMs, retries);
 
     const meta = buildMeta(primaryProvider.id, primaryProvider.label, primaryProvider.model, false);
     lastRuntimeMeta = meta;
@@ -147,7 +149,7 @@ export async function analyzeTone(text: string): Promise<AnalyzeToneOutput> {
     return { result, meta };
   } catch (primaryError) {
     console.warn(`Primary provider ${primaryProvider.id} failed, attempting fallback`, primaryError);
-    const result = await runProviderWithPolicy(fallbackProvider, text, timeoutMs, retries);
+    const result = await runProviderWithPolicy(fallbackProvider, text, sourceModel, timeoutMs, retries);
 
     const meta = buildMeta(fallbackProvider.id, fallbackProvider.label, fallbackProvider.model, true);
     lastRuntimeMeta = meta;

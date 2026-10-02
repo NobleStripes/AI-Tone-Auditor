@@ -199,19 +199,18 @@ describe('analyzeClient', () => {
       },
     };
 
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ result: mockResult, meta: mockMeta, telemetry: mockTelemetry }),
-      }),
-    );
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ result: mockResult, meta: mockMeta, telemetry: mockTelemetry }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
 
     const { analyzeTone, getLastAnalysisRuntimeMeta, getProviderTelemetrySnapshot } = await import('../../src/services/analyzeClient');
-    await analyzeTone('some text that is long enough for analysis');
+    await analyzeTone('some text that is long enough for analysis', undefined, 'claude');
 
     expect(getLastAnalysisRuntimeMeta().providerId).toBe('anthropic');
     expect(getLastAnalysisRuntimeMeta().usedFallback).toBe(true);
     expect(getProviderTelemetrySnapshot().totalAnalyses).toBe(5);
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)).sourceModel).toBe('claude');
   });
 });

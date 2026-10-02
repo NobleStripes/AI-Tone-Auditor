@@ -1,9 +1,12 @@
 import { AnalysisResult } from './analysis';
 
 export type ProviderId = 'openai' | 'anthropic' | 'gemini' | 'grok' | 'local';
+export const ANALYSIS_SOURCES = ['unknown', 'chatgpt', 'claude', 'gemini', 'grok', 'other'] as const;
+export type AnalysisSource = typeof ANALYSIS_SOURCES[number];
 
 export interface ProviderContext {
   promptVersion: string;
+  sourceModel?: AnalysisSource;
 }
 
 export interface AnalyzeToneInput {

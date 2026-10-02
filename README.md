@@ -123,6 +123,10 @@ The tone scores also flag three patterns when supported by the wording:
 
 These are probabilistic language signals, not proof of intent or inaccuracy. Review the quoted examples and surrounding context before drawing conclusions.
 
+## Source model lenses
+
+Choose a source model before auditing to enable an additional text-based diagnostic lens. Claude audits look for unsupported attribution of criminal or malicious intent; Grok audits look for uninvited snark, ridicule, or edgy familiarity. These lenses report findings only when the wording supports them. They do not identify a model from text or claim that all responses from a provider share these traits. Leave the source as unknown for a model-agnostic audit.
+
 Use trigger `weight` in `src/constants.ts` to calibrate detection precision.
 
 | Weight range | When to use | Typical examples |

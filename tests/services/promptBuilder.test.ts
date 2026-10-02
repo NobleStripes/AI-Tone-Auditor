@@ -13,4 +13,23 @@ describe('tone analysis prompt', () => {
     expect(prompt).toContain('headersAndLists');
     expect(prompt).toContain('ChatGPT Settings > Personalization');
   });
+
+  test('enables Claude intent-attribution checks only when Claude is selected', () => {
+    const claudePrompt = buildToneAnalysisPrompt('I cannot help with that.', 'claude');
+    const genericPrompt = buildToneAnalysisPrompt('I cannot help with that.');
+
+    expect(claudePrompt).toContain('presumptively criminal or malicious');
+    expect(claudePrompt).toContain('Presumed Malicious Intent');
+    expect(claudePrompt).toContain('Selected source model: claude');
+    expect(genericPrompt).toContain('No source-specific diagnostic lens was selected');
+    expect(genericPrompt).not.toContain('Grok-focused lens');
+  });
+
+  test('enables Grok snark checks only when Grok is selected', () => {
+    const prompt = buildToneAnalysisPrompt('Sure, genius.', 'grok');
+
+    expect(prompt).toContain('uninvited sarcasm, ridicule');
+    expect(prompt).toContain('Snark / Edgy Tone');
+    expect(prompt).toContain('Selected source model: grok');
+  });
 });

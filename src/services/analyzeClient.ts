@@ -1,4 +1,4 @@
-import type { AnalyzeToneOutput, ProviderRuntimeMeta } from '../types/provider';
+import type { AnalysisSource, AnalyzeToneOutput, ProviderRuntimeMeta } from '../types/provider';
 import type { ProviderTelemetrySnapshot } from './telemetry/providerTelemetry';
 
 const DEFAULT_META: ProviderRuntimeMeta = {
@@ -36,11 +36,15 @@ export function getProviderTelemetrySnapshot(): ProviderTelemetrySnapshot {
   return lastTelemetry;
 }
 
-export async function analyzeTone(text: string, signal?: AbortSignal): Promise<AnalyzeToneOutput> {
+export async function analyzeTone(
+  text: string,
+  signal?: AbortSignal,
+  sourceModel: AnalysisSource = 'unknown',
+): Promise<AnalyzeToneOutput> {
   const response = await fetch('/api/analyze', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, sourceModel }),
     signal,
   });
 
