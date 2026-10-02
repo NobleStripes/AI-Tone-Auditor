@@ -63,7 +63,6 @@ describe('OpenAI structured output adapter', () => {
       context: {
         promptVersion: 'test',
         sourceModel: 'claude',
-        auditContext: 'Check the current figure and cite a reliable source.',
       },
     });
     const request = readRequestBody();
@@ -75,7 +74,7 @@ describe('OpenAI structured output adapter', () => {
     });
     expect(request.model).toBe('gpt-6-luna');
     expect(request.store).toBe(false);
-    expect(request.input).toContain(JSON.stringify('Check the current figure and cite a reliable source.'));
+    expect(request.input).not.toContain('Check the current figure and cite a reliable source.');
     expect(request.text.format).toMatchObject({ type: 'json_schema', name: 'tone_analysis', strict: true });
     expectStrictObjects(request.text.format.schema);
     expect(result).toEqual(emptyAnalysisResult());

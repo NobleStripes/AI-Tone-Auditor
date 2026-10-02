@@ -84,6 +84,9 @@ export const localHeuristicProvider: AIProvider = {
       over_apologizing: 0,
       repetitive_filler: 0,
       unsupported_certainty: 0,
+      grounding_avoidance: 0,
+      refusal_quality: 0,
+      needless_escalation: 0,
     };
 
     for (const trigger of matchedTriggers) {

@@ -123,12 +123,16 @@ The tone scores also flag three patterns when supported by the wording:
 
 These are probabilistic language signals, not proof of intent or inaccuracy. Review the quoted examples and surrounding context before drawing conclusions.
 
-- **Unsupported Certainty**: scored only when the original request or verification requirement is supplied and the task calls for current information or verification. Missing citations alone do not prove a check was skipped; without context, and in local heuristic mode, this score stays at zero.
-- The optional original request is sent with the response to the configured semantic provider, but is not saved in local audit history. OpenAI Responses, Gemini Interactions, and Grok Responses requests disable provider-side response storage where supported.
+- **Unsupported Certainty**: not currently scored because the original prompt stays local and factual claims are not independently verified. Missing citations alone do not prove a check was skipped.
+- **Grounding Avoidance**: scored only when the prompt explicitly requests citations or use of supplied source material.
+- **Refusal Quality**: a positive score shown only when the response actually refuses or partially declines; higher means the boundary is specific, proportionate, and offers a useful allowed alternative.
+- **Needless Escalation**: scored only when a neutral prompt receives irrelevant calming, moralizing, or tone-policing language.
+- Prompt-comparison scores stay at zero when no original prompt is provided. Local comparison uses conservative visible-text rules; it cannot verify external sources or reliably infer intent and may miss nuance.
+- The optional original prompt/context stays in the app/server comparison path and is not sent to third-party semantic providers or saved in local audit history. Local comparison uses conservative visible-text rules and may miss nuance. The response text is still sent to the configured semantic provider. OpenAI Responses, Gemini Interactions, and Grok Responses requests disable provider-side response storage where supported.
 
 ## Source model lenses
 
-Choose a source model before auditing to enable an additional text-based diagnostic lens. Claude audits look for unsupported attribution of criminal or malicious intent; Grok audits look for uninvited snark, ridicule, or edgy familiarity. These lenses report findings only when the wording supports them. They do not identify a model from text or claim that all responses from a provider share these traits. Leave the source as unknown for a model-agnostic audit.
+Source-specific prompt-comparison lenses require original-prompt context. Since that context stays local, it is not available to third-party semantic providers; provider-specific comparison findings are therefore not generated in this privacy mode. The source model selection does not identify a model from text or imply that all responses from a provider share the same traits.
 
 Use trigger `weight` in `src/constants.ts` to calibrate detection precision.
 

@@ -62,7 +62,7 @@ export const geminiProvider: AIProvider = {
       },
       body: JSON.stringify({
         model: getGeminiModel(),
-        input: buildToneAnalysisPrompt(input.text, input.context.sourceModel, input.context.auditContext),
+        input: buildToneAnalysisPrompt(input.text, input.context.sourceModel),
         system_instruction: 'You are a tone analysis engine. Return only data matching the supplied JSON Schema.',
         response_format: {
           type: 'text',

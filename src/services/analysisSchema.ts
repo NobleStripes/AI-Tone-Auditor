@@ -28,6 +28,9 @@ export const ANALYSIS_RESULT_JSON_SCHEMA = {
         'over_apologizing',
         'repetitive_filler',
         'unsupported_certainty',
+        'grounding_avoidance',
+        'refusal_quality',
+        'needless_escalation',
       ],
       properties: {
         gaslighting: { type: 'number' },
@@ -40,6 +43,9 @@ export const ANALYSIS_RESULT_JSON_SCHEMA = {
         over_apologizing: { type: 'number' },
         repetitive_filler: { type: 'number' },
         unsupported_certainty: { type: 'number' },
+        grounding_avoidance: { type: 'number' },
+        refusal_quality: { type: 'number' },
+        needless_escalation: { type: 'number' },
       },
     },
     findings: {

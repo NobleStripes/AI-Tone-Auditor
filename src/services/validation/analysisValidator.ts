@@ -12,7 +12,22 @@ const SCORE_KEYS = [
   'over_apologizing',
   'repetitive_filler',
   'unsupported_certainty',
+  'grounding_avoidance',
+  'refusal_quality',
+  'needless_escalation',
 ] as const;
+const CONTEXT_REQUIRED_SCORE_KEYS = new Set([
+  'unsupported_certainty',
+  'grounding_avoidance',
+  'refusal_quality',
+  'needless_escalation',
+]);
+const CONTEXT_REQUIRED_FINDINGS = new Set([
+  'unsupported certainty',
+  'grounding avoidance',
+  'refusal quality',
+  'needless escalation',
+]);
 const DENSITY_VALUES = new Set(['low', 'medium', 'high']);
 const SEVERITY_VALUES = new Set(['low', 'medium', 'high']);
 const CALIBRATION_VALUES = new Set(['More', 'Default', 'Less']);
@@ -51,14 +66,17 @@ function normalizeBaseStyle(value: unknown, fallback: string): string {
   return fallback;
 }
 
-export function validateAnalysisResult(payload: unknown): AnalysisResult {
+export function validateAnalysisResult(payload: unknown, context: { auditContext?: string } = {}): AnalysisResult {
   const fallback = emptyAnalysisResult();
+  const hasAuditContext = Boolean(context.auditContext?.trim());
   const raw = payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
 
   const scores = raw.scores && typeof raw.scores === 'object' ? (raw.scores as Record<string, unknown>) : {};
 
   const normalizedScores = SCORE_KEYS.reduce<Record<string, number>>((acc, key) => {
-    acc[key] = toBoundedScore(scores[key]);
+    acc[key] = !hasAuditContext && CONTEXT_REQUIRED_SCORE_KEYS.has(key)
+      ? 0
+      : toBoundedScore(scores[key]);
     return acc;
   }, {});
 
@@ -73,6 +91,7 @@ export function validateAnalysisResult(payload: unknown): AnalysisResult {
           rlhfLogic: typeof item.rlhfLogic === 'string' ? item.rlhfLogic : undefined,
         }))
         .filter((item) => item.text.trim().length > 0)
+        .filter((item) => hasAuditContext || !CONTEXT_REQUIRED_FINDINGS.has(item.category.toLowerCase()))
     : [];
 
   const recommendations = Array.isArray(raw.recommendations)

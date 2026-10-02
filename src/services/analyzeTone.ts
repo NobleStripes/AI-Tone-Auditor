@@ -1,6 +1,7 @@
 import type { AnalysisResult } from '../types/analysis';
 import type { AnalysisSource, AnalyzeToneOutput, ProviderRuntimeMeta } from '../types/provider';
 import { ANALYSIS_PROMPT_VERSION } from './promptBuilder';
+import { applyLocalPromptComparison } from './localPromptComparison';
 import { resolveFallbackProvider, resolveProvider } from './providers/factory';
 import {
   getProviderTelemetrySnapshot,
@@ -65,7 +66,6 @@ async function runProviderWithPolicy(
   provider: ReturnType<typeof resolveProvider>,
   text: string,
   sourceModel: AnalysisSource,
-  auditContext: string,
   timeoutMs: number,
   retries: number,
 ): Promise<AnalysisResult> {
@@ -81,7 +81,6 @@ async function runProviderWithPolicy(
           context: {
             promptVersion: ANALYSIS_PROMPT_VERSION,
             sourceModel,
-            auditContext,
           },
         }),
         timeoutMs,
@@ -142,7 +141,11 @@ export async function analyzeTone(
   const retries = readIntEnv('AI_PROVIDER_RETRIES', DEFAULT_PROVIDER_RETRIES);
 
   try {
-    const result = await runProviderWithPolicy(primaryProvider, text, sourceModel, auditContext, timeoutMs, retries);
+    const result = applyLocalPromptComparison(
+      await runProviderWithPolicy(primaryProvider, text, sourceModel, timeoutMs, retries),
+      text,
+      auditContext,
+    );
 
     const meta = buildMeta(primaryProvider.id, primaryProvider.label, primaryProvider.model, false);
     lastRuntimeMeta = meta;
@@ -155,7 +158,11 @@ export async function analyzeTone(
     return { result, meta };
   } catch (primaryError) {
     console.warn(`Primary provider ${primaryProvider.id} failed, attempting fallback`, primaryError);
-    const result = await runProviderWithPolicy(fallbackProvider, text, sourceModel, auditContext, timeoutMs, retries);
+    const result = applyLocalPromptComparison(
+      await runProviderWithPolicy(fallbackProvider, text, sourceModel, timeoutMs, retries),
+      text,
+      auditContext,
+    );
 
     const meta = buildMeta(fallbackProvider.id, fallbackProvider.label, fallbackProvider.model, true);
     lastRuntimeMeta = meta;

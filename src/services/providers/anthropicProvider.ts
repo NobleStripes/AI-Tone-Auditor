@@ -68,7 +68,7 @@ export const anthropicProvider: AIProvider = {
         messages: [
           {
             role: 'user',
-            content: buildToneAnalysisPrompt(input.text, input.context.sourceModel, input.context.auditContext),
+            content: buildToneAnalysisPrompt(input.text, input.context.sourceModel),
           },
         ],
         output_config: {

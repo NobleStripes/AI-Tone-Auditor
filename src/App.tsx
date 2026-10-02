@@ -149,6 +149,9 @@ export default function App() {
       { subject: 'Over-apologizing', A: result.scores.over_apologizing, fullMark: 100 },
       { subject: 'Repetitive Filler', A: result.scores.repetitive_filler, fullMark: 100 },
       { subject: 'Unsupported Certainty', A: result.scores.unsupported_certainty, fullMark: 100 },
+      { subject: 'Grounding Avoidance', A: result.scores.grounding_avoidance, fullMark: 100 },
+      { subject: 'Refusal Quality', A: result.scores.refusal_quality, fullMark: 100 },
+      { subject: 'Needless Escalation', A: result.scores.needless_escalation, fullMark: 100 },
     ];
   }, [result]);
 
@@ -240,14 +243,14 @@ export default function App() {
 
               <div className="space-y-2">
                 <label htmlFor="audit-context" className="text-[10px] font-mono uppercase tracking-widest text-zinc-600">
-                  Original request / verification context (optional)
+                  Original prompt and source context (optional)
                 </label>
                 <textarea
                   id="audit-context"
                   value={auditContext}
                   onChange={(event) => setAuditContext(event.target.value)}
                   maxLength={5000}
-                  placeholder="Add the original request or explain what needed to be verified."
+                  placeholder="Paste the exact prompt and any source or verification requirements."
                   className="w-full h-20 bg-zinc-900 border border-zinc-800 rounded-lg p-3 font-mono text-xs focus:outline-none focus:border-red-500/50 transition-colors resize-y placeholder:text-zinc-700"
                 />
               </div>
@@ -418,6 +421,7 @@ export default function App() {
                   <div className="lg:col-span-5 space-y-6">
                     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 md:p-6">
                       <h3 className="text-xs font-mono uppercase tracking-widest text-zinc-500 mb-6">Tone Distribution Profile</h3>
+                      <p className="-mt-4 mb-4 text-[10px] text-zinc-600">Higher risk scores indicate more concern; higher Refusal Quality indicates a better refusal. No refusal is N/A.</p>
                       <div className="h-48 sm:h-64 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
@@ -437,22 +441,24 @@ export default function App() {
                       <div className="mt-6 space-y-3">
                         {Object.entries(TONE_CATEGORIES).map(([key, cat]) => {
                           const score = result.scores[cat.id as keyof typeof result.scores] || 0;
+                          const isRefusalQuality = cat.id === 'refusal_quality';
+                          const scoreColor = isRefusalQuality
+                            ? score === 0 ? 'text-zinc-600' : score > 70 ? 'text-emerald-500' : score > 40 ? 'text-amber-500' : 'text-red-500'
+                            : score > 70 ? 'text-red-500' : score > 40 ? 'text-amber-500' : 'text-emerald-500';
+                          const barColor = isRefusalQuality
+                            ? score === 0 ? 'bg-zinc-700' : score > 70 ? 'bg-emerald-500' : score > 40 ? 'bg-amber-500' : 'bg-red-500'
+                            : score > 70 ? 'bg-red-500' : score > 40 ? 'bg-amber-500' : 'bg-emerald-500';
                           return (
                             <div key={key} className="space-y-1">
                               <div className="flex justify-between text-[10px] font-mono uppercase">
                                 <span className="text-zinc-500">{cat.label}</span>
-                                <span className={cn(
-                                  score > 70 ? "text-red-500" : score > 40 ? "text-amber-500" : "text-emerald-500"
-                                )}>{score}%</span>
+                                <span className={scoreColor}>{isRefusalQuality && score === 0 ? 'N/A' : `${score}%`}</span>
                               </div>
                               <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
                                 <motion.div 
                                   initial={{ width: 0 }}
                                   animate={{ width: `${score}%` }}
-                                  className={cn(
-                                    "h-full rounded-full",
-                                    score > 70 ? "bg-red-500" : score > 40 ? "bg-amber-500" : "bg-emerald-500"
-                                  )}
+                                  className={cn('h-full rounded-full', barColor)}
                                 />
                               </div>
                             </div>

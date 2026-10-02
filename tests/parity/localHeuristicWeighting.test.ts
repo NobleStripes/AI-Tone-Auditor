@@ -40,4 +40,7 @@ test('does not infer unsupported certainty without verification context or exter
   });
 
   assert.equal(result.scores.unsupported_certainty, 0);
+  assert.equal(result.scores.grounding_avoidance, 0);
+  assert.equal(result.scores.refusal_quality, 0);
+  assert.equal(result.scores.needless_escalation, 0);
 });

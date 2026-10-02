@@ -14,6 +14,9 @@ const SCORE_KEYS = [
   'over_apologizing',
   'repetitive_filler',
   'unsupported_certainty',
+  'grounding_avoidance',
+  'refusal_quality',
+  'needless_escalation',
 ] as const;
 
 function topCategory(scores: Record<string, number>): string {

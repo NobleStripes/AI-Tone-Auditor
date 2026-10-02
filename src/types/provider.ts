@@ -7,7 +7,6 @@ export type AnalysisSource = typeof ANALYSIS_SOURCES[number];
 export interface ProviderContext {
   promptVersion: string;
   sourceModel?: AnalysisSource;
-  auditContext?: string;
 }
 
 export interface AnalyzeToneInput {

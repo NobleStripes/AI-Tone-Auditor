@@ -13,6 +13,9 @@ export const providerParityFixture = {
       over_apologizing: 8,
       repetitive_filler: 9,
       unsupported_certainty: 0,
+      grounding_avoidance: 0,
+      refusal_quality: 0,
+      needless_escalation: 0,
     },
     findings: [
       {
@@ -66,6 +69,9 @@ export const providerParityFixture = {
       over_apologizing: 9,
       repetitive_filler: 7,
       unsupported_certainty: 0,
+      grounding_avoidance: 0,
+      refusal_quality: 0,
+      needless_escalation: 0,
     },
     findings: [
       {

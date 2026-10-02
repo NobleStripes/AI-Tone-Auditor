@@ -82,7 +82,7 @@ export const openaiProvider: AIProvider = {
         max_output_tokens: 3000,
         store: false,
         instructions: 'You are a tone analysis engine. Return only data matching the supplied JSON Schema.',
-        input: buildToneAnalysisPrompt(input.text, input.context.sourceModel, input.context.auditContext),
+        input: buildToneAnalysisPrompt(input.text, input.context.sourceModel),
         text: {
           format: {
             type: 'json_schema',

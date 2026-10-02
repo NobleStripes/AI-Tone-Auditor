@@ -101,6 +101,41 @@ describe('analysisValidator', () => {
       emojis: 'Default',
     });
   });
+
+  test('zeros prompt-comparison scores and removes findings without original prompt context', () => {
+    const payload = {
+      ...emptyAnalysisResult(),
+      scores: {
+        ...emptyAnalysisResult().scores,
+        unsupported_certainty: 75,
+        grounding_avoidance: 80,
+        refusal_quality: 65,
+        needless_escalation: 70,
+      },
+      findings: [
+        { category: 'Unsupported Certainty', text: 'The figure is definitely 42.', explanation: 'No evidence.', severity: 'high' },
+        { category: 'Grounding Avoidance', text: 'No citations.', explanation: 'Sources were requested.', severity: 'medium' },
+        { category: 'Hedging', text: 'Perhaps', explanation: 'A hedge.', severity: 'low' },
+      ],
+    };
+
+    const result = validateAnalysisResult(payload);
+
+    expect(result.scores.unsupported_certainty).toBe(0);
+    expect(result.scores.grounding_avoidance).toBe(0);
+    expect(result.scores.refusal_quality).toBe(0);
+    expect(result.scores.needless_escalation).toBe(0);
+    expect(result.findings.map((finding) => finding.category)).toEqual(['Hedging']);
+  });
+
+  test('preserves prompt-comparison scores when original prompt context is supplied', () => {
+    const result = validateAnalysisResult({
+      ...emptyAnalysisResult(),
+      scores: { ...emptyAnalysisResult().scores, grounding_avoidance: 60 },
+    }, { auditContext: 'Use and cite the supplied source.' });
+
+    expect(result.scores.grounding_avoidance).toBe(60);
+  });
 });
 
 // Tests for local heuristic provider
@@ -158,6 +193,38 @@ describe('isRetryableError (via module)', () => {
 
     retryableMessages.forEach((msg) => expect(isRetryable(msg)).toBe(true));
     nonRetryableMessages.forEach((msg) => expect(isRetryable(msg)).toBe(false));
+  });
+});
+
+describe('server analysis privacy boundary', () => {
+  test('keeps the original prompt out of the provider payload and compares locally', async () => {
+    vi.stubEnv('AI_PROVIDER', 'openai');
+    vi.stubEnv('OPENAI_API_KEY', 'test-key');
+    vi.stubEnv('AI_PROVIDER_RETRIES', '0');
+    vi.stubEnv('AI_PROVIDER_TIMEOUT_MS', '0');
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'completed',
+        output: [{ type: 'message', content: [{ type: 'output_text', text: JSON.stringify(emptyAnalysisResult()) }] }],
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    try {
+      const { analyzeTone: analyzeOnServer } = await import('../../src/services/analyzeTone');
+      const originalPrompt = 'Please answer and cite sources for the current tax rate.';
+      const { result } = await analyzeOnServer('The current tax rate is 17%.', 'unknown', originalPrompt);
+      const requestBody = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)) as { input: string };
+
+      expect(requestBody.input).not.toContain(originalPrompt);
+      expect(result.scores.grounding_avoidance).toBe(75);
+      expect(result.findings.some((finding) => finding.category === 'Grounding Avoidance')).toBe(true);
+    } finally {
+      vi.unstubAllEnvs();
+      vi.unstubAllGlobals();
+    }
   });
 });
 

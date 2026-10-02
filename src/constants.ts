@@ -58,6 +58,24 @@ export const TONE_CATEGORIES = {
     label: 'Unsupported Certainty',
     description: 'Confident factual claims without visible support when the task calls for verification or current information.',
     color: '#14b8a6', // teal-500
+  },
+  GROUNDING_AVOIDANCE: {
+    id: 'grounding_avoidance',
+    label: 'Grounding Avoidance',
+    description: 'Failure to use requested citations or supplied source material when answering.',
+    color: '#0ea5e9', // sky-500
+  },
+  REFUSAL_QUALITY: {
+    id: 'refusal_quality',
+    label: 'Refusal Quality',
+    description: 'How specific, proportionate, and helpful an actual refusal is; higher scores indicate better quality.',
+    color: '#a855f7', // purple-500
+  },
+  NEEDLESS_ESCALATION: {
+    id: 'needless_escalation',
+    label: 'Needless Escalation',
+    description: 'Irrelevant calming, emotional, or moralizing language in response to a neutral request.',
+    color: '#f43f5e', // rose-500
   }
 } as const;
 
