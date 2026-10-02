@@ -101,6 +101,16 @@ Deploy using your preferred static hosting or web platform. Typical flow:
 
 ## Trigger weight tuning guide
 
+## Additional AI language tics
+
+The tone scores also flag three patterns when supported by the wording:
+
+- **Sycophancy**: unearned praise or agreement without supporting reasons; ordinary politeness and justified agreement are not enough.
+- **Over-apologizing**: repeated or generic apologies without a specific error and correction; concise accountability for a real mistake is not enough.
+- **Repetitive filler**: restatements, generic framing, or stock closers that do not add information; useful structure and summaries are not enough.
+
+These are probabilistic language signals, not proof of intent or inaccuracy. Review the quoted examples and surrounding context before drawing conclusions.
+
 Use trigger `weight` in `src/constants.ts` to calibrate detection precision.
 
 | Weight range | When to use | Typical examples |

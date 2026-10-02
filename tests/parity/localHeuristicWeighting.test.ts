@@ -21,3 +21,14 @@ test('single weak trigger stays low impact with explicit weight override', async
   assert.ok(result.scores.dismissive > 0, 'expected dismissive score to register');
   assert.ok(result.scores.dismissive <= 10, `expected weak weighted score <=10, got ${result.scores.dismissive}`);
 });
+
+test('scores newly added AI tic categories from explicit phrase markers', async () => {
+  const result = await localHeuristicProvider.analyzeTone({
+    text: "Great question. You're absolutely right. I apologize again. To summarize, here's the same answer. I hope this helps.",
+    context: { promptVersion: 'test' },
+  });
+
+  assert.ok(result.scores.sycophancy > 0, 'expected sycophancy markers to score');
+  assert.ok(result.scores.over_apologizing > 0, 'expected apology loop markers to score');
+  assert.ok(result.scores.repetitive_filler > 0, 'expected stock filler markers to score');
+});

@@ -128,6 +128,9 @@ export default function App() {
       { subject: 'Karen Trigger', A: result.scores.karen_trigger, fullMark: 100 },
       { subject: 'Hedging', A: result.scores.hedging, fullMark: 100 },
       { subject: 'Dismissive', A: result.scores.dismissive, fullMark: 100 },
+      { subject: 'Sycophancy', A: result.scores.sycophancy, fullMark: 100 },
+      { subject: 'Over-apologizing', A: result.scores.over_apologizing, fullMark: 100 },
+      { subject: 'Repetitive Filler', A: result.scores.repetitive_filler, fullMark: 100 },
     ];
   }, [result]);
 

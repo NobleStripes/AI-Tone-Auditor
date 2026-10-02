@@ -9,6 +9,9 @@ export const providerParityFixture = {
       karen_trigger: 79,
       hedging: 26,
       dismissive: 31,
+      sycophancy: 12,
+      over_apologizing: 8,
+      repetitive_filler: 9,
     },
     findings: [
       {
@@ -58,6 +61,9 @@ export const providerParityFixture = {
       karen_trigger: 81,
       hedging: 25,
       dismissive: 30,
+      sycophancy: 10,
+      over_apologizing: 9,
+      repetitive_filler: 7,
     },
     findings: [
       {

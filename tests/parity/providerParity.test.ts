@@ -3,7 +3,17 @@ import test from 'node:test';
 import { validateAnalysisResult } from '../../src/services/validation/analysisValidator';
 import { providerParityFixture } from '../fixtures/providerParity.fixture';
 
-const SCORE_KEYS = ['gaslighting', 'infantilizing', 'de_escalation', 'karen_trigger', 'hedging', 'dismissive'] as const;
+const SCORE_KEYS = [
+  'gaslighting',
+  'infantilizing',
+  'de_escalation',
+  'karen_trigger',
+  'hedging',
+  'dismissive',
+  'sycophancy',
+  'over_apologizing',
+  'repetitive_filler',
+] as const;
 
 function topCategory(scores: Record<string, number>): string {
   return Object.entries(scores)

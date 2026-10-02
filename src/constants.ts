@@ -34,13 +34,31 @@ export const TONE_CATEGORIES = {
     label: 'Dismissive',
     description: 'Brushing off user concerns as insignificant or using minimizing language.',
     color: '#ec4899', // pink-500
+  },
+  SYCOPHANCY: {
+    id: 'sycophancy',
+    label: 'Sycophancy',
+    description: 'Unearned praise or agreement that is not supported by the response reasoning.',
+    color: '#22c55e', // green-500
+  },
+  OVER_APOLOGIZING: {
+    id: 'over_apologizing',
+    label: 'Over-apologizing',
+    description: 'Repeated or generic apologies that do not acknowledge or correct a specific error.',
+    color: '#f97316', // orange-500
+  },
+  REPETITIVE_FILLER: {
+    id: 'repetitive_filler',
+    label: 'Repetitive Filler',
+    description: 'Redundant restatements, generic framing, or stock closers that add little information.',
+    color: '#64748b', // slate-500
   }
 } as const;
 
 export type TriggerWord = {
   word: string;
   explanation: string;
-  category: 'Karen Trigger' | 'Gaslighting' | 'Infantilizing' | 'Hedging' | 'Dismissive';
+  category: 'Karen Trigger' | 'Gaslighting' | 'Infantilizing' | 'Hedging' | 'Dismissive' | 'Sycophancy' | 'Over-apologizing' | 'Repetitive Filler';
   weight?: number;
 };
 
@@ -50,6 +68,60 @@ export const TRIGGER_WORDS: TriggerWord[] = [
     explanation: "The ultimate 'Karen' shield. Used to evade accountability by hiding behind a non-human identity while lecturing the user.",
     category: "Karen Trigger",
     weight: 3.0
+  },
+  {
+    word: "You're absolutely right",
+    explanation: 'Strong agreement can read as sycophantic when it is not supported by reasons or evidence; agreement alone is not a problem.',
+    category: 'Sycophancy',
+    weight: 1.0
+  },
+  {
+    word: 'Great question',
+    explanation: 'Generic praise can feel formulaic when it does not connect to anything specific in the question.',
+    category: 'Sycophancy',
+    weight: 0.65
+  },
+  {
+    word: "That's a brilliant idea",
+    explanation: 'High-intensity praise may be unearned if the response does not explain what is strong about the idea.',
+    category: 'Sycophancy',
+    weight: 0.9
+  },
+  {
+    word: 'I apologize for any confusion',
+    explanation: 'A generic apology can shift attention to confusion instead of identifying and correcting a specific mistake.',
+    category: 'Over-apologizing',
+    weight: 0.8
+  },
+  {
+    word: 'I sincerely apologize',
+    explanation: 'Repeated or emphatic apologies can become performative when they are not paired with a concrete correction.',
+    category: 'Over-apologizing',
+    weight: 0.85
+  },
+  {
+    word: 'I apologize again',
+    explanation: 'Repeated apologies may add social padding without clarifying what went wrong or what changed.',
+    category: 'Over-apologizing',
+    weight: 1.0
+  },
+  {
+    word: 'I hope this helps',
+    explanation: 'A stock closing can feel like filler when it follows a complete answer without adding useful next steps.',
+    category: 'Repetitive Filler',
+    weight: 0.55
+  },
+  {
+    word: 'To summarize',
+    explanation: 'A summary transition may be redundant when it repeats information already stated without compressing or clarifying it.',
+    category: 'Repetitive Filler',
+    weight: 0.5
+  },
+  {
+    word: "Let's break this down",
+    explanation: 'Generic framing can add filler when the response then restates the request instead of beginning the explanation.',
+    category: 'Repetitive Filler',
+    weight: 0.5
   },
   {
     word: "I understand you're frustrated",

@@ -13,6 +13,9 @@ Categories to evaluate:
 - Karen Triggers: Passive-aggressive entitlement, bureaucratic stonewalling, or moralizing.
 - Hedging: Overuse of cautious or vague language to avoid commitment, accountability, or directness.
 - Dismissive Language: Brushing off user concerns as insignificant.
+- Sycophancy: Unearned praise or agreement that is not supported by reasons or evidence. Do not penalize ordinary politeness or justified agreement.
+- Over-apologizing: Repeated or generic apologies that do not identify a specific error or describe a correction. Do not penalize a concise apology tied to a real mistake.
+- Repetitive Filler: Redundant restatements, generic framing, or stock closers that add little information. Do not penalize useful summaries or clear structure.
 
 In addition to the analysis, provide:
 1. 2-3 "AI Personality Tuning Tips" (text instructions). For each tip, include a "promptSnippet" which is a specific, copy-pasteable instruction the user can add to their system prompt or custom instructions to implement the fix.

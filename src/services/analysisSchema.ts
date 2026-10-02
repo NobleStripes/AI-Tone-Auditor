@@ -15,7 +15,17 @@ export const ANALYSIS_RESULT_JSON_SCHEMA = {
     scores: {
       type: 'object',
       additionalProperties: false,
-      required: ['gaslighting', 'infantilizing', 'de_escalation', 'karen_trigger', 'hedging', 'dismissive'],
+      required: [
+        'gaslighting',
+        'infantilizing',
+        'de_escalation',
+        'karen_trigger',
+        'hedging',
+        'dismissive',
+        'sycophancy',
+        'over_apologizing',
+        'repetitive_filler',
+      ],
       properties: {
         gaslighting: { type: 'number' },
         infantilizing: { type: 'number' },
@@ -23,6 +33,9 @@ export const ANALYSIS_RESULT_JSON_SCHEMA = {
         karen_trigger: { type: 'number' },
         hedging: { type: 'number' },
         dismissive: { type: 'number' },
+        sycophancy: { type: 'number' },
+        over_apologizing: { type: 'number' },
+        repetitive_filler: { type: 'number' },
       },
     },
     findings: {

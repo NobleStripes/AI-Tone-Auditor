@@ -1,7 +1,17 @@
 import { emptyAnalysisResult, type AnalysisResult } from '../../types/analysis';
 import { BASE_STYLES } from '../../constants';
 
-const SCORE_KEYS = ['gaslighting', 'infantilizing', 'de_escalation', 'karen_trigger', 'hedging', 'dismissive'] as const;
+const SCORE_KEYS = [
+  'gaslighting',
+  'infantilizing',
+  'de_escalation',
+  'karen_trigger',
+  'hedging',
+  'dismissive',
+  'sycophancy',
+  'over_apologizing',
+  'repetitive_filler',
+] as const;
 const DENSITY_VALUES = new Set(['low', 'medium', 'high']);
 const SEVERITY_VALUES = new Set(['low', 'medium', 'high']);
 const SUPPORTED_BASE_STYLES = new Set(BASE_STYLES.map((style) => style.style));

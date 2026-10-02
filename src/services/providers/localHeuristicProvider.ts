@@ -52,6 +52,12 @@ function mapCategoryToScoreId(category: TriggerWord['category']): keyof Analysis
       return 'hedging';
     case 'Dismissive':
       return 'dismissive';
+    case 'Sycophancy':
+      return 'sycophancy';
+    case 'Over-apologizing':
+      return 'over_apologizing';
+    case 'Repetitive Filler':
+      return 'repetitive_filler';
     case 'Karen Trigger':
     default:
       return 'karen_trigger';
@@ -74,6 +80,9 @@ export const localHeuristicProvider: AIProvider = {
       karen_trigger: 0,
       hedging: 0,
       dismissive: 0,
+      sycophancy: 0,
+      over_apologizing: 0,
+      repetitive_filler: 0,
     };
 
     for (const trigger of matchedTriggers) {
@@ -109,7 +118,7 @@ export const localHeuristicProvider: AIProvider = {
         text: trigger.word,
         explanation: trigger.explanation,
         severity: trigger.inferredWeight >= 2.1 ? 'high' as const : trigger.inferredWeight >= 1.25 ? 'medium' as const : 'low' as const,
-        rlhfLogic: 'This phrase is commonly used by alignment-safe templates to avoid risk while preserving neutral tone.',
+        rlhfLogic: 'This is a possible communication pattern suggested by the quoted wording; the phrase alone does not establish intent or cause.',
       }));
 
     const contextScore = Math.max(0, Math.min(100, Math.round((text.trim().length / 500) * 100)));
