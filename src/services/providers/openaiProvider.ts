@@ -1,59 +1,64 @@
 import { buildToneAnalysisPrompt } from '../promptBuilder';
+import { ANALYSIS_RESULT_JSON_SCHEMA } from '../analysisSchema';
 import { validateAnalysisResult } from '../validation/analysisValidator';
 import type { AIProvider, AnalyzeToneInput } from '../../types/provider';
 
-interface OpenAIChatResponse {
-  choices?: Array<{
-    message?: {
-      content?: string | Array<{ type?: string; text?: string }>;
-    };
+interface OpenAIResponse {
+  status?: string;
+  incomplete_details?: { reason?: string } | null;
+  output?: Array<{
+    type?: string;
+    content?: Array<{
+      type?: string;
+      text?: string;
+      refusal?: string;
+    }>;
   }>;
 }
 
 function getOpenAIModel(): string {
-  return process.env.OPENAI_MODEL || 'gpt-4o-mini';
+  return process.env.OPENAI_MODEL || 'gpt-6-luna';
 }
 
 function extractJsonFromContent(content: string): unknown {
-  const trimmed = content.trim();
-  if (!trimmed) {
-    return {};
-  }
-
   try {
-    return JSON.parse(trimmed);
+    return JSON.parse(content);
   } catch {
-    // Handle markdown code-fenced JSON payloads.
-    const fencedMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-    if (fencedMatch?.[1]) {
-      return JSON.parse(fencedMatch[1]);
-    }
-
-    // Last-chance extraction for the first object-like payload.
-    const firstBrace = trimmed.indexOf('{');
-    const lastBrace = trimmed.lastIndexOf('}');
-    if (firstBrace >= 0 && lastBrace > firstBrace) {
-      return JSON.parse(trimmed.slice(firstBrace, lastBrace + 1));
-    }
-
     throw new Error('OpenAI response did not contain parseable JSON.');
   }
 }
 
-function readMessageContent(payload: OpenAIChatResponse): string {
-  const content = payload.choices?.[0]?.message?.content;
-  if (typeof content === 'string') {
-    return content;
+function readResponseContent(payload: OpenAIResponse): string {
+  if (payload.status === 'incomplete') {
+    const reason = payload.incomplete_details?.reason || 'unknown reason';
+    throw new Error(`OpenAI response was incomplete: ${reason}`);
   }
 
-  if (Array.isArray(content)) {
-    return content
-      .filter((part) => part.type === 'text' && typeof part.text === 'string')
-      .map((part) => part.text)
-      .join('\n');
+  if (payload.status !== 'completed') {
+    throw new Error(`OpenAI response ended with status ${payload.status || 'unknown'}`);
   }
 
-  return '';
+  const text: string[] = [];
+  for (const item of payload.output ?? []) {
+    if (item.type !== 'message') {
+      continue;
+    }
+
+    for (const block of item.content ?? []) {
+      if (block.type === 'refusal') {
+        throw new Error('OpenAI refused the tone analysis request');
+      }
+      if (block.type === 'output_text' && typeof block.text === 'string') {
+        text.push(block.text);
+      }
+    }
+  }
+
+  const content = text.join('\n').trim();
+  if (!content) {
+    throw new Error('OpenAI response returned no output text');
+  }
+  return content;
 }
 
 export const openaiProvider: AIProvider = {
@@ -66,7 +71,7 @@ export const openaiProvider: AIProvider = {
       throw new Error('Missing OPENAI_API_KEY for OpenAI provider');
     }
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -74,18 +79,17 @@ export const openaiProvider: AIProvider = {
       },
       body: JSON.stringify({
         model: getOpenAIModel(),
-        temperature: 0.2,
-        response_format: { type: 'json_object' },
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a tone analysis engine. Output valid JSON that matches the requested structure.',
+        max_output_tokens: 3000,
+        instructions: 'You are a tone analysis engine. Return only data matching the supplied JSON Schema.',
+        input: buildToneAnalysisPrompt(input.text),
+        text: {
+          format: {
+            type: 'json_schema',
+            name: 'tone_analysis',
+            strict: true,
+            schema: ANALYSIS_RESULT_JSON_SCHEMA,
           },
-          {
-            role: 'user',
-            content: buildToneAnalysisPrompt(input.text),
-          },
-        ],
+        },
       }),
     });
 
@@ -94,11 +98,8 @@ export const openaiProvider: AIProvider = {
       throw new Error(`OpenAI request failed (${response.status}): ${errorText}`);
     }
 
-    const payload = (await response.json()) as OpenAIChatResponse;
-    if (!payload.choices || payload.choices.length === 0) {
-      throw new Error('OpenAI response returned no choices');
-    }
-    const content = readMessageContent(payload);
+    const payload = (await response.json()) as OpenAIResponse;
+    const content = readResponseContent(payload);
 
     try {
       const parsed = extractJsonFromContent(content);

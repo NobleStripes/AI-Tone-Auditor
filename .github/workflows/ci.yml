@@ -26,5 +26,8 @@ jobs:
       - name: Type check
         run: npm run lint
 
+      - name: Unit tests
+        run: npm test
+
       - name: Parity tests
         run: npm run test:parity

@@ -4,7 +4,7 @@ import type { ProviderTelemetrySnapshot } from './telemetry/providerTelemetry';
 const DEFAULT_META: ProviderRuntimeMeta = {
   providerId: 'openai',
   providerLabel: 'OpenAI',
-  model: 'gpt-4o-mini',
+  model: 'gpt-6-luna',
   usedFallback: false,
 };
 

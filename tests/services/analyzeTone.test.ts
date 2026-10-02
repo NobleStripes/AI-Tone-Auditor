@@ -159,7 +159,7 @@ describe('analyzeClient', () => {
   });
 
   test('updates in-memory meta after successful call', async () => {
-    const mockMeta = { providerId: 'anthropic', providerLabel: 'Anthropic Claude', model: 'claude-3-5-haiku-latest', usedFallback: true };
+    const mockMeta = { providerId: 'anthropic', providerLabel: 'Anthropic Claude', model: 'claude-sonnet-5-5', usedFallback: true };
     const mockResult = emptyAnalysisResult();
     const mockTelemetry = {
       totalAnalyses: 5,

@@ -1,0 +1,120 @@
+export const ANALYSIS_RESULT_JSON_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: [
+    'scores',
+    'findings',
+    'summary',
+    'overallTone',
+    'recommendations',
+    'personalization',
+    'contextAnalysis',
+    'euphemisms',
+  ],
+  properties: {
+    scores: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['gaslighting', 'infantilizing', 'de_escalation', 'karen_trigger', 'hedging', 'dismissive'],
+      properties: {
+        gaslighting: { type: 'number' },
+        infantilizing: { type: 'number' },
+        de_escalation: { type: 'number' },
+        karen_trigger: { type: 'number' },
+        hedging: { type: 'number' },
+        dismissive: { type: 'number' },
+      },
+    },
+    findings: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['category', 'text', 'explanation', 'severity', 'rlhfLogic'],
+        properties: {
+          category: { type: 'string' },
+          text: { type: 'string' },
+          explanation: { type: 'string' },
+          severity: { type: 'string', enum: ['low', 'medium', 'high'] },
+          rlhfLogic: { type: ['string', 'null'] },
+        },
+      },
+    },
+    summary: { type: 'string' },
+    overallTone: { type: 'string' },
+    recommendations: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['title', 'description', 'promptSnippet'],
+        properties: {
+          title: { type: 'string' },
+          description: { type: 'string' },
+          promptSnippet: { type: 'string' },
+        },
+      },
+    },
+    personalization: {
+      type: 'object',
+      additionalProperties: false,
+      required: [
+        'baseStyle',
+        'directness',
+        'neutrality',
+        'brevity',
+        'humility',
+        'karenRemediation',
+        'customInstructions',
+      ],
+      properties: {
+        baseStyle: {
+          type: 'string',
+          enum: ['Default', 'Professional', 'Friendly', 'Candid', 'Cynical', 'Efficient', 'Quirky'],
+        },
+        directness: { type: 'string', enum: ['More', 'Default', 'Less'] },
+        neutrality: { type: 'string', enum: ['More', 'Default', 'Less'] },
+        brevity: { type: 'string', enum: ['More', 'Default', 'Less'] },
+        humility: { type: 'string', enum: ['More', 'Default', 'Less'] },
+        karenRemediation: { type: 'string' },
+        customInstructions: { type: 'array', items: { type: 'string' } },
+      },
+    },
+    contextAnalysis: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['score', 'feedback', 'heatmap'],
+      properties: {
+        score: { type: 'number' },
+        feedback: { type: 'string' },
+        heatmap: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['text', 'density', 'explanation', 'suggestion'],
+            properties: {
+              text: { type: 'string' },
+              density: { type: 'string', enum: ['low', 'medium', 'high'] },
+              explanation: { type: ['string', 'null'] },
+              suggestion: { type: ['string', 'null'] },
+            },
+          },
+        },
+      },
+    },
+    euphemisms: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['term', 'translation', 'context'],
+        properties: {
+          term: { type: 'string' },
+          translation: { type: 'string' },
+          context: { type: 'string' },
+        },
+      },
+    },
+  },
+} as const;

@@ -56,9 +56,9 @@ This application runs as a standard web app with API-based provider integration.
    Create a `.env` file in the root directory with provider settings:
    ```env
    OPENAI_API_KEY=your_openai_key_here
-   OPENAI_MODEL=gpt-4o-mini
+   OPENAI_MODEL=gpt-6-luna
    ANTHROPIC_API_KEY=your_anthropic_key_here
-   ANTHROPIC_MODEL=claude-3-5-haiku-latest
+   ANTHROPIC_MODEL=claude-sonnet-5-5
    AI_PROVIDER=openai
    AI_FALLBACK_PROVIDER=anthropic
    ```
@@ -91,8 +91,10 @@ Deploy using your preferred static hosting or web platform. Typical flow:
 
 - `AI_PROVIDER`: Primary provider. Supported values: `openai`, `anthropic`, `local`.
 - `AI_FALLBACK_PROVIDER`: Secondary provider used if primary fails.
-- `OPENAI_MODEL`: Optional model override for OpenAI provider. Defaults to `gpt-4o-mini`.
-- `ANTHROPIC_MODEL`: Optional model override for Anthropic provider. Defaults to `claude-3-5-haiku-latest`.
+- `OPENAI_MODEL`: Optional model override for OpenAI provider. Defaults to `gpt-6-luna`.
+- `ANTHROPIC_MODEL`: Optional model override for Anthropic provider. Defaults to `claude-sonnet-5-5`.
+- OpenAI requests use the Responses API; both providers use schema-constrained JSON output and are checked by the shared analysis validator.
+- Model availability changes over time. Check the providers' lifecycle notices before pinning an override; the defaults are selected for current availability and analysis cost/quality.
 - `AI_PROVIDER_TIMEOUT_MS`: Per-attempt timeout in milliseconds for provider requests. Defaults to `15000`.
 - `AI_PROVIDER_RETRIES`: Retry count per provider for transient failures (timeouts, network errors, 429/5xx). Defaults to `1`.
 - Footer status bar displays `FALLBACK_RATE` and fallback activation count for live deprecation telemetry.

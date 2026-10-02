@@ -1,8 +1,10 @@
 import { buildToneAnalysisPrompt } from '../promptBuilder';
+import { ANALYSIS_RESULT_JSON_SCHEMA } from '../analysisSchema';
 import { validateAnalysisResult } from '../validation/analysisValidator';
 import type { AIProvider, AnalyzeToneInput } from '../../types/provider';
 
 interface AnthropicResponse {
+  stop_reason?: string | null;
   content?: Array<{
     type?: string;
     text?: string;
@@ -10,31 +12,36 @@ interface AnthropicResponse {
 }
 
 function getAnthropicModel(): string {
-  return process.env.ANTHROPIC_MODEL || 'claude-3-5-haiku-latest';
+  return process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5';
 }
 
 function extractJson(content: string): unknown {
-  const trimmed = content.trim();
-  if (!trimmed) {
-    return {};
-  }
-
   try {
-    return JSON.parse(trimmed);
+    return JSON.parse(content);
   } catch {
-    const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-    if (fenced?.[1]) {
-      return JSON.parse(fenced[1]);
-    }
-
-    const firstBrace = trimmed.indexOf('{');
-    const lastBrace = trimmed.lastIndexOf('}');
-    if (firstBrace >= 0 && lastBrace > firstBrace) {
-      return JSON.parse(trimmed.slice(firstBrace, lastBrace + 1));
-    }
-
     throw new Error('Anthropic response did not contain parseable JSON.');
   }
+}
+
+function readResponseContent(payload: AnthropicResponse): string {
+  if (payload.stop_reason === 'refusal') {
+    throw new Error('Anthropic refused the tone analysis request');
+  }
+  if (payload.stop_reason === 'max_tokens') {
+    throw new Error('Anthropic response reached its output token limit');
+  }
+  if (payload.stop_reason !== 'end_turn') {
+    throw new Error(`Anthropic response ended with stop reason ${payload.stop_reason || 'unknown'}`);
+  }
+
+  const text = payload.content
+    ?.filter((item) => item.type === 'text' && typeof item.text === 'string')
+    .map((item) => item.text)
+    .join('\n') || '';
+  if (!text.trim()) {
+    throw new Error('Anthropic response returned no output text');
+  }
+  return text;
 }
 
 export const anthropicProvider: AIProvider = {
@@ -56,15 +63,20 @@ export const anthropicProvider: AIProvider = {
       },
       body: JSON.stringify({
         model: getAnthropicModel(),
-        max_tokens: 1600,
-        temperature: 0.2,
-        system: 'You are a tone analysis engine. Return valid JSON only and match the requested schema fields.',
+        max_tokens: 3000,
+        system: 'You are a tone analysis engine. Return only data matching the supplied JSON Schema.',
         messages: [
           {
             role: 'user',
             content: buildToneAnalysisPrompt(input.text),
           },
         ],
+        output_config: {
+          format: {
+            type: 'json_schema',
+            schema: ANALYSIS_RESULT_JSON_SCHEMA,
+          },
+        },
       }),
     });
 
@@ -74,13 +86,7 @@ export const anthropicProvider: AIProvider = {
     }
 
     const payload = (await response.json()) as AnthropicResponse;
-    if (!payload.content || payload.content.length === 0) {
-      throw new Error('Anthropic response returned no content');
-    }
-    const text = payload.content
-      ?.filter((item) => item.type === 'text' && typeof item.text === 'string')
-      .map((item) => item.text)
-      .join('\n') || '';
+    const text = readResponseContent(payload);
 
     try {
       return validateAnalysisResult(extractJson(text));

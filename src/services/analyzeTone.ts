@@ -107,7 +107,7 @@ async function runProviderWithPolicy(
 let lastRuntimeMeta: ProviderRuntimeMeta = {
   providerId: 'openai',
   providerLabel: 'OpenAI',
-  model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+  model: process.env.OPENAI_MODEL || 'gpt-6-luna',
   usedFallback: false,
 };
 
