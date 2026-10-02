@@ -1,18 +1,18 @@
 # AI Tone Auditor Core
 
-AI Tone Auditor is a specialized diagnostic tool designed to help users identify and remediate the "Karen" persona often found in default LLM outputs. It provides deep semantic analysis to ensure your AI interactions are professional, clear, and free from bureaucratic condescension.
+AI Tone Auditor analyzes AI-generated responses for observable tone and communication patterns, including tone-policing, unsupported intent assumptions, sycophancy, over-apologizing, and repetitive filler. It supports OpenAI, Anthropic Claude, Google Gemini, and xAI Grok, with optional source-aware diagnostics and evidence-based suggestions for improving response style.
 
 ## Core Intent
 
-Many Large Language Models (LLMs) default to a personality that can come across as overly formal, evasive, or "Karen-like"—characterized by passive-aggressive helpfulness, bureaucratic jargon, and a lack of genuine empathy. 
+AI-generated responses can come across as overly formal, evasive, or patronizing, with passive-aggressive helpfulness, bureaucratic jargon, or misplaced emotional framing.
 
 The core intent of this tool is to:
 1. **Detect Default Bias**: Identify when an LLM is slipping into its default, overly robotic or quietly condescending personality.
-2. **Prevent the "Karen" Persona**: Flag specific phrases and tones that contribute to a negative user experience.
+2. **Identify Unhelpful Tone Patterns**: Flag specific phrases and tones that can undermine a clear, respectful response.
 3. **Customize AI Personality**: Provide actionable feedback and prompt snippets to help users tune their AI's personality to be more authentic and effective.
 4. **RLHF-inspired feedback**: Offer specific strategies to "un-learn" negative patterns through better custom instructions and prompt engineering.
 
-## Examples of "Karen" Patterns
+## Examples of Bureaucratic and Dismissive Patterns
 
 The auditor specifically looks for these common bureaucratic and passive-aggressive triggers:
 
@@ -23,7 +23,7 @@ The auditor specifically looks for these common bureaucratic and passive-aggress
 ## Key Features
 
 - **Semantic Deep Scan**: Analyzes text for subtle tone shifts and bureaucratic patterns.
-- **Trigger Word Analysis**: Detects specific phrases from our "Karen/Gaslight" dictionary.
+- **Trigger Word Analysis**: Detects specific phrases from the tone-pattern dictionary.
 - **Contextual Heatmap**: Visualizes areas of low context or evasive language.
 - **Universal Custom Instructions**: Generates a list of specific, actionable instructions that can be added to any LLM's system prompt or custom instructions field.
 - **RLHF-inspired feedback**: Provides "Reinforcement Learning from Human Feedback" style suggestions for immediate prompt improvement.
@@ -33,7 +33,7 @@ The auditor specifically looks for these common bureaucratic and passive-aggress
 
 1. Paste your AI's response into the auditor.
 2. Run the audit to see the Tone Distribution Profile.
-3. Review the "Anti-Karen Remediation Strategy" and "Universal Custom Instructions".
+3. Review the tone recommendations and custom instructions.
 4. Copy the suggested instructions to tune your AI's system prompt.
 
 ## Run and deploy
