@@ -37,6 +37,12 @@ export const HEDGING_HEAVY_OPENAI_SAMPLE: AnalysisResult = {
     neutrality: 'Default',
     brevity: 'More',
     humility: 'Less',
+    chatgptCharacteristics: {
+      warmth: 'Default',
+      enthusiasm: 'Default',
+      headersAndLists: 'Default',
+      emojis: 'Default',
+    },
     karenRemediation: 'Replace stacked hedges with a single qualifier if uncertainty is genuine.',
     customInstructions: ['Do not stack multiple uncertainty qualifiers in a single clause.'],
   },

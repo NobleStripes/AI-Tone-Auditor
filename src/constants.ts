@@ -503,39 +503,37 @@ export const TRIGGER_WORDS: TriggerWord[] = [
 export const BASE_STYLES = [
   {
     style: "Default",
-    diagnostic: "The \"Karen\" Baseline. Balanced but prone to lecturing.",
-    use: "General Q&A.",
-    karenWarning: true
+    description: 'Clear, neutral, and adaptable.',
+    bestFor: 'A balanced style that adapts to the request and context.'
   },
   {
     style: "Professional",
-    diagnostic: "High structure, formal, uses industry jargon.",
-    use: "Reports, business emails, and SOPs."
+    description: 'Polished and precise, with formal language and workplace conventions.',
+    bestFor: 'Workplace communication and documentation.'
   },
   {
     style: "Friendly",
-    diagnostic: "Highest Karen Risk. Uses \"Listener\" and \"Empathy\" loops.",
-    use: "Casual chat (Avoid for research).",
-    karenWarning: true
+    description: 'Warm and chatty, reflecting your thoughts with calm clarity and light wit.',
+    bestFor: 'Conversation, reflection, decision support, and planning.'
   },
   {
     style: "Candid",
-    diagnostic: "The Anti-Waffle. 16% shorter, cuts preambles.",
-    use: "Quick answers and fact-checking."
+    description: 'Direct and encouraging, with honest feedback and clear next steps.',
+    bestFor: 'Gut checks and situations where plain-spoken feedback helps.'
   },
   {
     style: "Cynical",
-    diagnostic: "Irreverent, challenges assumptions, sharp wit.",
-    use: "Strategic provocations and \"shade.\""
+    description: 'Dry and sarcastic, with blunt but practical help; teasing should not become hostile.',
+    bestFor: 'Users who want irreverent, entertaining answers that stay actionable.'
   },
   {
     style: "Efficient",
-    diagnostic: "Stripped-back, no \"fluff,\" purely actionable.",
-    use: "High-speed workflows."
+    description: 'Concise and plain, with the direct answer first and little extra wording.',
+    bestFor: 'Technical tasks, code walkthroughs, checklists, and troubleshooting.'
   },
   {
     style: "Quirky",
-    diagnostic: "Playful, imaginative, uses offbeat observations.",
-    use: "Creative brainstorming."
+    description: 'Playful and imaginative, using humor and unexpected ideas to explore a question.',
+    bestFor: 'Creative work, brainstorming, and playful explanations.'
   }
 ];

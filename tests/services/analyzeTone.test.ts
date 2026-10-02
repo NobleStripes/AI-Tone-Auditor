@@ -78,6 +78,29 @@ describe('analysisValidator', () => {
     const result = validateAnalysisResult(payload);
     expect(result.personalization.customInstructions).toEqual(['valid instruction', 'another valid']);
   });
+
+  test('normalizes ChatGPT characteristic recommendations to supported levels', () => {
+    const payload = {
+      ...emptyAnalysisResult(),
+      personalization: {
+        ...emptyAnalysisResult().personalization,
+        chatgptCharacteristics: {
+          warmth: 'More',
+          enthusiasm: 'Less',
+          headersAndLists: 'Sometimes',
+          emojis: 'Default',
+        },
+      },
+    };
+    const result = validateAnalysisResult(payload);
+
+    expect(result.personalization.chatgptCharacteristics).toEqual({
+      warmth: 'More',
+      enthusiasm: 'Less',
+      headersAndLists: 'Default',
+      emojis: 'Default',
+    });
+  });
 });
 
 // Tests for local heuristic provider

@@ -24,6 +24,12 @@ export interface AnalysisResult {
     neutrality: CalibrationLevel;
     brevity: CalibrationLevel;
     humility: CalibrationLevel;
+    chatgptCharacteristics: {
+      warmth: CalibrationLevel;
+      enthusiasm: CalibrationLevel;
+      headersAndLists: CalibrationLevel;
+      emojis: CalibrationLevel;
+    };
     karenRemediation: string;
     customInstructions: string[];
   };
@@ -67,6 +73,12 @@ export function emptyAnalysisResult(): AnalysisResult {
       neutrality: 'Default',
       brevity: 'Default',
       humility: 'Default',
+      chatgptCharacteristics: {
+        warmth: 'Default',
+        enthusiasm: 'Default',
+        headersAndLists: 'Default',
+        emojis: 'Default',
+      },
       karenRemediation: 'Use direct, non-lecturing language and acknowledge user intent before applying safeguards.',
       customInstructions: [],
     },

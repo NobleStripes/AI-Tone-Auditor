@@ -14,6 +14,7 @@ const SCORE_KEYS = [
 ] as const;
 const DENSITY_VALUES = new Set(['low', 'medium', 'high']);
 const SEVERITY_VALUES = new Set(['low', 'medium', 'high']);
+const CALIBRATION_VALUES = new Set(['More', 'Default', 'Less']);
 const SUPPORTED_BASE_STYLES = new Set(BASE_STYLES.map((style) => style.style));
 const LEGACY_BASE_STYLE_MAP: Record<string, string> = {
   Nerdy: 'Efficient',
@@ -25,6 +26,12 @@ function toBoundedScore(value: unknown): number {
   }
 
   return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function normalizeCalibration(value: unknown): AnalysisResult['personalization']['directness'] {
+  return CALIBRATION_VALUES.has(String(value))
+    ? (value as AnalysisResult['personalization']['directness'])
+    : 'Default';
 }
 
 function normalizeBaseStyle(value: unknown, fallback: string): string {
@@ -80,6 +87,9 @@ export function validateAnalysisResult(payload: unknown): AnalysisResult {
   const personalization = raw.personalization && typeof raw.personalization === 'object'
     ? (raw.personalization as Record<string, unknown>)
     : {};
+  const chatgptCharacteristics = personalization.chatgptCharacteristics && typeof personalization.chatgptCharacteristics === 'object'
+    ? (personalization.chatgptCharacteristics as Record<string, unknown>)
+    : {};
 
   const contextAnalysis = raw.contextAnalysis && typeof raw.contextAnalysis === 'object'
     ? (raw.contextAnalysis as Record<string, unknown>)
@@ -115,18 +125,16 @@ export function validateAnalysisResult(payload: unknown): AnalysisResult {
     recommendations,
     personalization: {
       baseStyle: normalizeBaseStyle(personalization.baseStyle, fallback.personalization.baseStyle),
-      directness: personalization.directness === 'More' || personalization.directness === 'Default' || personalization.directness === 'Less'
-        ? personalization.directness
-        : fallback.personalization.directness,
-      neutrality: personalization.neutrality === 'More' || personalization.neutrality === 'Default' || personalization.neutrality === 'Less'
-        ? personalization.neutrality
-        : fallback.personalization.neutrality,
-      brevity: personalization.brevity === 'More' || personalization.brevity === 'Default' || personalization.brevity === 'Less'
-        ? personalization.brevity
-        : fallback.personalization.brevity,
-      humility: personalization.humility === 'More' || personalization.humility === 'Default' || personalization.humility === 'Less'
-        ? personalization.humility
-        : fallback.personalization.humility,
+      directness: normalizeCalibration(personalization.directness),
+      neutrality: normalizeCalibration(personalization.neutrality),
+      brevity: normalizeCalibration(personalization.brevity),
+      humility: normalizeCalibration(personalization.humility),
+      chatgptCharacteristics: {
+        warmth: normalizeCalibration(chatgptCharacteristics.warmth),
+        enthusiasm: normalizeCalibration(chatgptCharacteristics.enthusiasm),
+        headersAndLists: normalizeCalibration(chatgptCharacteristics.headersAndLists),
+        emojis: normalizeCalibration(chatgptCharacteristics.emojis),
+      },
       karenRemediation: typeof personalization.karenRemediation === 'string'
         ? personalization.karenRemediation
         : fallback.personalization.karenRemediation,

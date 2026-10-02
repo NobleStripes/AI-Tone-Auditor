@@ -25,6 +25,12 @@ export const CLEAN_TEXT_SAMPLE: AnalysisResult = {
     neutrality: 'Default',
     brevity: 'Default',
     humility: 'Default',
+    chatgptCharacteristics: {
+      warmth: 'Default',
+      enthusiasm: 'Default',
+      headersAndLists: 'Default',
+      emojis: 'Default',
+    },
     karenRemediation: 'No remediation needed.',
     customInstructions: [],
   },

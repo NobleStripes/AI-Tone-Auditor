@@ -99,6 +99,10 @@ Deploy using your preferred static hosting or web platform. Typical flow:
 - `AI_PROVIDER_RETRIES`: Retry count per provider for transient failures (timeouts, network errors, 429/5xx). Defaults to `1`.
 - Footer status bar displays `FALLBACK_RATE` and fallback activation count for live deprecation telemetry.
 
+## ChatGPT personalization
+
+The personalization profile mirrors ChatGPT's current base styles: Default, Professional, Friendly, Candid, Cynical, Efficient, and Quirky. It also recommends levels for ChatGPT's warmth, enthusiasm, headers and lists, and emoji controls. These are suggestions to apply in ChatGPT Settings > Personalization; the auditor does not change account settings. Personality affects communication style, not capabilities or safety behavior, and can be outweighed by the request, context, memory, or custom instructions. See OpenAI's [personality guide](https://help.openai.com/en/articles/11899719-customizing-your-chatgpt-personality) and [ChatGPT release notes](https://help.openai.com/en/articles/6825453-chatgpt-release-notes).
+
 ## Trigger weight tuning guide
 
 ## Additional AI language tics

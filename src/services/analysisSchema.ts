@@ -1,3 +1,5 @@
+import { BASE_STYLES } from '../constants';
+
 export const ANALYSIS_RESULT_JSON_SCHEMA = {
   type: 'object',
   additionalProperties: false,
@@ -77,18 +79,30 @@ export const ANALYSIS_RESULT_JSON_SCHEMA = {
         'neutrality',
         'brevity',
         'humility',
+        'chatgptCharacteristics',
         'karenRemediation',
         'customInstructions',
       ],
       properties: {
         baseStyle: {
           type: 'string',
-          enum: ['Default', 'Professional', 'Friendly', 'Candid', 'Cynical', 'Efficient', 'Quirky'],
+          enum: BASE_STYLES.map(({ style }) => style),
         },
         directness: { type: 'string', enum: ['More', 'Default', 'Less'] },
         neutrality: { type: 'string', enum: ['More', 'Default', 'Less'] },
         brevity: { type: 'string', enum: ['More', 'Default', 'Less'] },
         humility: { type: 'string', enum: ['More', 'Default', 'Less'] },
+        chatgptCharacteristics: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['warmth', 'enthusiasm', 'headersAndLists', 'emojis'],
+          properties: {
+            warmth: { type: 'string', enum: ['More', 'Default', 'Less'] },
+            enthusiasm: { type: 'string', enum: ['More', 'Default', 'Less'] },
+            headersAndLists: { type: 'string', enum: ['More', 'Default', 'Less'] },
+            emojis: { type: 'string', enum: ['More', 'Default', 'Less'] },
+          },
+        },
         karenRemediation: { type: 'string' },
         customInstructions: { type: 'array', items: { type: 'string' } },
       },

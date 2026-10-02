@@ -1,5 +1,6 @@
 import React from 'react';
 import { ShieldAlert, Settings2, CheckCircle2, Copy } from 'lucide-react';
+import { BASE_STYLES } from '../constants';
 import type { AnalysisResult } from '../types/analysis';
 
 interface PersonalizationProfileProps {
@@ -7,25 +8,48 @@ interface PersonalizationProfileProps {
 }
 
 export function PersonalizationProfile({ personalization }: PersonalizationProfileProps) {
+  const selectedStyle = BASE_STYLES.find((style) => style.style === personalization.baseStyle);
+  const chatgptCharacteristics = [
+    { label: 'Warmth', value: personalization.chatgptCharacteristics.warmth },
+    { label: 'Enthusiasm', value: personalization.chatgptCharacteristics.enthusiasm },
+    { label: 'Headers & lists', value: personalization.chatgptCharacteristics.headersAndLists },
+    { label: 'Emojis', value: personalization.chatgptCharacteristics.emojis },
+  ];
+
   return (
     <div className="space-y-4">
       <h2 className="text-xs font-mono uppercase tracking-widest text-zinc-500 flex items-center gap-2">
-        <Settings2 className="w-3 h-3 text-blue-500" /> Personalization Profile
+        <Settings2 className="w-3 h-3 text-blue-500" /> ChatGPT Personalization
       </h2>
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 md:p-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-800 pb-4 gap-2">
           <div>
             <h4 className="text-sm font-bold text-zinc-200">Base style and tone</h4>
-            <p className="text-[10px] text-zinc-500">Set the style and tone of how the AI responds to you.</p>
+            <p className="text-[10px] text-zinc-500">{selectedStyle?.description}</p>
+            {selectedStyle && <p className="text-[10px] text-zinc-600">Best for: {selectedStyle.bestFor}</p>}
           </div>
           <div className="bg-zinc-950 border border-zinc-800 px-3 py-1.5 rounded text-xs font-mono text-blue-400 w-fit">
             {personalization.baseStyle}
           </div>
         </div>
 
+        <div className="space-y-3 border-b border-zinc-800 pb-5">
+          <h4 className="text-[10px] font-mono uppercase tracking-widest text-zinc-600">
+            ChatGPT characteristics
+          </h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {chatgptCharacteristics.map((characteristic) => (
+              <div key={characteristic.label} className="bg-zinc-950 border border-zinc-800 rounded-lg p-3">
+                <p className="text-[10px] text-zinc-500">{characteristic.label}</p>
+                <p className="mt-1 text-xs font-mono text-blue-400">{characteristic.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="space-y-4">
           <h4 className="text-[10px] font-mono uppercase tracking-widest text-zinc-600">
-            Universal Custom Instructions
+            Custom instructions
           </h4>
           <div className="space-y-3">
             {personalization.customInstructions.map((instruction, idx) => (
