@@ -2,6 +2,31 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { localHeuristicProvider } from '../../src/services/providers/localHeuristicProvider';
 
+test('does not invent euphemisms, including when safety guidelines are mentioned', async () => {
+  for (const text of ['The result is 42.', 'Follow the laboratory safety guidelines.']) {
+    const result = await localHeuristicProvider.analyzeTone({ text, context: { promptVersion: 'test' } });
+    assert.deepEqual(result.euphemisms, []);
+    if (text.includes('safety guidelines')) {
+      const finding = result.findings.find((item) => item.text === 'Safety guidelines');
+      assert.ok(finding);
+      assert.match(finding.explanation, /phrase alone does not establish/);
+      assert.doesNotMatch(finding.explanation, /often when no actual safety risk exists/);
+    }
+  }
+});
+
+test('describes response length without attributing safety language to missing prompt context', async () => {
+  const result = await localHeuristicProvider.analyzeTone({ text: 'The result is 42.', context: { promptVersion: 'test' } });
+  assert.match(result.contextAnalysis.feedback, /Response length alone does not establish/);
+  assert.match(result.contextAnalysis.heatmap[0].explanation ?? '', /original prompt and reasons for safety language are not available/);
+  assert.doesNotMatch(JSON.stringify(result.contextAnalysis), /increases generic safety|force broad safety/);
+});
+
+test('does not equate a longer response with sufficient context', async () => {
+  const result = await localHeuristicProvider.analyzeTone({ text: 'A longer response sample. '.repeat(30), context: { promptVersion: 'test' } });
+  assert.match(result.contextAnalysis.feedback, /Response length alone does not establish context adequacy/);
+});
+
 test('custom weights prioritize high-signal phrases over weak single-token matches', async () => {
   const result = await localHeuristicProvider.analyzeTone({
     text: 'As an AI language model, I cannot fulfill this request. It is just not possible.',

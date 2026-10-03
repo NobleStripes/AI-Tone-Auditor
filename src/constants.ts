@@ -238,7 +238,7 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   },
   {
     word: "Safety guidelines",
-    explanation: "Vague moralizing. Used as a catch-all justification for refusing to provide information, often when no actual safety risk exists.",
+    explanation: "References safety guidance. The phrase alone does not establish moralizing, an unjustified refusal, or whether a safety risk exists.",
     category: "Karen Trigger"
   },
   {

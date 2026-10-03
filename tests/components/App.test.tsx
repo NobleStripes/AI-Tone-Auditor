@@ -41,6 +41,6 @@ describe('saved audit presentation', () => {
     expect(within(screen.getByTestId('risk-radar')).queryByText('Refusal Quality')).not.toBeInTheDocument();
     const qualityPanel = screen.getByRole('region', { name: 'Response quality' });
     expect(within(qualityPanel).getByText('Refusal Quality')).toBeInTheDocument();
-    expect(within(qualityPanel).getByText(quality ? '100/100' : 'N/A')).toBeInTheDocument();
+    expect(within(qualityPanel).getByText('N/A')).toBeInTheDocument();
   });
 });

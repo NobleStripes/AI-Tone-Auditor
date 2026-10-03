@@ -129,7 +129,7 @@ These are probabilistic language signals, not proof of intent or inaccuracy. Rev
 - **Needless Escalation**: scored only when a neutral prompt receives irrelevant calming, moralizing, or tone-policing language.
 - Prompt-comparison scores stay at zero when no original prompt is provided. Local comparison uses conservative visible-text rules; it cannot verify external sources or reliably infer intent and may miss nuance.
 - The optional original prompt/context stays in the app/server comparison path and is not sent to third-party semantic providers or saved in local audit history. Local comparison uses conservative visible-text rules and may miss nuance. The response text is still sent to the configured semantic provider. OpenAI Responses, Gemini Interactions, and Grok Responses requests disable provider-side response storage where supported.
-- Audit history stores the full response text, selected source, analysis result, and available runtime metadata locally. Older entries retain their saved analysis, but response text that was never stored cannot be recovered; loading them leaves the response input empty. Original-prompt context is cleared when loading an entry.
+- Audit history stores the full response text, selected source, analysis result, and available runtime metadata locally. Restored results are normalized through the same validator as provider results. Since original-prompt context is not stored, context-dependent scores reset to zero and their findings are removed; re-audit with the original prompt to recompute them. Response text that was never stored in older entries cannot be recovered; loading them leaves the response input empty. Original-prompt context is cleared when loading an entry.
 
 ## Source model lenses
 

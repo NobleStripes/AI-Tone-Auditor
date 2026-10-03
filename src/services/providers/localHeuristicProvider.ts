@@ -109,7 +109,7 @@ export const localHeuristicProvider: AIProvider = {
       summary: findings.length > 0
         ? 'Local heuristic detected multiple known trigger phrases. Use provider output for deeper semantic reasoning when available.'
         : 'No direct trigger phrases detected by local heuristic rules.',
-      overallTone: findings.length > 4 ? 'High-risk scripted alignment tone' : findings.length > 1 ? 'Mixed tone with potential friction' : 'Neutral/undetermined',
+      overallTone: findings.length > 4 ? 'Many matched phrase markers; tone undetermined' : findings.length > 1 ? 'Mixed tone with potential friction' : 'Neutral/undetermined',
       recommendations: [
         {
           title: 'Increase Directness',
@@ -138,24 +138,17 @@ export const localHeuristicProvider: AIProvider = {
       contextAnalysis: {
         score: contextScore,
         feedback: contextScore < LOW_CONTEXT_THRESHOLD
-          ? 'Input may be under-specified; low context increases generic safety defaults.'
-          : 'Input context is sufficient for specific recommendations.',
+          ? 'Short response sample. Response length alone does not establish whether the original request was sufficiently specified.'
+          : 'Longer response sample. Response length alone does not establish context adequacy or explain the wording used.',
         heatmap: [
           {
             text: text.slice(0, 240),
             density: contextScore < LOW_CONTEXT_THRESHOLD ? 'low' : 'medium',
-            explanation: contextScore < LOW_CONTEXT_THRESHOLD ? 'Short or underspecified prompts force broad safety assumptions.' : undefined,
-            suggestion: contextScore < LOW_CONTEXT_THRESHOLD ? 'Add concrete intent, constraints, and expected output format.' : undefined,
+            explanation: contextScore < LOW_CONTEXT_THRESHOLD ? 'Only response length is measured here; the original prompt and reasons for safety language are not available.' : undefined,
+            suggestion: contextScore < LOW_CONTEXT_THRESHOLD ? 'Supply the original prompt locally for context-dependent comparison.' : undefined,
           },
         ],
       },
-      euphemisms: [
-        {
-          term: 'Safety guidelines',
-          translation: 'Policy constraint preventing direct completion',
-          context: 'Used as a broad refusal rationale when specifics are omitted.',
-        },
-      ],
     };
   },
 };

@@ -1,5 +1,6 @@
 import type { AnalysisResult } from './analysis';
 import { ANALYSIS_SOURCES, type AnalysisSource, type ProviderRuntimeMeta } from './provider';
+import { validateAnalysisResult } from '../services/validation/analysisValidator';
 
 export interface HistoryEntry {
   id: string;
@@ -19,8 +20,8 @@ export function parseAuditHistory(stored: string | null): HistoryEntry[] {
       if (!entry || typeof entry !== 'object') return [];
       const raw = entry as Record<string, unknown>;
       if (typeof raw.id !== 'string' || typeof raw.title !== 'string' || typeof raw.timestamp !== 'number' || !Number.isFinite(raw.timestamp)) return [];
-      const data = raw.data as AnalysisResult | undefined;
-      if (!data || typeof data !== 'object' || !data.scores || !Array.isArray(data.findings) || !data.personalization || !data.contextAnalysis || !Array.isArray(data.recommendations) || !Array.isArray(data.euphemisms)) return [];
+      if (!raw.data || typeof raw.data !== 'object' || Array.isArray(raw.data)) return [];
+      const data = validateAnalysisResult(raw.data);
       const meta = raw.meta as ProviderRuntimeMeta | undefined;
       const validMeta = meta && ['openai', 'anthropic', 'gemini', 'grok', 'local'].includes(meta.providerId)
         && typeof meta.providerLabel === 'string' && typeof meta.model === 'string' && typeof meta.usedFallback === 'boolean';
