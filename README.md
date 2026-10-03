@@ -42,7 +42,7 @@ This application runs as a standard web app with API-based provider integration.
 
 ### Prerequisites
 
-- Node.js (v18 or later)
+- Node.js 24 LTS
 - npm or yarn
 
 ### Local Development
@@ -83,6 +83,22 @@ Deploy using your preferred static hosting or web platform. Typical flow:
    ```
 2. Publish the generated `dist/` directory to your host.
 3. Configure required environment variables for your deployment environment.
+
+## Continuous Integration
+
+The GitHub Actions workflow in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on pull requests, pushes to `main`, and manual dispatch from the Actions tab. The `validate` job uses Ubuntu and Node.js 24 with npm caching, read-only repository permissions, and a 15-minute timeout. Superseded runs for the same pull request or ref are cancelled.
+
+Checks run in order and stop on failure:
+
+```bash
+npm ci
+npm run lint
+npm test
+npm run test:parity
+npm run build
+```
+
+Type checking covers both frontend and server code. Provider tests use mocked network calls, so CI requires no provider API keys or running development server. This workflow validates the application; it does not deploy it.
 
 ## Tech Stack
 
