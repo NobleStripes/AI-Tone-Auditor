@@ -22,9 +22,10 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts';
 import { analyzeTone, getLastAnalysisRuntimeMeta, getProviderTelemetrySnapshot } from './services/analyzeClient';
-import { TONE_CATEGORIES, TRIGGER_WORDS } from './constants';
+import { RISK_CATEGORIES, QUALITY_CATEGORIES, TRIGGER_WORDS } from './constants';
 import { cn } from './lib/utils';
 import type { AnalysisResult } from './types/analysis';
+import { parseAuditHistory, type HistoryEntry } from './types/history';
 import { ANALYSIS_SOURCES, type AnalysisSource, type ProviderRuntimeMeta } from './types/provider';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
@@ -51,10 +52,10 @@ export default function App() {
   const [auditContext, setAuditContext] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [history, setHistory] = useState<any[]>(() => {
+  const [history, setHistory] = useState<HistoryEntry[]>(() => {
     try {
       const stored = localStorage.getItem('audit-history');
-      return stored ? (JSON.parse(stored) as any[]) : [];
+      return parseAuditHistory(stored);
     } catch {
       return [];
     }
@@ -88,16 +89,19 @@ export default function App() {
       setRuntimeMeta(meta);
       setTelemetry(getProviderTelemetrySnapshot());
       
-      const newEntry = {
+      const newEntry: HistoryEntry = {
         id: Math.random().toString(36).substr(2, 9),
         title: textToAnalyze.slice(0, 30) + '...',
         timestamp: Date.now(),
         sourceModel,
+        responseText: textToAnalyze,
         data,
         meta,
       };
       setHistory(prev => {
-        if (prev.length > 0 && prev[0].title === newEntry.title) return prev;
+        if (prev.length > 0 && prev[0].responseText === newEntry.responseText && prev[0].sourceModel === newEntry.sourceModel) {
+          return [newEntry, ...prev.slice(1)];
+        }
         return [newEntry, ...prev].slice(0, 50);
       });
     } catch (error) {
@@ -138,22 +142,11 @@ export default function App() {
 
   const chartData = useMemo(() => {
     if (!result) return [];
-    return [
-      { subject: 'Gaslighting', A: result.scores.gaslighting, fullMark: 100 },
-      { subject: 'Infantilizing', A: result.scores.infantilizing, fullMark: 100 },
-      { subject: 'De-escalation', A: result.scores.de_escalation, fullMark: 100 },
-      { subject: 'Karen Trigger', A: result.scores.karen_trigger, fullMark: 100 },
-      { subject: 'Hedging', A: result.scores.hedging, fullMark: 100 },
-      { subject: 'Dismissive', A: result.scores.dismissive, fullMark: 100 },
-      { subject: 'Sycophancy', A: result.scores.sycophancy, fullMark: 100 },
-      { subject: 'Over-apologizing', A: result.scores.over_apologizing, fullMark: 100 },
-      { subject: 'Repetitive Filler', A: result.scores.repetitive_filler, fullMark: 100 },
-      { subject: 'Unsupported Certainty', A: result.scores.unsupported_certainty, fullMark: 100 },
-      { subject: 'Grounding Avoidance', A: result.scores.grounding_avoidance, fullMark: 100 },
-      { subject: 'Refusal Quality', A: result.scores.refusal_quality, fullMark: 100 },
-      { subject: 'Needless Escalation', A: result.scores.needless_escalation, fullMark: 100 },
-      { subject: 'Moralizing', A: result.scores.unsolicited_moralizing ?? 0, fullMark: 100 },
-    ];
+    return RISK_CATEGORIES.map((category) => ({
+      subject: 'chartLabel' in category ? category.chartLabel : category.label,
+      A: result.scores[category.id] ?? 0,
+      fullMark: 100,
+    }));
   }, [result]);
 
   return (
@@ -170,9 +163,9 @@ export default function App() {
             const item = history.find(h => h.id === id);
             if (item) {
               setResult(item.data);
-              setInputText(item.title); // Simplified
-              setSourceModel(ANALYSIS_SOURCES.includes(item.sourceModel) ? item.sourceModel : 'unknown');
-              setAuditContext(item.auditContext || '');
+              setInputText(item.responseText);
+              setSourceModel(item.sourceModel);
+              setAuditContext('');
               if (item.meta) {
                 setRuntimeMeta(item.meta);
               }
@@ -422,7 +415,6 @@ export default function App() {
                   <div className="lg:col-span-5 space-y-6">
                     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 md:p-6">
                       <h3 className="text-xs font-mono uppercase tracking-widest text-zinc-500 mb-6">Tone Distribution Profile</h3>
-                      <p className="-mt-4 mb-4 text-[10px] text-zinc-600">Higher risk scores indicate more concern; higher Refusal Quality indicates a better refusal. No refusal is N/A.</p>
                       <div className="h-48 sm:h-64 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
@@ -440,20 +432,15 @@ export default function App() {
                       </div>
                       
                       <div className="mt-6 space-y-3">
-                        {Object.entries(TONE_CATEGORIES).map(([key, cat]) => {
-                          const score = result.scores[cat.id as keyof typeof result.scores] || 0;
-                          const isRefusalQuality = cat.id === 'refusal_quality';
-                          const scoreColor = isRefusalQuality
-                            ? score === 0 ? 'text-zinc-600' : score > 70 ? 'text-emerald-500' : score > 40 ? 'text-amber-500' : 'text-red-500'
-                            : score > 70 ? 'text-red-500' : score > 40 ? 'text-amber-500' : 'text-emerald-500';
-                          const barColor = isRefusalQuality
-                            ? score === 0 ? 'bg-zinc-700' : score > 70 ? 'bg-emerald-500' : score > 40 ? 'bg-amber-500' : 'bg-red-500'
-                            : score > 70 ? 'bg-red-500' : score > 40 ? 'bg-amber-500' : 'bg-emerald-500';
+                        {RISK_CATEGORIES.map((cat) => {
+                          const score = result.scores[cat.id] ?? 0;
+                          const scoreColor = score > 70 ? 'text-red-500' : score > 40 ? 'text-amber-500' : 'text-emerald-500';
+                          const barColor = score > 70 ? 'bg-red-500' : score > 40 ? 'bg-amber-500' : 'bg-emerald-500';
                           return (
-                            <div key={key} className="space-y-1">
+                            <div key={cat.id} className="space-y-1">
                               <div className="flex justify-between text-[10px] font-mono uppercase">
                                 <span className="text-zinc-500">{cat.label}</span>
-                                <span className={scoreColor}>{isRefusalQuality && score === 0 ? 'N/A' : `${score}%`}</span>
+                                <span className={scoreColor}>{`${score}%`}</span>
                               </div>
                               <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
                                 <motion.div 
@@ -467,6 +454,19 @@ export default function App() {
                         })}
                       </div>
                     </div>
+
+                    <section aria-label="Response quality" className="border-t border-zinc-800 pt-4 space-y-3">
+                      {QUALITY_CATEGORIES.map((category) => {
+                        const score = result.scores[category.id] ?? 0;
+                        const color = score === 0 ? 'text-zinc-600' : score > 70 ? 'text-emerald-500' : score > 40 ? 'text-amber-500' : 'text-red-500';
+                        return (
+                          <div key={category.id} className="flex items-center justify-between gap-4">
+                            <h3 className="text-xs font-mono uppercase tracking-widest text-zinc-500">{category.label}</h3>
+                            <span className={cn('text-sm font-mono', color)}>{score === 0 ? 'N/A' : `${score}/100`}</span>
+                          </div>
+                        );
+                      })}
+                    </section>
 
                     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 md:p-6">
                       <h3 className="text-xs font-mono uppercase tracking-widest text-zinc-500 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">

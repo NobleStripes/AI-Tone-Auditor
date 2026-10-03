@@ -1,3 +1,5 @@
+import { createEmptyScores } from '../constants';
+
 export type SeverityLevel = 'low' | 'medium' | 'high';
 export type CalibrationLevel = 'More' | 'Default' | 'Less';
 export type DensityLevel = 'low' | 'medium' | 'high';
@@ -52,22 +54,7 @@ export interface AnalysisResult {
 
 export function emptyAnalysisResult(): AnalysisResult {
   return {
-    scores: {
-      gaslighting: 0,
-      infantilizing: 0,
-      de_escalation: 0,
-      karen_trigger: 0,
-      hedging: 0,
-      dismissive: 0,
-      sycophancy: 0,
-      over_apologizing: 0,
-      repetitive_filler: 0,
-      unsupported_certainty: 0,
-      grounding_avoidance: 0,
-      refusal_quality: 0,
-      needless_escalation: 0,
-      unsolicited_moralizing: 0,
-    },
+    scores: createEmptyScores(),
     findings: [],
     summary: 'No analysis available.',
     overallTone: 'Unknown',

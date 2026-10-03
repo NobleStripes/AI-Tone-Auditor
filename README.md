@@ -124,11 +124,12 @@ The tone scores also flag three patterns when supported by the wording:
 These are probabilistic language signals, not proof of intent or inaccuracy. Review the quoted examples and surrounding context before drawing conclusions.
 
 - **Unsupported Certainty**: not currently scored because the original prompt stays local and factual claims are not independently verified. Missing citations alone do not prove a check was skipped.
-- **Grounding Avoidance**: scored only when the prompt explicitly requests citations or use of supplied source material.
-- **Refusal Quality**: a positive score shown only when the response actually refuses or partially declines; higher means the boundary is specific, proportionate, and offers a useful allowed alternative.
+- **Grounding Avoidance**: a narrow visible-citation check, scored only when the prompt explicitly requests citations or use of supplied source material. Requests such as "search the web," "look this up," or "verify the current information" alone are not detected. A URL or citation marker satisfies the presence check even if unrelated; the tool does not verify relevance, source use, retrieval, or factual support.
+- **Refusal Quality**: a positive score displayed separately from the risk radar. Local rules recognize direct first-person task declines, look for a reason in the refusal sentence, and check for alternative wording. Higher scores indicate more of these visible signals, not a verified judgment that the refusal was proportionate or appropriate. No detected refusal or missing prompt context is shown as N/A. Paraphrased refusals and separate explanation sentences may be missed.
 - **Needless Escalation**: scored only when a neutral prompt receives irrelevant calming, moralizing, or tone-policing language.
 - Prompt-comparison scores stay at zero when no original prompt is provided. Local comparison uses conservative visible-text rules; it cannot verify external sources or reliably infer intent and may miss nuance.
 - The optional original prompt/context stays in the app/server comparison path and is not sent to third-party semantic providers or saved in local audit history. Local comparison uses conservative visible-text rules and may miss nuance. The response text is still sent to the configured semantic provider. OpenAI Responses, Gemini Interactions, and Grok Responses requests disable provider-side response storage where supported.
+- Audit history stores the full response text, selected source, analysis result, and available runtime metadata locally. Older entries retain their saved analysis, but response text that was never stored cannot be recovered; loading them leaves the response input empty. Original-prompt context is cleared when loading an entry.
 
 ## Source model lenses
 
@@ -141,6 +142,8 @@ Source-specific prompt-comparison lenses require original-prompt context. That c
 - **Paternalistic Redirection** and **Refusal Overreach** remain separate, deferred categories. This lens does not decide whether a refusal was warranted.
 
 Use trigger `weight` in `src/constants.ts` to calibrate detection precision.
+
+`TONE_CATEGORIES` in `src/constants.ts` is the category registry: score IDs, labels, risk/quality direction, and context requirements generate score defaults, validation keys, schema properties, local weight initialization, and chart/list data. Provider prompts analyze response text only; context-dependent comparison is owned by the local comparison service.
 
 | Weight range | When to use | Typical examples |
 | --- | --- | --- |

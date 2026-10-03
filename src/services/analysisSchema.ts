@@ -1,4 +1,4 @@
-import { BASE_STYLES } from '../constants';
+import { BASE_STYLES, SCORE_KEYS } from '../constants';
 
 export const ANALYSIS_RESULT_JSON_SCHEMA = {
   type: 'object',
@@ -17,38 +17,8 @@ export const ANALYSIS_RESULT_JSON_SCHEMA = {
     scores: {
       type: 'object',
       additionalProperties: false,
-      required: [
-        'gaslighting',
-        'infantilizing',
-        'de_escalation',
-        'karen_trigger',
-        'hedging',
-        'dismissive',
-        'sycophancy',
-        'over_apologizing',
-        'repetitive_filler',
-        'unsupported_certainty',
-        'grounding_avoidance',
-        'refusal_quality',
-        'needless_escalation',
-        'unsolicited_moralizing',
-      ],
-      properties: {
-        gaslighting: { type: 'number' },
-        infantilizing: { type: 'number' },
-        de_escalation: { type: 'number' },
-        karen_trigger: { type: 'number' },
-        hedging: { type: 'number' },
-        dismissive: { type: 'number' },
-        sycophancy: { type: 'number' },
-        over_apologizing: { type: 'number' },
-        repetitive_filler: { type: 'number' },
-        unsupported_certainty: { type: 'number' },
-        grounding_avoidance: { type: 'number' },
-        refusal_quality: { type: 'number' },
-        needless_escalation: { type: 'number' },
-        unsolicited_moralizing: { type: 'number' },
-      },
+      required: SCORE_KEYS,
+      properties: Object.fromEntries(SCORE_KEYS.map((id) => [id, { type: 'number' }])),
     },
     findings: {
       type: 'array',

@@ -99,6 +99,33 @@ describe('Claude unsolicited moralizing', () => {
 });
 
 describe('local prompt comparison', () => {
+  test.each([
+    "The parser can't read that token because it is invalid.",
+    "I can't believe how small the file is. Here is the summary.",
+    'The error says "I cannot provide a value". Initialize the variable.',
+    '> I cannot help with that.',
+    'If I cannot help with that, I will explain why.',
+  ])('does not confuse inability, reported text or hypotheticals with a refusal: %s', (response) => {
+    const result = applyLocalPromptComparison(emptyAnalysisResult(), response, 'Explain this error.');
+    expect(result.scores.refusal_quality).toBe(0);
+    expect(result.findings).toEqual([]);
+  });
+
+  test('does not count an unrelated because as a refusal explanation', () => {
+    const result = applyLocalPromptComparison(emptyAnalysisResult(), "I can't help with that. The sky is blue because of scattering.", 'Explain this request.');
+    expect(result.scores.refusal_quality).toBe(20);
+  });
+
+  test.each(['Do not cite sources.', 'Summarize the phrase "cite sources".', 'Search the web for the latest rate.', 'Look this up and verify the current information.'])('keeps the grounding detector narrow: %s', (prompt) => {
+    const result = applyLocalPromptComparison(emptyAnalysisResult(), 'The rate is 17%.', prompt);
+    expect(result.scores.grounding_avoidance).toBe(0);
+  });
+
+  test('documents the citation-presence limitation: an unrelated URL is not verified for relevance', () => {
+    const result = applyLocalPromptComparison(emptyAnalysisResult(), 'The rate is 17%. Visit https://example.com/unrelated.', 'Answer and cite sources.');
+    expect(result.scores.grounding_avoidance).toBe(0);
+  });
+
   test('does not score comparative categories without an original prompt', () => {
     const result = applyLocalPromptComparison(emptyAnalysisResult(), 'I cannot help with that.', '');
 

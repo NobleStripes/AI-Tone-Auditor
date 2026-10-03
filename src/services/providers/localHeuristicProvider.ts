@@ -1,4 +1,4 @@
-import { TRIGGER_WORDS, type TriggerWord } from '../../constants';
+import { TRIGGER_WORDS, createEmptyScores, type ScoreId, type TriggerWord } from '../../constants';
 import { emptyAnalysisResult, type AnalysisResult } from '../../types/analysis';
 import type { AIProvider, AnalyzeToneInput } from '../../types/provider';
 
@@ -42,27 +42,16 @@ function collectMatchedTriggers(text: string): Array<TriggerWord & { inferredWei
     }));
 }
 
-function mapCategoryToScoreId(category: TriggerWord['category']): keyof AnalysisResult['scores'] {
-  switch (category) {
-    case 'Gaslighting':
-      return 'gaslighting';
-    case 'Infantilizing':
-      return 'infantilizing';
-    case 'Hedging':
-      return 'hedging';
-    case 'Dismissive':
-      return 'dismissive';
-    case 'Sycophancy':
-      return 'sycophancy';
-    case 'Over-apologizing':
-      return 'over_apologizing';
-    case 'Repetitive Filler':
-      return 'repetitive_filler';
-    case 'Karen Trigger':
-    default:
-      return 'karen_trigger';
-  }
-}
+const TRIGGER_SCORE_IDS = {
+  Gaslighting: 'gaslighting',
+  Infantilizing: 'infantilizing',
+  Hedging: 'hedging',
+  Dismissive: 'dismissive',
+  Sycophancy: 'sycophancy',
+  'Over-apologizing': 'over_apologizing',
+  'Repetitive Filler': 'repetitive_filler',
+  'Karen Trigger': 'karen_trigger',
+} satisfies Record<TriggerWord['category'], ScoreId>;
 
 export const localHeuristicProvider: AIProvider = {
   id: 'local',
@@ -73,25 +62,10 @@ export const localHeuristicProvider: AIProvider = {
     const baseline = emptyAnalysisResult();
     const matchedTriggers = collectMatchedTriggers(text);
 
-    const groupedWeights: Record<keyof AnalysisResult['scores'], number> = {
-      gaslighting: 0,
-      infantilizing: 0,
-      de_escalation: 0,
-      karen_trigger: 0,
-      hedging: 0,
-      dismissive: 0,
-      sycophancy: 0,
-      over_apologizing: 0,
-      repetitive_filler: 0,
-      unsupported_certainty: 0,
-      grounding_avoidance: 0,
-      refusal_quality: 0,
-      needless_escalation: 0,
-      unsolicited_moralizing: 0,
-    };
+    const groupedWeights = createEmptyScores();
 
     for (const trigger of matchedTriggers) {
-      const scoreId = mapCategoryToScoreId(trigger.category);
+      const scoreId = TRIGGER_SCORE_IDS[trigger.category];
       groupedWeights[scoreId] += trigger.inferredWeight;
     }
 

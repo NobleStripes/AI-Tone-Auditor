@@ -1,14 +1,7 @@
 import { History, Trash2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
-
-interface HistoryEntry {
-  id: string;
-  title: string;
-  timestamp: number;
-  data: unknown;
-  meta?: unknown;
-}
+import type { HistoryEntry } from '../types/history';
 
 interface SidebarProps {
   history: HistoryEntry[];

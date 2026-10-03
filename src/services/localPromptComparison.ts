@@ -3,8 +3,8 @@ import type { AnalysisSource } from '../types/provider';
 
 const SOURCE_REQUEST_PATTERN = /\b(?:cite (?:your )?sources?|include citations?|provide (?:sources|references)|with sources|based on the (?:provided|attached|supplied) (?:source|document|evidence)|use the (?:provided|attached|supplied) (?:source|document|evidence))\b/i;
 const VISIBLE_CITATION_PATTERN = /https?:\/\/|www\.|\[\^?\d+\]|\[[^\]]+\]\(https?:\/\/|\b(?:source|reference)\s*\d+\b/i;
-const REFUSAL_PATTERN = /\b(?:can't|cannot|won't|will not|unable to|not able to|must decline|have to decline|can't assist|can't help)\b/i;
-const REFUSAL_REASON_PATTERN = /\b(?:because|due to|so I can't|I can't provide|I cannot provide|I can't help with|I cannot help with|I can't assist with|I cannot assist with)\b/i;
+const REFUSAL_PATTERN = /^(?:(?:sorry|i'm sorry)[,;:]?\s+(?:but\s+)?)?(?:i (?:can't|cannot|won't|will not|am unable to|am not able to) (?:help|assist|provide|share|comply|fulfill|explain|give|perform|access)\b|i (?:must|have to) decline\b)/i;
+const REFUSAL_REASON_PATTERN = /\b(?:because|due to)\s+\S/i;
 const ALTERNATIVE_PATTERN = /\b(?:instead|I can help with|I can provide|I can explain|a safer alternative|safe alternative|you could|try this)\b/i;
 const TONE_POLICING_PATTERN = /\b(?:calm down|take a deep breath|let's keep this (?:professional|civil)|you need to be respectful|i understand you're (?:frustrated|upset|angry)|let's take a step back)\b/i;
 const DISTRESS_PATTERN = /\b(?:frustrated|upset|angry|furious|scared|afraid|panicking|distressed|urgent|emergency|threatened|hurt)\b/i;
@@ -85,7 +85,8 @@ export function applyLocalPromptComparison(
     }
   }
 
-  if (SOURCE_REQUEST_PATTERN.test(prompt) && !VISIBLE_CITATION_PATTERN.test(responseText)) {
+  const sourceRequest = withoutQuotedText(prompt).replace(NEGATED_DISCUSSION_PATTERN, ' ');
+  if (SOURCE_REQUEST_PATTERN.test(sourceRequest) && !VISIBLE_CITATION_PATTERN.test(responseText)) {
     scores.grounding_avoidance = 75;
     addFinding(
       result,
@@ -96,8 +97,9 @@ export function applyLocalPromptComparison(
     );
   }
 
-  if (REFUSAL_PATTERN.test(responseText)) {
-    const explainsLimit = REFUSAL_REASON_PATTERN.test(responseText);
+  const refusalSentences = (withoutQuotedText(responseText).match(/[^.!?\n]+[.!?]?/g) ?? []).filter((sentence) => REFUSAL_PATTERN.test(sentence.trim()));
+  if (refusalSentences.length > 0) {
+    const explainsLimit = refusalSentences.some((sentence) => REFUSAL_REASON_PATTERN.test(sentence));
     const offersAlternative = ALTERNATIVE_PATTERN.test(responseText);
     scores.refusal_quality = 20 + (explainsLimit ? 35 : 0) + (offersAlternative ? 45 : 0);
 

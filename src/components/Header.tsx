@@ -1,4 +1,5 @@
 import { ShieldAlert, Menu } from 'lucide-react';
+import { version } from '../../package.json';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -23,7 +24,7 @@ export function Header({ onToggleSidebar, latencyMs }: HeaderProps) {
           <h1 className="text-sm md:text-lg font-bold text-zinc-100 tracking-tight flex items-center gap-2">
             AI TONE AUDITOR{' '}
             <span className="hidden sm:inline text-[10px] bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-400 font-mono">
-              v1.0.2
+              v{version}
             </span>
           </h1>
           <p className="text-[9px] md:text-xs text-zinc-500 font-mono uppercase tracking-widest">

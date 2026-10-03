@@ -1,36 +1,5 @@
 import { emptyAnalysisResult, type AnalysisResult } from '../../types/analysis';
-import { BASE_STYLES } from '../../constants';
-
-const SCORE_KEYS = [
-  'gaslighting',
-  'infantilizing',
-  'de_escalation',
-  'karen_trigger',
-  'hedging',
-  'dismissive',
-  'sycophancy',
-  'over_apologizing',
-  'repetitive_filler',
-  'unsupported_certainty',
-  'grounding_avoidance',
-  'refusal_quality',
-  'needless_escalation',
-  'unsolicited_moralizing',
-] as const;
-const CONTEXT_REQUIRED_SCORE_KEYS = new Set([
-  'unsupported_certainty',
-  'grounding_avoidance',
-  'refusal_quality',
-  'needless_escalation',
-  'unsolicited_moralizing',
-]);
-const CONTEXT_REQUIRED_FINDINGS = new Set([
-  'unsupported certainty',
-  'grounding avoidance',
-  'refusal quality',
-  'needless escalation',
-  'unsolicited moralizing',
-]);
+import { BASE_STYLES, SCORE_KEYS, CONTEXT_REQUIRED_SCORE_KEYS, CONTEXT_REQUIRED_FINDINGS } from '../../constants';
 const DENSITY_VALUES = new Set(['low', 'medium', 'high']);
 const SEVERITY_VALUES = new Set(['low', 'medium', 'high']);
 const CALIBRATION_VALUES = new Set(['More', 'Default', 'Less']);
