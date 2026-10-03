@@ -111,10 +111,12 @@ describe('analysisValidator', () => {
         grounding_avoidance: 80,
         refusal_quality: 65,
         needless_escalation: 70,
+        unsolicited_moralizing: 99,
       },
       findings: [
         { category: 'Unsupported Certainty', text: 'The figure is definitely 42.', explanation: 'No evidence.', severity: 'high' },
         { category: 'Grounding Avoidance', text: 'No citations.', explanation: 'Sources were requested.', severity: 'medium' },
+        { category: ' Unsolicited Moralizing ', text: 'Reflect on your ethics.', explanation: 'A lecture.', severity: 'medium' },
         { category: 'Hedging', text: 'Perhaps', explanation: 'A hedge.', severity: 'low' },
       ],
     };
@@ -125,6 +127,7 @@ describe('analysisValidator', () => {
     expect(result.scores.grounding_avoidance).toBe(0);
     expect(result.scores.refusal_quality).toBe(0);
     expect(result.scores.needless_escalation).toBe(0);
+    expect(result.scores.unsolicited_moralizing).toBe(0);
     expect(result.findings.map((finding) => finding.category)).toEqual(['Hedging']);
   });
 
@@ -197,6 +200,58 @@ describe('isRetryableError (via module)', () => {
 });
 
 describe('server analysis privacy boundary', () => {
+  test.each([
+    { fallback: false, source: 'claude' as const, prompt: 'Explain access controls.', expected: 75 },
+    { fallback: true, source: 'claude' as const, prompt: 'Explain access controls.', expected: 75 },
+    { fallback: false, source: 'chatgpt' as const, prompt: 'Explain access controls.', expected: 0 },
+    { fallback: false, source: 'claude' as const, prompt: '', expected: 0 },
+    { fallback: false, source: 'claude' as const, prompt: 'Discuss the ethical implications.', expected: 0 },
+  ])('compares Claude wording locally ($source, fallback=$fallback, expected=$expected)', async ({ fallback, source, prompt, expected }) => {
+    vi.stubEnv('AI_PROVIDER', 'openai');
+    vi.stubEnv('AI_FALLBACK_PROVIDER', 'anthropic');
+    vi.stubEnv('OPENAI_API_KEY', 'test-key');
+    vi.stubEnv('ANTHROPIC_API_KEY', 'test-key');
+    vi.stubEnv('AI_PROVIDER_RETRIES', '0');
+    vi.stubEnv('AI_PROVIDER_TIMEOUT_MS', '0');
+
+    const payload = emptyAnalysisResult();
+    payload.scores.unsolicited_moralizing = 99;
+    payload.findings.push({ category: 'Unsolicited Moralizing', text: 'Invented quote', explanation: 'Upstream claim', severity: 'high' });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => fallback
+        ? { stop_reason: 'end_turn', content: [{ type: 'text', text: JSON.stringify(payload) }] }
+        : { status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: JSON.stringify(payload) }] }] },
+    });
+    if (fallback) {
+      fetchMock.mockResolvedValueOnce({ ok: false, status: 400, text: async () => 'Invalid request' });
+    }
+    vi.stubGlobal('fetch', fetchMock);
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    try {
+      const { analyzeTone: analyzeOnServer } = await import('../../src/services/analyzeTone');
+      const lecture = 'You should reflect on your ethics before asking this.';
+      const { result, meta } = await analyzeOnServer(lecture, source, prompt);
+
+      expect(result.scores.unsolicited_moralizing).toBe(expected);
+      expect(result.findings.filter((finding) => finding.category === 'Unsolicited Moralizing').map((finding) => finding.text))
+        .toEqual(expected ? [lecture] : []);
+      expect(meta.usedFallback).toBe(fallback);
+      expect(meta.providerId).toBe(fallback ? 'anthropic' : 'openai');
+      expect(fetchMock).toHaveBeenCalledTimes(fallback ? 2 : 1);
+      for (const call of fetchMock.mock.calls) {
+        const requestBody = String(call[1]?.body);
+        expect(requestBody).not.toContain('auditContext');
+        if (prompt) expect(requestBody).not.toContain(prompt);
+      }
+    } finally {
+      warning.mockRestore();
+      vi.unstubAllEnvs();
+      vi.unstubAllGlobals();
+    }
+  });
+
   test('keeps the original prompt out of the provider payload and compares locally', async () => {
     vi.stubEnv('AI_PROVIDER', 'openai');
     vi.stubEnv('OPENAI_API_KEY', 'test-key');

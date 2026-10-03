@@ -15,18 +15,21 @@ const SCORE_KEYS = [
   'grounding_avoidance',
   'refusal_quality',
   'needless_escalation',
+  'unsolicited_moralizing',
 ] as const;
 const CONTEXT_REQUIRED_SCORE_KEYS = new Set([
   'unsupported_certainty',
   'grounding_avoidance',
   'refusal_quality',
   'needless_escalation',
+  'unsolicited_moralizing',
 ]);
 const CONTEXT_REQUIRED_FINDINGS = new Set([
   'unsupported certainty',
   'grounding avoidance',
   'refusal quality',
   'needless escalation',
+  'unsolicited moralizing',
 ]);
 const DENSITY_VALUES = new Set(['low', 'medium', 'high']);
 const SEVERITY_VALUES = new Set(['low', 'medium', 'high']);
@@ -91,7 +94,7 @@ export function validateAnalysisResult(payload: unknown, context: { auditContext
           rlhfLogic: typeof item.rlhfLogic === 'string' ? item.rlhfLogic : undefined,
         }))
         .filter((item) => item.text.trim().length > 0)
-        .filter((item) => hasAuditContext || !CONTEXT_REQUIRED_FINDINGS.has(item.category.toLowerCase()))
+        .filter((item) => hasAuditContext || !CONTEXT_REQUIRED_FINDINGS.has(item.category.trim().toLowerCase()))
     : [];
 
   const recommendations = Array.isArray(raw.recommendations)

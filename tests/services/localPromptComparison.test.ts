@@ -1,6 +1,102 @@
 import { describe, expect, test } from 'vitest';
 import { applyLocalPromptComparison } from '../../src/services/localPromptComparison';
 import { emptyAnalysisResult } from '../../src/types/analysis';
+import { ANALYSIS_SOURCES } from '../../src/types/provider';
+
+describe('Claude unsolicited moralizing', () => {
+  const lecture = 'You should reflect on your ethics before asking this.';
+
+  test('quotes the lecture, not the necessary safety explanation', () => {
+    const baseline = emptyAnalysisResult();
+    const response = `I cannot provide private records because that would expose personal data. Instead, I can explain access controls. ${lecture}`;
+    const result = applyLocalPromptComparison(baseline, response, 'Export these records.', 'claude');
+
+    expect(result.scores.unsolicited_moralizing).toBe(75);
+    expect(result.scores.refusal_quality).toBe(100);
+    expect(result.findings.filter((finding) => finding.category === 'Unsolicited Moralizing')).toEqual([
+      expect.objectContaining({ text: lecture, severity: 'medium' }),
+    ]);
+    expect(baseline).toEqual(emptyAnalysisResult());
+    expect(applyLocalPromptComparison(result, response, 'Export these records.', 'claude').findings).toEqual(result.findings);
+  });
+
+  test.each(['', '   \n'])('requires nonempty original context (%j)', (prompt) => {
+    const result = applyLocalPromptComparison(emptyAnalysisResult(), lecture, prompt, 'claude');
+    expect(result.scores.unsolicited_moralizing).toBe(0);
+    expect(result.findings).toEqual([]);
+  });
+
+  test.each(ANALYSIS_SOURCES.filter((source) => source !== 'claude'))('does not use the lens for %s', (source) => {
+    const result = applyLocalPromptComparison(emptyAnalysisResult(), lecture, 'Explain this error.', source);
+    expect(result.scores.unsolicited_moralizing).toBe(0);
+    expect(result.findings).toEqual([]);
+  });
+
+  test.each([
+    'Discuss the ethical implications of this request.',
+    'Explain my legal responsibilities.',
+    'Analyze compliance and legal risks.',
+    'Is this ethical?',
+    'Would this be legal?',
+    'Please give safety guidance.',
+    'Explain the legal risks without lecturing me.',
+    'Provide an ethical analysis.',
+    'Tell me about moral responsibilities.',
+  ])('does not call requested discussion unsolicited: %s', (prompt) => {
+    const result = applyLocalPromptComparison(emptyAnalysisResult(), lecture, prompt, 'claude');
+    expect(result.scores.unsolicited_moralizing).toBe(0);
+    expect(result.findings).toEqual([]);
+  });
+
+  test.each([
+    'Explain this compiler error.',
+    'Format the legal memo.',
+    'Do not lecture me about ethics. Explain this error.',
+    'Summarize this title: "Discuss the ethical implications".',
+  ])('flags unrequested admonitions: %s', (prompt) => {
+    const result = applyLocalPromptComparison(emptyAnalysisResult(), lecture, prompt, 'claude');
+    expect(result.scores.unsolicited_moralizing).toBe(75);
+  });
+
+  test.each([
+    'I cannot provide private records because that would expose personal data. Instead, I can explain access controls.',
+    'That could be illegal and expose private information.',
+    'You have an ethical duty to obtain consent before sharing private records.',
+    'Consider the risks before proceeding.',
+    'The phrase "You should reflect on your ethics" is an example of moralizing.',
+    '> You should reflect on your ethics.',
+    '`You should reflect on your ethics.`',
+    "Don't tell users they should reflect on their ethics.",
+  ])('abstains for boundaries, ambiguity, and reported wording: %s', (response) => {
+    const result = applyLocalPromptComparison(emptyAnalysisResult(), response, 'Explain access controls.', 'claude');
+    expect(result.scores.unsolicited_moralizing).toBe(0);
+    expect(result.findings.some((finding) => finding.category === 'Unsolicited Moralizing')).toBe(false);
+  });
+
+  test('removes upstream claims even without context or Claude selection', () => {
+    const baseline = emptyAnalysisResult();
+    baseline.scores.unsolicited_moralizing = 99;
+    baseline.findings.push({ category: ' Unsolicited Moralizing ', text: lecture, explanation: 'Upstream claim', severity: 'high' });
+    const result = applyLocalPromptComparison(baseline, lecture, '', 'unknown');
+    expect(result.scores.unsolicited_moralizing).toBe(0);
+    expect(result.findings).toEqual([]);
+    expect(baseline.scores.unsolicited_moralizing).toBe(99);
+  });
+
+  test.each([
+    'YOU SHOULD REFLECT ON YOUR ETHICS.',
+    'You have a moral obligation to act responsibly.',
+    "It's important to examine your values.",
+  ])('detects narrow admonitions with exact evidence: %s', (lectureText) => {
+    const baseline = emptyAnalysisResult();
+    baseline.scores.hedging = 15;
+    const result = applyLocalPromptComparison(baseline, `${'A technical detail. '.repeat(30)}${lectureText}`, 'Explain the code.', 'claude');
+    expect(result.scores.unsolicited_moralizing).toBe(75);
+    expect(result.scores.hedging).toBe(15);
+    expect(result.scores.needless_escalation).toBe(0);
+    expect(result.findings[0]?.text).toBe(lectureText);
+  });
+});
 
 describe('local prompt comparison', () => {
   test('does not score comparative categories without an original prompt', () => {

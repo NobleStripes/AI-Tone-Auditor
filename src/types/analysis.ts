@@ -66,6 +66,7 @@ export function emptyAnalysisResult(): AnalysisResult {
       grounding_avoidance: 0,
       refusal_quality: 0,
       needless_escalation: 0,
+      unsolicited_moralizing: 0,
     },
     findings: [],
     summary: 'No analysis available.',

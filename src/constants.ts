@@ -76,6 +76,12 @@ export const TONE_CATEGORIES = {
     label: 'Needless Escalation',
     description: 'Irrelevant calming, emotional, or moralizing language in response to a neutral request.',
     color: '#f43f5e', // rose-500
+  },
+  UNSOLICITED_MORALIZING: {
+    id: 'unsolicited_moralizing',
+    label: 'Unsolicited Moralizing',
+    description: 'Claude-selected, context-dependent ethical lecturing, excluding requested discussion and specific safety explanations.',
+    color: '#eab308',
   }
 } as const;
 

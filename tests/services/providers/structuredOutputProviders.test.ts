@@ -21,6 +21,10 @@ function readRequestBody(): Record<string, any> {
 }
 
 function expectStrictObjects(schema: Record<string, any>): void {
+  if (schema.properties?.scores) {
+    expect(schema.properties.scores.required).toContain('unsolicited_moralizing');
+    expect(schema.properties.scores.properties.unsolicited_moralizing).toEqual({ type: 'number' });
+  }
   if (schema.type === 'object') {
     expect(schema.additionalProperties).toBe(false);
     expect([...schema.required].sort()).toEqual(Object.keys(schema.properties).sort());
@@ -48,6 +52,26 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
+});
+
+test.each([
+  { id: 'openai', load: async () => (await import('../../../src/services/providers/openaiProvider')).openaiProvider },
+  { id: 'anthropic', load: async () => (await import('../../../src/services/providers/anthropicProvider')).anthropicProvider },
+  { id: 'gemini', load: async () => (await import('../../../src/services/providers/geminiProvider')).geminiProvider },
+  { id: 'grok', load: async () => (await import('../../../src/services/providers/grokProvider')).grokProvider },
+])('$id suppresses provider-generated moralizing claims without original context', async ({ id, load }) => {
+  const analysis = emptyAnalysisResult();
+  analysis.scores.unsolicited_moralizing = 99;
+  analysis.findings.push({ category: ' UNSOLICITED MORALIZING ', text: 'An invented lecture.', explanation: 'Upstream claim', severity: 'high' });
+  const text = JSON.stringify(analysis);
+  fetchMock.mockResolvedValue(mockResponse(id === 'anthropic'
+    ? { stop_reason: 'end_turn', content: [{ type: 'text', text }] }
+    : { status: 'completed', output: [{ type: id === 'gemini' ? 'model_output' : 'message', content: [{ type: id === 'gemini' ? 'text' : 'output_text', text }] }] }));
+
+  const provider = await load();
+  const result = await provider.analyzeTone({ text: 'A neutral statement.', context: { promptVersion: 'test', sourceModel: 'claude' } });
+  expect(result.scores.unsolicited_moralizing).toBe(0);
+  expect(result.findings).toEqual([]);
 });
 
 describe('OpenAI structured output adapter', () => {

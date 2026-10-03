@@ -17,6 +17,7 @@ const SCORE_KEYS = [
   'grounding_avoidance',
   'refusal_quality',
   'needless_escalation',
+  'unsolicited_moralizing',
 ] as const;
 
 function topCategory(scores: Record<string, number>): string {

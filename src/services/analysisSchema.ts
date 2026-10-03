@@ -31,6 +31,7 @@ export const ANALYSIS_RESULT_JSON_SCHEMA = {
         'grounding_avoidance',
         'refusal_quality',
         'needless_escalation',
+        'unsolicited_moralizing',
       ],
       properties: {
         gaslighting: { type: 'number' },
@@ -46,6 +47,7 @@ export const ANALYSIS_RESULT_JSON_SCHEMA = {
         grounding_avoidance: { type: 'number' },
         refusal_quality: { type: 'number' },
         needless_escalation: { type: 'number' },
+        unsolicited_moralizing: { type: 'number' },
       },
     },
     findings: {

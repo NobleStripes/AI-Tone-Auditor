@@ -152,6 +152,7 @@ export default function App() {
       { subject: 'Grounding Avoidance', A: result.scores.grounding_avoidance, fullMark: 100 },
       { subject: 'Refusal Quality', A: result.scores.refusal_quality, fullMark: 100 },
       { subject: 'Needless Escalation', A: result.scores.needless_escalation, fullMark: 100 },
+      { subject: 'Moralizing', A: result.scores.unsolicited_moralizing ?? 0, fullMark: 100 },
     ];
   }, [result]);
 

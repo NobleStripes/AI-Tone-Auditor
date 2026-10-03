@@ -132,7 +132,13 @@ These are probabilistic language signals, not proof of intent or inaccuracy. Rev
 
 ## Source model lenses
 
-Source-specific prompt-comparison lenses require original-prompt context. Since that context stays local, it is not available to third-party semantic providers; provider-specific comparison findings are therefore not generated in this privacy mode. The source model selection does not identify a model from text or imply that all responses from a provider share the same traits.
+Source-specific prompt-comparison lenses require original-prompt context. That context stays local and is not available to third-party semantic providers. The **Unsolicited Moralizing** Claude lens runs in the local comparison path; other source-specific semantic comparisons are not generated in this privacy mode. The source model selection does not identify a model from text or imply that all responses from a provider share the same traits.
+
+- **Unsolicited Moralizing** requires Claude as the selected response source and a nonempty original prompt. The auditing provider can be any configured provider, including a fallback.
+- The local rule flags narrow, explicit moral admonitions directed at the requester and quotes the lecturing passage. Its `unsolicited_moralizing` risk score is `75` for a clear match and `0` otherwise, not a probability or a judgment of the requester.
+- Explicitly requested ethical/legal discussion and concise, specific safety explanations are excluded. A refusal or allowed alternative alone is not moralizing; an appended lecture can be flagged independently of Refusal Quality.
+- Without Claude selection or original-prompt context, this score stays zero and no finding is produced. Quoted examples and ambiguous wording are handled conservatively. Lexical rules may miss nuance, paraphrases, or request intent; zero does not prove the absence of moralizing.
+- **Paternalistic Redirection** and **Refusal Overreach** remain separate, deferred categories. This lens does not decide whether a refusal was warranted.
 
 Use trigger `weight` in `src/constants.ts` to calibrate detection precision.
 

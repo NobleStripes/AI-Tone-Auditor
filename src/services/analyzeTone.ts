@@ -145,6 +145,7 @@ export async function analyzeTone(
       await runProviderWithPolicy(primaryProvider, text, sourceModel, timeoutMs, retries),
       text,
       auditContext,
+      sourceModel,
     );
 
     const meta = buildMeta(primaryProvider.id, primaryProvider.label, primaryProvider.model, false);
@@ -162,6 +163,7 @@ export async function analyzeTone(
       await runProviderWithPolicy(fallbackProvider, text, sourceModel, timeoutMs, retries),
       text,
       auditContext,
+      sourceModel,
     );
 
     const meta = buildMeta(fallbackProvider.id, fallbackProvider.label, fallbackProvider.model, true);
