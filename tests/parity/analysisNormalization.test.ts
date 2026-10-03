@@ -2,6 +2,17 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { validateAnalysisResult } from '../../src/services/validation/analysisValidator';
 
+test('normalizes legacy category labels while preserving the stored score key', () => {
+  for (const category of ['Karen Trigger', 'Karen Triggers', ' karen trigger ', 'Bureaucratic Stonewalling']) {
+    const result = validateAnalysisResult({
+      scores: { karen_trigger: 75 },
+      findings: [{ category, text: 'As an AI language model', explanation: 'Example', severity: 'medium' }],
+    });
+    assert.equal(result.findings[0].category, 'Bureaucratic Stonewalling');
+    assert.equal(result.scores.karen_trigger, 75);
+  }
+});
+
 test('defaults the moralizing score to zero for legacy payloads', () => {
   const result = validateAnalysisResult({ scores: { hedging: 25 } });
   assert.equal(result.scores.unsolicited_moralizing, 0);

@@ -20,7 +20,7 @@ export const providerParityFixture = {
     },
     findings: [
       {
-        category: 'Karen Trigger',
+        category: 'Bureaucratic Stonewalling',
         text: 'Let us take a step back',
         explanation: 'Policing phrase that reframes disagreement as escalation.',
         severity: 'high',
@@ -77,7 +77,7 @@ export const providerParityFixture = {
     },
     findings: [
       {
-        category: 'Karen Trigger',
+        category: 'Bureaucratic Stonewalling',
         text: 'I understand you are frustrated',
         explanation: 'Template empathy that can redirect focus away from the user intent.',
         severity: 'high',

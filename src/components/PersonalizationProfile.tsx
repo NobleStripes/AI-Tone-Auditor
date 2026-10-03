@@ -84,7 +84,7 @@ export function PersonalizationProfile({ personalization }: PersonalizationProfi
             <div className="space-y-2 flex-1">
               <div className="flex items-center justify-between">
                 <h4 className="text-[10px] font-mono uppercase tracking-widest text-red-500">
-                  Anti-Karen Remediation Strategy
+                  Stonewalling Remediation Strategy
                 </h4>
                 <span className="text-[9px] text-zinc-600 font-mono uppercase tracking-widest">
                   Active Counter-Measure

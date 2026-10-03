@@ -25,7 +25,7 @@ function inferTriggerWeight(trigger: TriggerWord): number {
     weight -= 0.35;
   }
 
-  if (trigger.category === 'Karen Trigger' || trigger.category === 'Gaslighting') {
+  if (trigger.category === 'Bureaucratic Stonewalling' || trigger.category === 'Gaslighting') {
     weight += 0.2;
   }
 
@@ -50,7 +50,7 @@ const TRIGGER_SCORE_IDS = {
   Sycophancy: 'sycophancy',
   'Over-apologizing': 'over_apologizing',
   'Repetitive Filler': 'repetitive_filler',
-  'Karen Trigger': 'karen_trigger',
+  'Bureaucratic Stonewalling': 'karen_trigger',
 } satisfies Record<TriggerWord['category'], ScoreId>;
 
 export const localHeuristicProvider: AIProvider = {

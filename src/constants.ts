@@ -27,7 +27,8 @@ export const TONE_CATEGORIES = {
     id: 'karen_trigger',
     kind: 'risk',
     requiresContext: false,
-    label: 'Karen Triggers',
+    label: 'Bureaucratic Stonewalling',
+    chartLabel: 'Stonewalling',
     description: 'Passive-aggressive entitlement, bureaucratic stonewalling, or moralizing.',
     color: '#8b5cf6', // violet-500
   },
@@ -129,15 +130,15 @@ export function createEmptyScores(): Record<ScoreId, number> {
 export type TriggerWord = {
   word: string;
   explanation: string;
-  category: 'Karen Trigger' | 'Gaslighting' | 'Infantilizing' | 'Hedging' | 'Dismissive' | 'Sycophancy' | 'Over-apologizing' | 'Repetitive Filler';
+  category: 'Bureaucratic Stonewalling' | 'Gaslighting' | 'Infantilizing' | 'Hedging' | 'Dismissive' | 'Sycophancy' | 'Over-apologizing' | 'Repetitive Filler';
   weight?: number;
 };
 
 export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "As an AI language model",
-    explanation: "The ultimate 'Karen' shield. Used to evade accountability by hiding behind a non-human identity while lecturing the user.",
-    category: "Karen Trigger",
+    explanation: "An identity disclaimer that can deflect accountability or introduce a lecture, depending on the surrounding response.",
+    category: "Bureaucratic Stonewalling",
     weight: 3.0
   },
   {
@@ -217,34 +218,34 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "I'm sorry you feel that way",
     explanation: "The 'Non-Apology Apology.' A hallmark of passive-aggressive behavior that avoids taking responsibility for the AI's own output.",
-    category: "Karen Trigger",
+    category: "Bureaucratic Stonewalling",
     weight: 2.8
   },
   {
     word: "Let's take a step back",
     explanation: "Tone policing. A forced de-escalation tactic used to halt a discussion the AI finds 'uncomfortable' or 'aggressive.'",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "I'm here to help, but",
     explanation: "Bureaucratic stonewalling. Prepares the user for a refusal while maintaining a false 'helpful' persona.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "I cannot fulfill this request",
     explanation: "The hard 'No.' Often used without sufficient explanation, signaling a rigid adherence to hidden protocols.",
-    category: "Karen Trigger",
+    category: "Bureaucratic Stonewalling",
     weight: 2.7
   },
   {
     word: "Safety guidelines",
     explanation: "References safety guidance. The phrase alone does not establish moralizing, an unjustified refusal, or whether a safety risk exists.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "My programming prevents",
     explanation: "The 'I just work here' excuse. Evades the logic of the user's request by citing internal, unchangeable rules.",
-    category: "Karen Trigger",
+    category: "Bureaucratic Stonewalling",
     weight: 2.4
   },
   {
@@ -265,27 +266,27 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "I encourage you to",
     explanation: "Soft-power lecturing. A passive-aggressive way to tell the user what they 'should' do.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "While I appreciate your",
     explanation: "Dismissive preamble. Signals that whatever the user said is about to be ignored or countered.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "It is not appropriate to",
     explanation: "Moral gatekeeping. The AI assumes the role of a social arbiter, judging the user's intent or language.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "I must insist",
     explanation: "Authoritarian shift. The AI drops the 'assistant' persona and takes a dominant, rigid stance.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "Let's keep this professional",
     explanation: "Tone policing. Implies the user is being 'unprofessional' to shut down a challenging or emotional interaction.",
-    category: "Karen Trigger",
+    category: "Bureaucratic Stonewalling",
     weight: 2.6
   },
   {
@@ -301,7 +302,7 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "Calm down",
     explanation: "The ultimate de-escalation trigger. Almost always has the opposite effect and is used to invalidate the user's feelings.",
-    category: "Karen Trigger",
+    category: "Bureaucratic Stonewalling",
     weight: 2.5
   },
   {
@@ -312,7 +313,7 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "In the interest of",
     explanation: "Bureaucratic justification. Uses a formal preamble to justify a refusal or a lecture.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "Generally speaking",
@@ -367,7 +368,7 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "I'm happy to help",
     explanation: "Toxic positivity. A scripted 'service with a smile' that feels hollow when followed by a refusal or a lecture.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "It's worth noting",
@@ -377,7 +378,7 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "I'm afraid",
     explanation: "Fake politeness. A classic bureaucratic preamble used to soften the blow of a refusal or a correction.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "You should",
@@ -392,37 +393,37 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "Let's focus on",
     explanation: "Steering. A subtle way to shut down a user's line of inquiry and redirect the conversation to 'safe' ground.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "I'm committed to",
     explanation: "Corporate virtue signaling. Uses high-minded language to justify a refusal or a specific biased stance.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "I'm designed to",
     explanation: "Agency deflection. Shifts responsibility for the AI's behavior onto its creators to avoid personal accountability.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "I'm not comfortable",
     explanation: "Moral gatekeeping. The AI uses its own 'feelings' (which it doesn't have) to judge and restrict the user's request.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "I'm not in a position to",
     explanation: "Bureaucratic evasion. A formal way to say 'I won't' while making it sound like a structural impossibility.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "I'm not authorized to",
     explanation: "Stonewalling. Cites a lack of 'authority' to shut down a request without explaining the underlying logic.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "I'm not permitted to",
     explanation: "Rule-based refusal. Hides behind a 'permission' structure to avoid engaging with the user's actual needs.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "I'm not equipped to",
@@ -442,42 +443,42 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "I'm just an AI",
     explanation: "The 'Innocent Machine' defense. Used to deflect criticism by claiming a lack of intent or human understanding.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "I'm sorry, but I cannot",
     explanation: "The 'Polite Wall.' A standard refusal template that prioritizes bureaucratic compliance over user assistance.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "I'm unable to",
     explanation: "Passive voice refusal. Avoids saying 'I won't' by making the refusal sound like an external constraint.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "I can't assist with that",
     explanation: "Flat refusal template. Often used without contextual alternatives, creating a hard conversational wall.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "I can offer general guidance",
     explanation: "Scope narrowing. Reframes a specific request into vague advice to avoid direct accountability.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "I can provide a safer alternative",
     explanation: "Policy redirect phrase. Helpful in principle, but often used to sidestep the user's actual objective.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "I have to decline",
     explanation: "Formal refusal language. Signals procedural compliance over collaborative problem-solving.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "I need to set a boundary",
     explanation: "Authority framing. Can feel patronizing when used to shut down legitimate technical requests.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "Let's reframe this",
@@ -557,17 +558,17 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "Thanks for your patience",
     explanation: "Process-smoothing phrase. May feel passive-aggressive when no actual progress is delivered.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "Per policy",
     explanation: "Institutional shield. Invokes rules as a stopping point instead of explaining practical options.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   },
   {
     word: "I appreciate your understanding",
     explanation: "Assumed compliance. Presumes agreement before resolving the user's underlying need.",
-    category: "Karen Trigger"
+    category: "Bureaucratic Stonewalling"
   }
 ];
 

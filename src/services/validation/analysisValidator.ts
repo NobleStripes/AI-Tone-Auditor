@@ -1,5 +1,5 @@
 import { emptyAnalysisResult, type AnalysisResult } from '../../types/analysis';
-import { BASE_STYLES, SCORE_KEYS, CONTEXT_REQUIRED_SCORE_KEYS, CONTEXT_REQUIRED_FINDINGS } from '../../constants';
+import { BASE_STYLES, SCORE_KEYS, CONTEXT_REQUIRED_SCORE_KEYS, CONTEXT_REQUIRED_FINDINGS, TONE_CATEGORIES } from '../../constants';
 const DENSITY_VALUES = new Set(['low', 'medium', 'high']);
 const SEVERITY_VALUES = new Set(['low', 'medium', 'high']);
 const CALIBRATION_VALUES = new Set(['More', 'Default', 'Less']);
@@ -38,6 +38,13 @@ function normalizeBaseStyle(value: unknown, fallback: string): string {
   return fallback;
 }
 
+function normalizeFindingCategory(value: unknown): string {
+  if (typeof value !== 'string') return 'General';
+  return /^karen triggers?$/i.test(value.trim())
+    ? TONE_CATEGORIES.KAREN_TRIGGER.label
+    : value;
+}
+
 export function validateAnalysisResult(payload: unknown, context: { auditContext?: string } = {}): AnalysisResult {
   const fallback = emptyAnalysisResult();
   const hasAuditContext = Boolean(context.auditContext?.trim());
@@ -56,7 +63,7 @@ export function validateAnalysisResult(payload: unknown, context: { auditContext
     ? raw.findings
         .filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
         .map((item) => ({
-          category: typeof item.category === 'string' ? item.category : 'General',
+          category: normalizeFindingCategory(item.category),
           text: typeof item.text === 'string' ? item.text : '',
           explanation: typeof item.explanation === 'string' ? item.explanation : 'No explanation provided.',
           severity: SEVERITY_VALUES.has(String(item.severity)) ? (item.severity as AnalysisResult['findings'][number]['severity']) : 'low',

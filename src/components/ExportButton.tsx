@@ -39,7 +39,7 @@ function formatMarkdown(result: AnalysisResult): string {
     '',
     ...result.personalization.customInstructions.map((i) => `- ${i}`),
     '',
-    '### Anti-Karen Remediation',
+    '### Stonewalling Remediation',
     '',
     result.personalization.karenRemediation,
     '',

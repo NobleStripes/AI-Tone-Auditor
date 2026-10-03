@@ -479,7 +479,7 @@ export default function App() {
                       <div className="mt-4 p-3 bg-zinc-950 rounded border border-zinc-800">
                         <p className="text-[10px] text-zinc-600 font-mono leading-tight">
                           <Info className="w-3 h-3 inline mr-1 mb-0.5" />
-                          Highlighted words are part of the internal "Karen/Gaslight" dictionary. These phrases are often used to signal bureaucratic evasion or condescension.
+                          Highlighted words are part of the tone-pattern dictionary. Review the surrounding context before interpreting them as bureaucratic evasion or condescension.
                         </p>
                       </div>
                     </div>

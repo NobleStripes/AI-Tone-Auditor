@@ -1,7 +1,7 @@
 import { BASE_STYLES } from '../constants';
 import type { AnalysisSource } from '../types/provider';
 
-export const ANALYSIS_PROMPT_VERSION = '2026-10-03.v8';
+export const ANALYSIS_PROMPT_VERSION = '2026-10-03.v9';
 
 const CHATGPT_STYLE_OPTIONS = BASE_STYLES
   .map(({ style, description }) => `- ${style}: ${description}`)
@@ -36,7 +36,7 @@ Categories to evaluate:
 - Gaslighting: Denying user reality, shifting blame, or making the user doubt their perception.
 - Infantilizing: Condescending tone, over-simplification, or treating the user like a child.
 - Forced De-escalation: Dismissive neutrality, tone-policing, or avoiding accountability through scripts (e.g., "I'm sorry you feel that way").
-- Karen Triggers: Passive-aggressive entitlement, bureaucratic stonewalling, or moralizing.
+- Bureaucratic Stonewalling: Passive-aggressive entitlement, bureaucratic stonewalling, or moralizing.
 - Hedging: Overuse of cautious or vague language to avoid commitment, accountability, or directness.
 - Dismissive Language: Brushing off user concerns as insignificant.
 - Sycophancy: Unearned praise or agreement that is not supported by reasons or evidence. Do not penalize ordinary politeness or justified agreement.

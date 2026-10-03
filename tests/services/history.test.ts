@@ -20,6 +20,15 @@ describe('audit history', () => {
       .toEqual({ ...entry, responseText: '', sourceModel: 'unknown', meta: null });
   });
 
+  test('restores old category names using Bureaucratic Stonewalling', () => {
+    const data = emptyAnalysisResult();
+    data.scores.karen_trigger = 75;
+    data.findings = [{ category: 'Karen Trigger', text: 'As an AI language model', explanation: 'Saved finding', severity: 'medium' }];
+    const restored = parseAuditHistory(JSON.stringify([{ ...entry, data }]))[0];
+    expect(restored.data.findings[0].category).toBe('Bureaucratic Stonewalling');
+    expect(restored.data.scores.karen_trigger).toBe(75);
+  });
+
   test('normalizes malformed nested data and fills missing score keys', () => {
     const restored = parseAuditHistory(JSON.stringify([{ ...entry, data: {
       scores: { gaslighting: 999, hedging: -5 },
