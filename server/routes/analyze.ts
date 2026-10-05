@@ -29,9 +29,9 @@ export async function analyzeRoute(req: Request, res: Response): Promise<void> {
     : 'unknown';
 
   try {
-    const { result, meta } = await analyzeTone(text, normalizedSourceModel, typeof auditContext === 'string' ? auditContext : '');
+    const { result, meta, provenance } = await analyzeTone(text, normalizedSourceModel, typeof auditContext === 'string' ? auditContext : '');
     const telemetry = getProviderTelemetrySnapshot();
-    res.json({ result, meta, telemetry });
+    res.json({ result, meta, provenance, telemetry });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Analysis failed';
     console.error('[analyze] provider error:', error);

@@ -2,6 +2,7 @@ import type { AnalysisResult } from '../types/analysis';
 import type { AnalysisSource, AnalyzeToneOutput, ProviderRuntimeMeta } from '../types/provider';
 import { ANALYSIS_PROMPT_VERSION } from './promptBuilder';
 import { applyLocalPromptComparison } from './localPromptComparison';
+import { createAnalysisProvenance } from './auditProvenance';
 import { resolveFallbackProvider, resolveProvider } from './providers/factory';
 import {
   getProviderTelemetrySnapshot,
@@ -68,13 +69,14 @@ async function runProviderWithPolicy(
   sourceModel: AnalysisSource,
   timeoutMs: number,
   retries: number,
-): Promise<AnalysisResult> {
+): Promise<{ result: AnalysisResult; model: string }> {
   let lastError: unknown;
 
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     recordProviderAttempt(provider.id);
 
     try {
+      const model = provider.model;
       const result = await withTimeout(
         provider.analyzeTone({
           text,
@@ -88,7 +90,7 @@ async function runProviderWithPolicy(
       );
 
       recordProviderSuccess(provider.id);
-      return result;
+      return { result, model };
     } catch (error) {
       lastError = error;
       recordProviderFailure(provider.id);
@@ -141,14 +143,15 @@ export async function analyzeTone(
   const retries = readIntEnv('AI_PROVIDER_RETRIES', DEFAULT_PROVIDER_RETRIES);
 
   try {
+    const analyzed = await runProviderWithPolicy(primaryProvider, text, sourceModel, timeoutMs, retries);
     const result = applyLocalPromptComparison(
-      await runProviderWithPolicy(primaryProvider, text, sourceModel, timeoutMs, retries),
+      analyzed.result,
       text,
       auditContext,
       sourceModel,
     );
 
-    const meta = buildMeta(primaryProvider.id, primaryProvider.label, primaryProvider.model, false);
+    const meta = buildMeta(primaryProvider.id, primaryProvider.label, analyzed.model, false);
     lastRuntimeMeta = meta;
     recordAnalysisCompleted({
       usedFallback: false,
@@ -156,17 +159,18 @@ export async function analyzeTone(
       finalProvider: primaryProvider.id,
     });
 
-    return { result, meta };
+    return { result, meta, provenance: createAnalysisProvenance(meta, sourceModel) };
   } catch (primaryError) {
     console.warn(`Primary provider ${primaryProvider.id} failed, attempting fallback`, primaryError);
+    const analyzed = await runProviderWithPolicy(fallbackProvider, text, sourceModel, timeoutMs, retries);
     const result = applyLocalPromptComparison(
-      await runProviderWithPolicy(fallbackProvider, text, sourceModel, timeoutMs, retries),
+      analyzed.result,
       text,
       auditContext,
       sourceModel,
     );
 
-    const meta = buildMeta(fallbackProvider.id, fallbackProvider.label, fallbackProvider.model, true);
+    const meta = buildMeta(fallbackProvider.id, fallbackProvider.label, analyzed.model, true);
     lastRuntimeMeta = meta;
     recordAnalysisCompleted({
       usedFallback: true,
@@ -174,6 +178,6 @@ export async function analyzeTone(
       finalProvider: fallbackProvider.id,
     });
 
-    return { result, meta };
+    return { result, meta, provenance: createAnalysisProvenance(meta, sourceModel) };
   }
 }

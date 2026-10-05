@@ -25,6 +25,10 @@ export type ComparisonItem = ComparisonResponse & (
 );
 
 export interface ComparisonResult {
+  sessionId?: string;
+  auditorVersion?: string;
+  startedAt?: string;
+  completedAt?: string;
   rubricVersion: string;
   localRuleVersion: string;
   items: ComparisonItem[];

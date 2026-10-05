@@ -13,6 +13,8 @@ import { ResponseDiagnostics } from './ResponseDiagnostics';
 import { FindingCard } from './FindingCard';
 import { ExportButton } from './ExportButton';
 import { downloadJson } from '../lib/download';
+import { createComparisonExport } from '../services/exportReport';
+import { normalizeAnalysisProvenance } from '../services/auditProvenance';
 
 interface ComparisonWorkspaceProps {
   active: boolean;
@@ -137,11 +139,12 @@ export function ComparisonWorkspace({ active, onBusyChange, onCompleted }: Compa
         <div className="space-y-6">
           <div className="flex flex-wrap justify-between items-center gap-3">
             <h3 className="text-lg font-semibold">Observed differences</h3>
-            <button onClick={() => downloadJson(comparison, `tone-comparison-${Date.now()}.json`)}
+            <button onClick={() => downloadJson(createComparisonExport(comparison), `tone-comparison-${Date.now()}.json`)}
               className="text-xs px-3 py-2 border border-zinc-700 rounded">Export comparison JSON</button>
           </div>
           <p className="text-xs text-zinc-400">
             Rubric {comparison.rubricVersion}; local rules {comparison.localRuleVersion}.
+            {' '}Session {comparison.sessionId ?? 'unrecorded'}.
             Scores are indices, not probabilities. Source-specific lenses and different auditors are not treated as directly comparable.
             Quality indices have the opposite direction to risk indices.
           </p>
@@ -192,7 +195,7 @@ export function ComparisonWorkspace({ active, onBusyChange, onCompleted }: Compa
                 <p className="text-xs text-zinc-400">Auditor: {item.analysis.meta.providerLabel} / {item.analysis.meta.model}{item.analysis.meta.usedFallback ? ' (fallback)' : ''}</p>
                 <p className="text-sm whitespace-pre-wrap break-words">{item.text}</p>
                 <p className="text-xs text-zinc-400">{item.analysis.result.summary}</p>
-                <ExportButton result={item.analysis.result} />
+                <ExportButton result={item.analysis.result} provenance={normalizeAnalysisProvenance(item.analysis.provenance, item.analysis.meta, item.sourceModel)} />
                 <ResponseDiagnostics result={item.analysis.result} />
                 {item.analysis.result.findings.map((finding, findingIndex) => <FindingCard key={findingIndex} finding={finding} index={index * 1000 + findingIndex} />)}
               </div>

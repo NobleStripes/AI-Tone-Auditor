@@ -140,7 +140,13 @@ test('comparison JSON retains versions, results and response text but not the pr
     reader.onerror = () => reject(reader.error);
     reader.readAsText(blob);
   });
-  expect(JSON.parse(text)).toEqual(comparison);
+  const { exportMetadata, ...exportedComparison } = JSON.parse(text);
+  expect(exportedComparison).toEqual(comparison);
+  expect(exportMetadata).toMatchObject({
+    comparisonSessionId: comparison.sessionId, auditorVersion: comparison.auditorVersion,
+    promptVersion: comparison.rubricVersion, localRuleVersion: comparison.localRuleVersion,
+    originalPromptIncluded: false,
+  });
   expect(text).not.toContain(input.originalPrompt);
   expect(JSON.parse(text)).not.toHaveProperty('originalPrompt');
 });

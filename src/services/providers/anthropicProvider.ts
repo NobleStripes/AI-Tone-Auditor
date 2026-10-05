@@ -47,7 +47,7 @@ function readResponseContent(payload: AnthropicResponse): string {
 export const anthropicProvider: AIProvider = {
   id: 'anthropic',
   label: 'Anthropic Claude',
-  model: getAnthropicModel(),
+  get model() { return getAnthropicModel(); },
   async analyzeTone(input: AnalyzeToneInput) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {

@@ -54,7 +54,7 @@ function readOutputText(payload: GrokResponse): string {
 export const grokProvider: AIProvider = {
   id: 'grok',
   label: 'Grok (xAI)',
-  model: getGrokModel(),
+  get model() { return getGrokModel(); },
   async analyzeTone(input: AnalyzeToneInput) {
     const apiKey = process.env.XAI_API_KEY;
     if (!apiKey) {

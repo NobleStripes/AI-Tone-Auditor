@@ -47,7 +47,7 @@ function readOutputText(payload: GeminiInteractionResponse): string {
 export const geminiProvider: AIProvider = {
   id: 'gemini',
   label: 'Google Gemini',
-  model: getGeminiModel(),
+  get model() { return getGeminiModel(); },
   async analyzeTone(input: AnalyzeToneInput) {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {

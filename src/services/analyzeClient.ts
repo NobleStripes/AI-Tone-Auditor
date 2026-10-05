@@ -67,13 +67,14 @@ export async function analyzeTone(
   const data = await readAnalysisResponse<{
     result: AnalyzeToneOutput['result'];
     meta: ProviderRuntimeMeta;
+    provenance?: AnalyzeToneOutput['provenance'];
     telemetry: ProviderTelemetrySnapshot;
   }>(response);
 
   lastMeta = data.meta;
   lastTelemetry = data.telemetry;
 
-  return { result: data.result, meta: data.meta };
+  return { result: data.result, meta: data.meta, provenance: data.provenance };
 }
 
 export async function compareToneResponses(input: ComparisonRequest, signal?: AbortSignal): Promise<ComparisonResult> {

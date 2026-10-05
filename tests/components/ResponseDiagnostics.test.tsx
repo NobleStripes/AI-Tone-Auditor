@@ -78,7 +78,7 @@ test('Markdown exports state, heuristic index and separate finding confidence', 
   const markdown = writeText.mock.calls[0][0];
   expect(markdown).toContain('## Response Diagnostics');
   expect(markdown).toContain('### Epistemic behavior');
-  expect(markdown).toContain('75/100; heuristic risk index');
+  expect(markdown).toContain('75/100; assessment state: assessed; heuristic risk index');
   expect(markdown).toContain('match confidence: medium');
   expect(markdown).toContain('Unsupported Certainty (unsupported_certainty)**: N/A — not assessed');
   expect(markdown).toContain('(medium severity)');
@@ -106,7 +106,9 @@ test('the JSON download preserves assessment states and finding confidence', asy
     reader.readAsText(blob);
   });
   const exported = JSON.parse(text);
-  expect(exported).toEqual(result);
+  const { exportMetadata, ...exportedResult } = exported;
+  expect(exportedResult).toEqual(result);
+  expect(exportMetadata).toMatchObject({ schemaVersion: '1.0.0', auditorVersion: null, selectedSourceModel: 'unknown', originalPromptIncluded: false });
   expect(exported.assessments.needless_escalation).toMatchObject({ status: 'assessed', confidence: 'medium', method: 'lexical_rule' });
   expect(exported.assessments.unsupported_certainty.status).toBe('not_assessed');
   expect(exported.findings[0]).toMatchObject({ severity: 'medium', confidence: 'medium', method: 'lexical_rule' });

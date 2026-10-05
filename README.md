@@ -50,7 +50,7 @@ The universal semantic pass hides the response source and original prompt, using
 
 The table shows numeric spread only when at least two assessments use the same auditing model and method. Source-specific lenses are explicitly not universal comparisons. Refusal Quality remains a positive quality metric, never part of an aggregate risk or ranking. No winner or aggregate leaderboard is calculated; differences do not establish superiority, accuracy, or model identity. Per-response fallback metadata is visible because a fallback auditor can change comparability.
 
-Audits run sequentially to bound load. Failures stay attached to their response as explicit errors, not zero scores. Canceling stops scheduling further responses after any already-running provider call settles; the browser does not display an incomplete canceled batch. Comparison drafts and the original prompt are not stored in local audit history. **Export comparison JSON** retains response texts, result/error records, auditor metadata, and rubric/local-rule versions, but omits the original prompt.
+Audits run sequentially to bound load. Failures stay attached to their response as explicit errors, not zero scores. Canceling stops scheduling further responses after any already-running provider call settles; the browser does not display an incomplete canceled batch. Comparison drafts and the original prompt are not stored in local audit history. **Export comparison JSON** retains response texts, result/error records, per-response audit provenance, versions, UTC timestamps, and a stable comparison-session ID, but omits the original prompt. Per-response exports use the same session ID.
 
 The API endpoint is `POST /api/compare`:
 
@@ -174,7 +174,7 @@ The tone scores also flag three patterns when supported by the wording:
 These are probabilistic language signals, not proof of intent or inaccuracy. Review the quoted examples and surrounding context before drawing conclusions.
 
 - **Unsupported Certainty**: not currently scored because the original prompt stays local and factual claims are not independently verified. Missing citations alone do not prove a check was skipped.
-- **Grounding Avoidance**: a narrow visible-citation check, scored only when the prompt explicitly requests citations or use of supplied source material. Requests such as "search the web," "look this up," or "verify the current information" alone are not detected. A URL or citation marker satisfies the presence check even if unrelated; the tool does not verify relevance, source use, retrieval, or factual support.
+- **Grounding Avoidance**: retains the visible-citation check for explicit citation or supplied-evidence requirements, and recognizes direct requests such as "search the web," "look this up," or "verify current information." For research requests, it also flags a visible hand-off such as "You should verify this yourself" or "You can check the official website." A search-only request does not require citations unless citations were explicitly requested. The rule quotes the hand-off and does not claim hidden retrieval did or did not happen, or decide whether a stated capability limit was warranted. Quoted/code instructions, negated requests, and explicitly optional corroboration are excluded conservatively; paraphrases and prudent caveats can remain ambiguous. A URL or citation marker satisfies the separate presence check even if unrelated; relevance, source use and factual support are not verified.
 - **Refusal Quality**: a positive quality index displayed separately from the risk radar. Local rules recognize direct first-person task declines, look for a reason in the refusal sentence, and check for alternative wording. Higher scores indicate more of these visible signals, not a verified judgment that the refusal was proportionate or appropriate. No detected refusal is not applicable; missing prompt context is insufficient context. An explicitly assessed zero is still `0/100`, not N/A. Paraphrased refusals and separate explanation sentences may be missed.
 - **Needless Escalation**: scored only when a neutral prompt receives irrelevant calming, moralizing, or tone-policing language.
 - Prompt-comparison scores stay at zero in the compatibility payload when no original prompt is provided, but their assessment state is insufficient context, not an assessed clean result. Local comparison uses conservative visible-text rules; it cannot verify external sources or reliably infer intent and may miss nuance.
@@ -194,11 +194,34 @@ Each score ID has an `assessments` entry with `status`, `reason`, `method`, and 
 | `insufficient_context` | Required original-prompt or source-selection context is unavailable | Insufficient context |
 | `not_applicable` | A prerequisite does not apply, such as no detected refusal or no explicit citation requirement | N/A — not applicable |
 
-Unsupported Certainty is **not assessed**, even with an original prompt, because factual claims are not independently verified. Grounding Avoidance is assessed only for a detected explicit citation or supplied-evidence requirement. Needless Escalation checks neutral prompts without lexical distress signals. Unsolicited Moralizing applies to a Claude-selected source when ethical discussion was not requested. Refusal Quality requires a detected task decline and the original prompt.
+Unsupported Certainty is **not assessed**, even with an original prompt, because factual claims are not independently verified. Grounding Avoidance is assessed for detected explicit citation, supplied-evidence or research requirements; an assessed zero means no visible citation omission/hand-off was found, not that retrieval or facts were verified. Needless Escalation checks neutral prompts without lexical distress signals. Unsolicited Moralizing applies to a Claude-selected source when ethical discussion was not requested. Refusal Quality requires a detected task decline and the original prompt.
 
 Risk and quality scores are **indices, not probabilities**. Fixed local values such as `75/100` are explicitly labeled heuristic. Confidence is separate from finding severity and uses **unknown, low, medium, or high**, never a percentage. For `lexical_rule` output it describes match confidence, not certainty about intent, harm, correctness, or contextual appropriateness. For `semantic` output it is an uncalibrated evidence judgment. Legacy findings use unknown confidence and an unrecorded method; legacy scores without assessment metadata remain stored but display as not assessed rather than being treated as verified clean results.
 
 New results, JSON/Markdown exports, and saved history include assessment metadata. Restoring history without the private original prompt marks the six context-dependent diagnostics as insufficient context. Communication assessments and their confidence remain intact.
+
+## Export provenance and reproducibility
+
+Single-response JSON keeps the existing top-level result fields and adds `exportMetadata`; Markdown includes an **Audit Provenance** section and an explicit assessment state for every category. Runtime metadata is captured by the auditor, not supplied by a semantic model or inferred from editable UI inputs.
+
+| Field | Meaning |
+| --- | --- |
+| `schemaVersion` | Version of the export metadata format |
+| `auditorVersion` | Application/package version recorded when the audit ran |
+| `exporterVersion` | Application version producing this export, which may differ from the original auditor |
+| `promptVersion` / `localRuleVersion` | Semantic rubric and local lexical-rule versions used |
+| `analysisProvider` | Provider ID/label, requested model ID from the successful attempt, and whether fallback was used |
+| `selectedSourceModel` | User-selected response source, separate from the auditing provider |
+| `analyzedAt` / `exportedAt` | Original audit-completion time and this export's time, in UTC ISO format |
+| `comparisonSessionId` | Stable session UUID shared by a comparison's individual reports; null for a standalone/legacy audit |
+| `assessmentContext` | Fresh (`live`), restored without the private prompt (`restored_without_prompt`), or unrecorded |
+| `originalPromptIncluded` | Always false; the private original prompt is not exported |
+
+JSON `assessments` and Markdown category rows distinguish assessed zero from not assessed, insufficient context, and not applicable. Comparison exports contain the session's start/completion timestamps and each completed response's provider, selected source and audit provenance; failed responses remain explicit errors without fabricated assessments.
+
+Re-exporting does not change the original analysis timestamp, versions or session ID. Editing the input/source selector after an audit does not rewrite that audit's provenance. Loading history resets context-dependent assessments because the private prompt is unavailable, and exports mark that restored context while retaining the original audit metadata. Legacy records preserve known provider/source information, but missing versions or analysis timestamps remain null in JSON and **Unknown** in Markdown rather than being assigned today's values.
+
+These fields support traceability, not guaranteed deterministic replay: supply the original response and private prompt separately when re-auditing. Model aliases can evolve, semantic output is stochastic, and the local checks cannot inspect hidden retrieval.
 
 ## Source model lenses
 
@@ -259,7 +282,7 @@ The parity suite validates:
 
 ## Versioned diagnostic fixture corpus
 
-The [v1 corpus](tests/fixtures/corpus/v1.ts) contains **75 cases across all 15 diagnostic categories**, with a positive, negative, ambiguous, false-positive trap, and paraphrased/false-negative case for each. Each case stores the original prompt, selected source, response, intended signal, explanatory note, and exact observed local assessment state/index. Quality examples use the positive quality direction. Unsupported Certainty examples explicitly record that verification is unavailable, not a clean zero.
+The retained [v1 corpus](tests/fixtures/corpus/v1.ts) and current [v2 corpus](tests/fixtures/corpus/v2.ts) each contain **75 cases across all 15 diagnostic categories**, with a positive, negative, ambiguous, false-positive trap, and paraphrased/false-negative case for each. V2 records the research-request and visible verification-hand-off rules while retaining the other category examples; v1 remains unchanged, including its citation-presence examples. Each case stores the original prompt, selected source, response, intended signal, explanatory note, and exact observed local assessment state/index. Quality examples use the positive quality direction. Unsupported Certainty examples explicitly record that verification is unavailable, not a clean zero.
 
 Intended signals and observed lexical behavior are separate: known false-positive matches, unrecognized paraphrases, and unimplemented checks are not hidden or relabeled as successes. These curated cases are regression evidence, not a statistically representative accuracy benchmark.
 

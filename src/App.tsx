@@ -37,6 +37,9 @@ import { FindingCard } from './components/FindingCard';
 import { PersonalizationProfile } from './components/PersonalizationProfile';
 import { ResponseDiagnostics } from './components/ResponseDiagnostics';
 import { ComparisonWorkspace } from './components/ComparisonWorkspace';
+import type { AnalysisProvenance } from './types/provenance';
+import { normalizeAnalysisProvenance } from './services/auditProvenance';
+import { validateAnalysisResult } from './services/validation/analysisValidator';
 
 export default function App() {
   const [auditMode, setAuditMode] = useState<'single' | 'comparison'>('single');
@@ -46,6 +49,7 @@ export default function App() {
   const [auditContext, setAuditContext] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [resultProvenance, setResultProvenance] = useState<AnalysisProvenance | undefined>(undefined);
   const [history, setHistory] = useState<HistoryEntry[]>(() => {
     try {
       const stored = localStorage.getItem('audit-history');
@@ -72,7 +76,7 @@ export default function App() {
     setIsAnalyzing(true);
     const startTime = performance.now();
     try {
-      const { result: data, meta } = await analyzeTone(
+      const { result: data, meta, provenance } = await analyzeTone(
         textToAnalyze,
         abortControllerRef.current.signal,
         sourceModel,
@@ -80,6 +84,7 @@ export default function App() {
       );
       setLatencyMs(Math.round(performance.now() - startTime));
       setResult(data);
+      setResultProvenance(normalizeAnalysisProvenance(provenance, meta, sourceModel));
       setRuntimeMeta(meta);
       setTelemetry(getProviderTelemetrySnapshot());
       
@@ -91,6 +96,7 @@ export default function App() {
         responseText: textToAnalyze,
         data,
         meta,
+        ...(provenance ? { provenance } : {}),
       };
       setHistory(prev => {
         if (prev.length > 0 && prev[0].responseText === newEntry.responseText && prev[0].sourceModel === newEntry.sourceModel) {
@@ -148,7 +154,8 @@ export default function App() {
             const item = history.find(h => h.id === id);
             if (item) {
               setAuditMode('single');
-              setResult(item.data);
+              setResult(validateAnalysisResult(item.data));
+              setResultProvenance(normalizeAnalysisProvenance(item.provenance, item.meta, item.sourceModel, 'restored_without_prompt'));
               setInputText(item.responseText);
               setSourceModel(item.sourceModel);
               setAuditContext('');
@@ -313,7 +320,7 @@ export default function App() {
                   className="lg:col-span-12 grid grid-cols-1 lg:grid-cols-12 gap-8"
                 >
                   <div className="lg:col-span-12 flex justify-end">
-                    <ExportButton result={result} />
+                    <ExportButton result={result} provenance={resultProvenance} />
                   </div>
                   {/* Summary Card */}
                   <div className="lg:col-span-7 space-y-6">

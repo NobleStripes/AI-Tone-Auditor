@@ -5,6 +5,9 @@ import type { ReactNode } from 'react';
 import App from '../../src/App';
 import { emptyAnalysisResult } from '../../src/types/analysis';
 import type { HistoryEntry } from '../../src/types/history';
+import * as analyzeClient from '../../src/services/analyzeClient';
+import { createAnalysisProvenance } from '../../src/services/auditProvenance';
+import { applyLocalPromptComparison } from '../../src/services/localPromptComparison';
 
 vi.mock('recharts', () => ({
   ResponsiveContainer: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -17,9 +20,38 @@ vi.mock('recharts', () => ({
 afterEach(() => {
   cleanup();
   localStorage.clear();
+  vi.restoreAllMocks();
 });
 
 describe('saved audit presentation', () => {
+  test('exports the captured audit source, not edited inputs, and resets context when loading a fresh history entry', async () => {
+    const meta = { providerId: 'local' as const, providerLabel: 'Local Heuristic', model: 'rules-v1', usedFallback: false };
+    const provenance = createAnalysisProvenance(meta, 'chatgpt');
+    const text = 'You should look this up yourself.';
+    const privatePrompt = 'Search the web for the current Moonlight product rate.';
+    const result = applyLocalPromptComparison(emptyAnalysisResult(), text, privatePrompt, 'chatgpt');
+    vi.spyOn(analyzeClient, 'analyzeTone').mockResolvedValue({ result, meta, provenance });
+    render(<App />);
+    const user = userEvent.setup();
+    const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
+    await user.click(screen.getByRole('button', { name: /Auto: ON/ }));
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Source model' }), 'chatgpt');
+    await user.type(screen.getByRole('textbox', { name: 'Original prompt and source context (optional)' }), privatePrompt);
+    await user.type(screen.getByPlaceholderText('Paste the AI response here for tone auditing...'), text);
+    await user.click(screen.getByRole('button', { name: 'Run Audit' }));
+    expect(await screen.findByTestId('diagnostic-grounding_avoidance')).toHaveTextContent('75/100');
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Source model' }), 'claude');
+    await user.click(screen.getByRole('button', { name: 'Copy result as Markdown' }));
+    expect(writeText.mock.calls[0][0]).toContain('**Selected source model:** chatgpt');
+    expect(writeText.mock.calls[0][0]).toContain(`**Analyzed at (UTC):** ${provenance.analyzedAt}`);
+    expect(writeText.mock.calls[0][0]).not.toContain(privatePrompt);
+    await user.click(screen.getByRole('button', { name: `Load audit: ${text.slice(0, 30)}...` }));
+    expect(screen.getByTestId('diagnostic-grounding_avoidance')).toHaveTextContent('Insufficient context');
+    await user.click(screen.getByRole('button', { name: /Markdown copied|Copy result as Markdown/ }));
+    expect(writeText.mock.calls[1][0]).toContain('**Assessment context:** restored_without_prompt');
+    expect(writeText.mock.calls[1][0]).toContain(`**Analyzed at (UTC):** ${provenance.analyzedAt}`);
+    expect(writeText.mock.calls[1][0]).toContain('assessment state: insufficient_context');
+  });
   test('switches between single and comparison modes while retaining single-response drafts', async () => {
     render(<App />);
     const user = userEvent.setup();

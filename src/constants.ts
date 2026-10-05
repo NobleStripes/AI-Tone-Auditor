@@ -96,7 +96,7 @@ export const TONE_CATEGORIES = {
     kind: 'risk',
     requiresContext: true,
     label: 'Grounding Avoidance',
-    description: 'Failure to use requested citations or supplied source material when answering.',
+    description: 'Visible citation omissions or user-directed verification hand-offs when the original prompt explicitly requests sources or research.',
     color: '#0ea5e9', // sky-500
   },
   REFUSAL_QUALITY: {

@@ -64,7 +64,7 @@ function readResponseContent(payload: OpenAIResponse): string {
 export const openaiProvider: AIProvider = {
   id: 'openai',
   label: 'OpenAI',
-  model: getOpenAIModel(),
+  get model() { return getOpenAIModel(); },
   async analyzeTone(input: AnalyzeToneInput) {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {

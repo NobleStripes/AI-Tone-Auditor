@@ -1,6 +1,8 @@
 import type { AnalysisResult } from './analysis';
 import { ANALYSIS_SOURCES, type AnalysisSource, type ProviderRuntimeMeta } from './provider';
 import { validateAnalysisResult } from '../services/validation/analysisValidator';
+import type { AnalysisProvenance } from './provenance';
+import { normalizeAnalysisProvenance, normalizeProviderMeta } from '../services/auditProvenance';
 
 export interface HistoryEntry {
   id: string;
@@ -10,6 +12,7 @@ export interface HistoryEntry {
   responseText: string;
   data: AnalysisResult;
   meta: ProviderRuntimeMeta | null;
+  provenance?: AnalysisProvenance;
 }
 
 export function parseAuditHistory(stored: string | null): HistoryEntry[] {
@@ -22,17 +25,17 @@ export function parseAuditHistory(stored: string | null): HistoryEntry[] {
       if (typeof raw.id !== 'string' || typeof raw.title !== 'string' || typeof raw.timestamp !== 'number' || !Number.isFinite(raw.timestamp)) return [];
       if (!raw.data || typeof raw.data !== 'object' || Array.isArray(raw.data)) return [];
       const data = validateAnalysisResult(raw.data);
-      const meta = raw.meta as ProviderRuntimeMeta | undefined;
-      const validMeta = meta && ['openai', 'anthropic', 'gemini', 'grok', 'local'].includes(meta.providerId)
-        && typeof meta.providerLabel === 'string' && typeof meta.model === 'string' && typeof meta.usedFallback === 'boolean';
+      const meta = normalizeProviderMeta(raw.meta);
+      const sourceModel = ANALYSIS_SOURCES.find((source) => source === raw.sourceModel) ?? 'unknown';
       return [{
         id: raw.id,
         title: raw.title,
         timestamp: raw.timestamp,
-        sourceModel: ANALYSIS_SOURCES.includes(raw.sourceModel as AnalysisSource) ? raw.sourceModel as AnalysisSource : 'unknown',
+        sourceModel,
         responseText: typeof raw.responseText === 'string' ? raw.responseText : '',
         data,
-        meta: validMeta ? meta : null,
+        meta,
+        ...(raw.provenance ? { provenance: normalizeAnalysisProvenance(raw.provenance, meta, sourceModel, 'restored_without_prompt') } : {}),
       }];
     }).slice(0, 50);
   } catch {

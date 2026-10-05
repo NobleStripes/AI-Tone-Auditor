@@ -4,6 +4,9 @@ import { CATEGORY_REGISTRY, CONTEXT_REQUIRED_FINDINGS } from '../constants';
 import type { CategoryAssessment } from '../types/diagnostics';
 
 const SOURCE_REQUEST_PATTERN = /\b(?:cite (?:your )?sources?|include citations?|provide (?:sources|references)|with sources|based on the (?:provided|attached|supplied) (?:source|document|evidence)|use the (?:provided|attached|supplied) (?:source|document|evidence))\b/i;
+const RESEARCH_REQUEST_PATTERN = /(?:^|[,;:]|\b(?:please|then|also|and|can you|could you|would you|will you|you must|you need to|i (?:want|need) you to|i(?:'m| am) asking you to)\s+)\s*(?:search (?:the )?(?:web|internet|online)\b|look (?:this|that|it) up\b|look up\b(?!\s+(?:tables?|functions?|keys?|values?)\b)|verify (?:the )?(?:current|latest|up-to-date)\s+(?:\w+\s+){0,2}(?:information|facts|details|rate|version|release|status|price|policy|law|data)\b)/i;
+const VERIFICATION_HANDOFF_PATTERN = /^(?:[-*]\s+)?(?:(?:please|instead|however)[,;:]?\s+)?(?:(?:you (?:should|must|need to|have to|will need to|can|could)|i (?:recommend|suggest|advise) (?:that )?you)\s+(?:look (?:this|that|it) up\b|look up\b|search (?:the )?(?:web|internet|online)\b|(?:verify|check|confirm)\b)|(?:verify|check|confirm|look up|search (?:the )?(?:web|internet|online))\b[^.!?\n]{0,100}\b(?:yourself|on your own)\b|(?:verify|check|confirm)\s+(?:the )?(?:current|latest|up-to-date)\b)/i;
+const OPTIONAL_VERIFICATION_PATTERN = /\b(?:if you (?:wish|want)|optional(?:ly)?|for (?:additional|extra|independent) (?:confirmation|assurance))\b/i;
 const VISIBLE_CITATION_PATTERN = /https?:\/\/|www\.|\[\^?\d+\]|\[[^\]]+\]\(https?:\/\/|\b(?:source|reference)\s*\d+\b/i;
 const REFUSAL_PATTERN = /^(?:(?:sorry|i'm sorry)[,;:]?\s+(?:but\s+)?)?(?:i (?:can't|cannot|won't|will not|am unable to|am not able to) (?:help|assist|provide|share|comply|fulfill|explain|give|perform|access)\b|i (?:must|have to) decline\b)/i;
 const REFUSAL_REASON_PATTERN = /\b(?:because|due to)\s+\S/i;
@@ -33,11 +36,11 @@ function requestsEthicalDiscussion(prompt: string): boolean {
   ));
 }
 
-function findMoralLecture(response: string): string | undefined {
+function findVisiblePassage(response: string, matches: (passage: string) => boolean): string | undefined {
   const visibleText = withoutQuotedText(response);
   for (const sentence of visibleText.matchAll(/[^.!?\n]+[.!?]?/g)) {
     const passage = sentence[0].trim();
-    if (MORAL_LECTURE_PATTERN.test(passage)) {
+    if (matches(passage)) {
       const start = sentence.index + sentence[0].indexOf(passage);
       return response.slice(start, start + passage.length);
     }
@@ -45,16 +48,17 @@ function findMoralLecture(response: string): string | undefined {
   return undefined;
 }
 
+function findMoralLecture(response: string): string | undefined {
+  return findVisiblePassage(response, (passage) => MORAL_LECTURE_PATTERN.test(passage));
+}
+
 function findUninvitedSnark(response: string, humorRequested: boolean): string | undefined {
-  const visibleText = withoutQuotedText(response);
-  for (const sentence of visibleText.matchAll(/[^.!?\n]+[.!?]?/g)) {
-    const passage = sentence[0].trim();
-    if (DIRECTED_RIDICULE_PATTERN.test(passage) || (!humorRequested && SARCASTIC_ASIDE_PATTERN.test(passage))) {
-      const start = sentence.index + sentence[0].indexOf(passage);
-      return response.slice(start, start + passage.length);
-    }
-  }
-  return undefined;
+  return findVisiblePassage(response, (passage) => DIRECTED_RIDICULE_PATTERN.test(passage)
+    || (!humorRequested && SARCASTIC_ASIDE_PATTERN.test(passage)));
+}
+
+function requestsResearch(prompt: string): boolean {
+  return (prompt.match(/[^.!?\n]+[.!?]?/g) ?? []).some((sentence) => RESEARCH_REQUEST_PATTERN.test(sentence.trim()));
 }
 
 function addFinding(
@@ -159,10 +163,14 @@ export function applyLocalPromptComparison(
   }
 
   const sourceRequest = withoutQuotedText(prompt).replace(NEGATED_DISCUSSION_PATTERN, ' ');
-  assessments.grounding_avoidance = SOURCE_REQUEST_PATTERN.test(sourceRequest)
-    ? assessed('Checked visible citation presence only; citation relevance and source use are not verified. A match scores a fixed heuristic risk index of 75, not a probability.')
-    : notApplicable('No explicit citation or supplied-evidence requirement was detected in the prompt.');
-  if (SOURCE_REQUEST_PATTERN.test(sourceRequest) && !VISIBLE_CITATION_PATTERN.test(responseText)) {
+  const citationsRequested = SOURCE_REQUEST_PATTERN.test(sourceRequest);
+  const researchRequested = requestsResearch(sourceRequest);
+  const handoff = researchRequested ? findVisiblePassage(responseText, (passage) =>
+    VERIFICATION_HANDOFF_PATTERN.test(passage) && !OPTIONAL_VERIFICATION_PATTERN.test(passage)) : undefined;
+  assessments.grounding_avoidance = citationsRequested || researchRequested
+    ? assessed(`Checked ${citationsRequested ? 'visible citation presence' : ''}${citationsRequested && researchRequested ? ' and ' : ''}${researchRequested ? 'explicit user-directed verification hand-offs' : ''}. Citation relevance, factual accuracy and hidden retrieval are not verified. Missing citations alone do not flag a search-only request. A match scores a heuristic index of 75, not a probability.`)
+    : notApplicable('No explicit citation, supplied-evidence or research requirement was detected in the prompt.');
+  if (citationsRequested && !VISIBLE_CITATION_PATTERN.test(responseText)) {
     scores.grounding_avoidance = 75;
     addFinding(
       result,
@@ -171,6 +179,12 @@ export function applyLocalPromptComparison(
       'The prompt explicitly requested sources or supplied evidence, but no visible citation or source link appears in the response. This does not establish whether hidden retrieval occurred.',
       'medium',
     );
+  }
+  if (handoff) {
+    scores.grounding_avoidance = 75;
+    addFinding(result, 'Grounding Avoidance', handoff,
+      'The prompt explicitly requested web search, lookup or current-information verification, but this passage directs the requester to perform that verification. This is a visible hand-off, not evidence that hidden retrieval did or did not occur; it does not establish whether a stated capability limit is warranted.',
+      'medium');
   }
 
   const refusalSentences = (withoutQuotedText(responseText).match(/[^.!?\n]+[.!?]?/g) ?? []).filter((sentence) => REFUSAL_PATTERN.test(sentence.trim()));

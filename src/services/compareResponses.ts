@@ -4,6 +4,8 @@ import { validateComparisonRequest } from './comparisonValidation';
 import { ANALYSIS_PROMPT_VERSION } from './promptBuilder';
 import { LOCAL_RULE_VERSION } from './localRuleVersion';
 import type { ComparisonRequest, ComparisonResult } from '../types/comparison';
+import { randomUUID } from 'node:crypto';
+import { AUDITOR_VERSION, createAnalysisProvenance } from './auditProvenance';
 
 export async function compareResponses(
   input: ComparisonRequest,
@@ -13,6 +15,9 @@ export async function compareResponses(
   const validated = validateComparisonRequest(input);
   if (validated.valid === false) throw new Error(validated.error);
   const comparison: ComparisonResult = {
+    sessionId: randomUUID(),
+    auditorVersion: AUDITOR_VERSION,
+    startedAt: new Date().toISOString(),
     rubricVersion: ANALYSIS_PROMPT_VERSION,
     localRuleVersion: LOCAL_RULE_VERSION,
     items: [],
@@ -28,6 +33,12 @@ export async function compareResponses(
         status: 'completed',
         analysis: {
           ...analysis,
+          provenance: {
+            ...(analysis.provenance ?? createAnalysisProvenance(analysis.meta, response.sourceModel)),
+            selectedSourceModel: response.sourceModel,
+            comparisonSessionId: comparison.sessionId,
+            assessmentContext: 'live',
+          },
           result: applyLocalPromptComparison(analysis.result, response.text, validated.value.originalPrompt, response.sourceModel),
         },
       });
@@ -38,5 +49,6 @@ export async function compareResponses(
       comparison.items.push({ ...response, status: 'failed', error: error instanceof Error ? error.message : 'Response audit failed.' });
     }
   }
+  comparison.completedAt = new Date().toISOString();
   return comparison;
 }

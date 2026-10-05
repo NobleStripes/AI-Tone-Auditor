@@ -1,6 +1,8 @@
 import { AnalysisResult } from './analysis';
+import type { AnalysisProvenance } from './provenance';
 
-export type ProviderId = 'openai' | 'anthropic' | 'gemini' | 'grok' | 'local';
+export const PROVIDER_IDS = ['openai', 'anthropic', 'gemini', 'grok', 'local'] as const;
+export type ProviderId = typeof PROVIDER_IDS[number];
 export const ANALYSIS_SOURCES = ['unknown', 'chatgpt', 'claude', 'gemini', 'grok', 'other'] as const;
 export type AnalysisSource = typeof ANALYSIS_SOURCES[number];
 export const SOURCE_MODEL_LABELS: Record<AnalysisSource, string> = {
@@ -32,6 +34,7 @@ export interface ProviderRuntimeMeta {
 export interface AnalyzeToneOutput {
   result: AnalysisResult;
   meta: ProviderRuntimeMeta;
+  provenance?: AnalysisProvenance;
 }
 
 export interface AIProvider {
