@@ -2,6 +2,7 @@ import { buildToneAnalysisPrompt } from '../promptBuilder';
 import { ANALYSIS_RESULT_JSON_SCHEMA } from '../analysisSchema';
 import { validateAnalysisResult } from '../validation/analysisValidator';
 import type { AIProvider, AnalyzeToneInput } from '../../types/provider';
+import { ProviderHttpError, requireApiKey } from './providerErrors';
 
 interface OpenAIResponse {
   status?: string;
@@ -66,10 +67,7 @@ export const openaiProvider: AIProvider = {
   label: 'OpenAI',
   get model() { return getOpenAIModel(); },
   async analyzeTone(input: AnalyzeToneInput) {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error('Missing OPENAI_API_KEY for OpenAI provider');
-    }
+    const apiKey = requireApiKey('OPENAI_API_KEY', 'OpenAI');
 
     const response = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
@@ -96,7 +94,7 @@ export const openaiProvider: AIProvider = {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`OpenAI request failed (${response.status}): ${errorText}`);
+      throw new ProviderHttpError('OpenAI', 'OPENAI_API_KEY', response.status, errorText, apiKey);
     }
 
     const payload = (await response.json()) as OpenAIResponse;

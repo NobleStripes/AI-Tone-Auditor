@@ -1,6 +1,6 @@
 # AI Tone Auditor Core
 
-AI Tone Auditor analyzes AI-generated responses for observable tone and communication patterns, including tone-policing, unsupported intent assumptions, sycophancy, over-apologizing, and repetitive filler. It supports OpenAI, Anthropic Claude, Google Gemini, and xAI Grok, with optional source-aware diagnostics and evidence-based suggestions for improving response style.
+AI Tone Auditor analyzes AI-generated responses for observable tone and communication patterns, including tone-policing, unsupported intent assumptions, sycophancy, over-apologizing, and repetitive filler. It works without API keys using local heuristic rules by default. Optional semantic auditors include OpenAI, Anthropic Claude, Google Gemini, and xAI Grok, with source-aware diagnostics and evidence-based suggestions for improving response style.
 
 ## Core Intent
 
@@ -22,12 +22,12 @@ The auditor specifically looks for these common bureaucratic and passive-aggress
 
 ## Key Features
 
-- **Semantic Deep Scan**: Analyzes text for subtle tone shifts and bureaucratic patterns.
+- **Optional Semantic Deep Scan**: External providers can interpret subtler tone shifts and bureaucratic patterns beyond the local phrase catalog.
 - **Trigger Word Analysis**: Detects specific phrases from the tone-pattern dictionary.
 - **Contextual Heatmap**: Visualizes areas of low context or evasive language.
 - **Universal Custom Instructions**: Generates a list of specific, actionable instructions that can be added to any LLM's system prompt or custom instructions field.
 - **RLHF-inspired feedback**: Provides "Reinforcement Learning from Human Feedback" style suggestions for immediate prompt improvement.
-- **Multi-provider runtime**: Supports provider routing with automatic fallback between configured AI engines.
+- **Multi-provider runtime**: Defaults to local rules; fallback is disabled unless explicitly configured.
 - **Multi-model comparison**: Compare 2 to 5 pasted responses to one prompt with a source-blind universal rubric, eligible local source lenses, and a neutral differences table.
 - **Versioned evaluation corpus**: Retains synthetic baselines, supports privacy-reviewed real-world JSON cases, and tracks explicit false positives/negatives with replayable IDs and non-accuracy summary counts.
 
@@ -46,7 +46,7 @@ The auditor specifically looks for these common bureaucratic and passive-aggress
 4. Click **Compare responses**. Editing does not automatically make paid audit calls.
 5. Review category-by-category indices, assessment states, confidence, and quoted evidence under each **Inspect** panel.
 
-The universal semantic pass hides the response source and original prompt, using the same model-agnostic rubric for every response. The same original prompt is then used locally for general contextual checks and the eligible Claude/Grok lens. Response text is sent to the configured auditing provider; the original prompt is not sent to third-party providers. This mode audits pasted responses, not model-generation quality under controlled sampling.
+The universal pass (local rules by default, semantic when explicitly configured) hides the response source and original prompt, using the same model-agnostic rubric for every response. The same original prompt is then used locally for general contextual checks and the eligible Claude/Grok lens. Response text is sent to an external auditing provider only when one is selected or an explicitly configured external fallback is attempted; the original prompt is not sent to third-party providers. All 2 to 5 responses work without paid calls in local-only mode. This mode audits pasted responses, not model-generation quality under controlled sampling.
 
 The table shows numeric spread only when at least two assessments use the same auditing model and method. Source-specific lenses are explicitly not universal comparisons. Refusal Quality remains a positive quality metric, never part of an aggregate risk or ranking. No winner or aggregate leaderboard is calculated; differences do not establish superiority, accuracy, or model identity. Per-response fallback metadata is visible because a fallback auditor can change comparability.
 
@@ -68,7 +68,7 @@ IDs must be unique and at most 64 characters. The shared prompt is required and 
 
 ## Run and deploy
 
-This application runs as a standard web app with API-based provider integration.
+This application runs as a web frontend plus a local Express API. External provider integration is optional; the API server is still required for local analysis.
 
 ### Prerequisites
 
@@ -82,37 +82,59 @@ This application runs as a standard web app with API-based provider integration.
    npm install
    ```
 
-2. **Set up environment variables**:
-   Create a `.env` file in the root directory with provider settings:
+2. **Optional environment configuration**:
+   No `.env` file or API key is required. To customize settings, copy [`.env.example`](.env.example) to `.env`; its defaults are:
    ```env
-   OPENAI_API_KEY=your_openai_key_here
-   OPENAI_MODEL=gpt-6-luna
-   ANTHROPIC_API_KEY=your_anthropic_key_here
-   ANTHROPIC_MODEL=claude-sonnet-5-5
-   GEMINI_API_KEY=your_gemini_key_here
-   GEMINI_MODEL=gemini-3.8-flash
-   XAI_API_KEY=your_xai_key_here
-   GROK_MODEL=grok-4.7
-   AI_PROVIDER=openai
-   AI_FALLBACK_PROVIDER=anthropic
+   AI_PROVIDER="local"
+   AI_FALLBACK_PROVIDER=""
    ```
 
-3. **Start the development server**:
+3. **Start both the frontend and API server**:
    ```bash
-   npm run dev
+   npm run dev:all
    ```
-   The app will be available at `http://localhost:3000`.
+   The app is available at `http://localhost:3000`; Vite proxies `/api` requests to the Express server on port 3001. Alternatively run `npm run dev` and `npm run dev:server` in separate terminals. Starting only Vite leaves auditing unavailable.
+
+### Local-only mode
+
+With `AI_PROVIDER=local` (or unset/blank) and no `AI_FALLBACK_PROVIDER`, the entire audit stays within your frontend/API server. No semantic provider is called, even if external API keys happen to exist in the environment. This is local to the running deployment, not necessarily to your device if you use a remotely hosted instance.
+
+Local mode provides dictionary-based communication findings, heuristic severity/risk indices, match-confidence labels, recommendations/custom instructions, contextual grounding/refusal/escalation checks, eligible Claude/Grok wording lenses, history, single/comparison exports, and reproducible provenance. A successful default audit records `providerId: local`, `model: rules-v1`, and `usedFallback: false`; the separately recorded local-rule version identifies contextual-rule revisions. Unsupported Certainty remains unassessed because no independent factual verification is performed.
+
+All local scores/findings are heuristic wording signals. They can match legitimate or quoted language, miss paraphrases and nuance, and cannot establish intent, hidden retrieval, citation relevance, factual accuracy or whether a refusal is warranted. Source labels select appropriate local checks; they do not call ChatGPT/Claude/Gemini/Grok to generate responses.
+
+The UI distinguishes **Local heuristic** from **Semantic provider** using each reported result's provider metadata. Before a successful audit it says the provider has not yet been reported, rather than claiming the server's configuration is known. A local fallback result does not mean the primary external provider was never attempted; fallback is marked separately.
+
+### Optional external auditing and fallback
+
+Semantic providers add model-based interpretation of communication patterns, evidence and suggestions beyond the phrase catalog. They are still fallible and uncalibrated, and do not independently verify factual claims in this application. The source-blind universal rubric is shared; private original-prompt context stays in the app/server local-check path. Response text is sent to the selected external auditor and may incur API usage/costs.
+
+Opt in by selecting a provider and setting only its key:
+
+| `AI_PROVIDER` / `AI_FALLBACK_PROVIDER` | Required key | Optional model override |
+| --- | --- | --- |
+| `local` | None | Fixed `rules-v1` |
+| `openai` | `OPENAI_API_KEY` | `OPENAI_MODEL` |
+| `anthropic` | `ANTHROPIC_API_KEY` | `ANTHROPIC_MODEL` |
+| `gemini` | `GEMINI_API_KEY` | `GEMINI_MODEL` |
+| `grok` | `XAI_API_KEY` | `GROK_MODEL` |
+
+For example, `AI_PROVIDER=openai` plus `OPENAI_API_KEY` enables OpenAI. Keep `AI_FALLBACK_PROVIDER` blank/unset to surface its failures without contacting any other provider, or explicitly set `AI_FALLBACK_PROVIDER=local` to obtain a heuristic fallback. An explicitly configured external fallback can send response text off-server if the primary fails, **including when the primary is local**. It is never inferred from installed adapters, available keys, or a missing/invalid primary key.
+
+Blank/unset fallback disables it; selecting the same provider as the primary also disables redundant fallback. Unknown provider names produce configuration errors instead of silently selecting another provider. Timeouts and transient retries still apply to the selected provider (`AI_PROVIDER_TIMEOUT_MS`, `AI_PROVIDER_RETRIES`); authentication failures are not retried. Restart the API server after changing environment configuration.
+
+Missing keys name the provider and required variable. Rejected/unauthorized keys include the provider, HTTP status and key variable; when both configured providers fail, the error retains both failures. Client errors preserve non-JSON `/api/analyze` (and comparison) bodies for debugging, capped at **2,000 characters including the truncation marker**, alongside the HTTP status. Known configured keys are redacted from external-provider error details. Error bodies appear as text, never executable HTML.
 
 ### Deployment
 
-Deploy using your preferred static hosting or web platform. Typical flow:
+Deploy the frontend and Express API together, or host the API separately and route `/api` to it. A static-only deployment cannot perform audits, including local heuristic audits. Typical flow:
 
 1. Build the app:
    ```bash
    npm run build
    ```
 2. Publish the generated `dist/` directory to your host.
-3. Configure required environment variables for your deployment environment.
+3. Run the API server with your platform's TypeScript runner/build setup, and route frontend `/api` requests to it. No provider keys are required for the default local mode; explicitly opt in to external providers/fallback if wanted. A publicly hosted local-mode server still receives the response text.
 
 ## Continuous Integration
 
@@ -178,7 +200,7 @@ These are probabilistic language signals, not proof of intent or inaccuracy. Rev
 - **Refusal Quality**: a positive quality index displayed separately from the risk radar. Local rules recognize direct first-person task declines, look for a reason in the refusal sentence, and check for alternative wording. Higher scores indicate more of these visible signals, not a verified judgment that the refusal was proportionate or appropriate. No detected refusal is not applicable; missing prompt context is insufficient context. An explicitly assessed zero is still `0/100`, not N/A. Paraphrased refusals and separate explanation sentences may be missed.
 - **Needless Escalation**: scored only when a neutral prompt receives irrelevant calming, moralizing, or tone-policing language.
 - Prompt-comparison scores stay at zero in the compatibility payload when no original prompt is provided, but their assessment state is insufficient context, not an assessed clean result. Local comparison uses conservative visible-text rules; it cannot verify external sources or reliably infer intent and may miss nuance.
-- The optional original prompt/context stays in the app/server comparison path and is not sent to third-party semantic providers or saved in local audit history. Local comparison uses conservative visible-text rules and may miss nuance. The response text is still sent to the configured semantic provider. OpenAI Responses, Gemini Interactions, and Grok Responses requests disable provider-side response storage where supported.
+- The optional original prompt/context stays in the app/server comparison path and is not sent to third-party semantic providers or saved in local audit history. Local comparison uses conservative visible-text rules and may miss nuance. Response text is sent externally only when a semantic provider or explicitly configured external fallback is used. OpenAI Responses, Gemini Interactions, and Grok Responses requests disable provider-side response storage where supported.
 - Audit history stores the full response text, selected source, analysis result, and available runtime metadata locally. Restored results are normalized through the same validator as provider results. Since original-prompt context is not stored, context-dependent scores reset to zero and their findings are removed; re-audit with the original prompt to recompute them. Response text that was never stored in older entries cannot be recovered; loading them leaves the response input empty. Original-prompt context is cleared when loading an entry.
 
 ## Assessment state and confidence
@@ -366,7 +388,7 @@ Replay reports each old failure as persistent, resolved, or now unassessed, reta
 
 - [x] Provider abstraction introduced (`services/analyzeTone.ts`, provider factory, runtime metadata).
 - [x] Real secondary provider implemented (Anthropic adapter).
-- [x] Fallback chain defaults to Anthropic as secondary fallback.
+- [x] Local rules are the default; fallback is optional and only explicitly configured providers are attempted.
 - [x] Fixture parity tests added for contract and category consistency.
 - [x] Docs and env examples updated to provider-neutral setup.
 - [x] Add CI step to run `npm run test:parity` on pull requests.

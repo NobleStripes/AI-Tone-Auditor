@@ -2,6 +2,7 @@ import { ANALYSIS_RESULT_JSON_SCHEMA } from '../analysisSchema';
 import { buildToneAnalysisPrompt } from '../promptBuilder';
 import { validateAnalysisResult } from '../validation/analysisValidator';
 import type { AIProvider, AnalyzeToneInput } from '../../types/provider';
+import { ProviderHttpError, requireApiKey } from './providerErrors';
 
 interface GeminiInteractionResponse {
   status?: string;
@@ -49,10 +50,7 @@ export const geminiProvider: AIProvider = {
   label: 'Google Gemini',
   get model() { return getGeminiModel(); },
   async analyzeTone(input: AnalyzeToneInput) {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error('Missing GEMINI_API_KEY for Gemini provider');
-    }
+    const apiKey = requireApiKey('GEMINI_API_KEY', 'Gemini');
 
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', {
       method: 'POST',
@@ -75,7 +73,7 @@ export const geminiProvider: AIProvider = {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Gemini request failed (${response.status}): ${errorText}`);
+      throw new ProviderHttpError('Gemini', 'GEMINI_API_KEY', response.status, errorText, apiKey);
     }
 
     const payload = (await response.json()) as GeminiInteractionResponse;

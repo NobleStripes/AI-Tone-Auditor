@@ -31,6 +31,13 @@ export interface ProviderRuntimeMeta {
   usedFallback: boolean;
 }
 
+export const DEFAULT_LOCAL_RUNTIME_META: ProviderRuntimeMeta = {
+  providerId: 'local',
+  providerLabel: 'Local Heuristic',
+  model: 'rules-v1',
+  usedFallback: false,
+};
+
 export interface AnalyzeToneOutput {
   result: AnalysisResult;
   meta: ProviderRuntimeMeta;

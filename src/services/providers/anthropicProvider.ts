@@ -2,6 +2,7 @@ import { buildToneAnalysisPrompt } from '../promptBuilder';
 import { ANALYSIS_RESULT_JSON_SCHEMA } from '../analysisSchema';
 import { validateAnalysisResult } from '../validation/analysisValidator';
 import type { AIProvider, AnalyzeToneInput } from '../../types/provider';
+import { ProviderHttpError, requireApiKey } from './providerErrors';
 
 interface AnthropicResponse {
   stop_reason?: string | null;
@@ -49,10 +50,7 @@ export const anthropicProvider: AIProvider = {
   label: 'Anthropic Claude',
   get model() { return getAnthropicModel(); },
   async analyzeTone(input: AnalyzeToneInput) {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      throw new Error('Missing ANTHROPIC_API_KEY for Anthropic provider');
-    }
+    const apiKey = requireApiKey('ANTHROPIC_API_KEY', 'Anthropic');
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -82,7 +80,7 @@ export const anthropicProvider: AIProvider = {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Anthropic request failed (${response.status}): ${errorText}`);
+      throw new ProviderHttpError('Anthropic', 'ANTHROPIC_API_KEY', response.status, errorText, apiKey);
     }
 
     const payload = (await response.json()) as AnthropicResponse;

@@ -292,11 +292,7 @@ describe('analyzeClient', () => {
   test('throws on non-OK response with server error message', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({
-        ok: false,
-        status: 500,
-        json: async () => ({ error: 'Provider unavailable' }),
-      }),
+      vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: 'Provider unavailable' }), { status: 500 })),
     );
 
     const { analyzeTone } = await import('../../src/services/analyzeClient');

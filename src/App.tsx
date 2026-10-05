@@ -26,6 +26,7 @@ import { cn } from './lib/utils';
 import type { AnalysisResult } from './types/analysis';
 import { parseAuditHistory, type HistoryEntry } from './types/history';
 import { ANALYSIS_SOURCES, SOURCE_MODEL_LABELS, type AnalysisSource, type ProviderRuntimeMeta } from './types/provider';
+import { AnalysisModeIndicator } from './components/AnalysisModeIndicator';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { TriggerHighlighter } from './components/TriggerHighlighter';
@@ -64,6 +65,7 @@ export default function App() {
   const [minAuditLength, setMinAuditLength] = useState(20);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [runtimeMeta, setRuntimeMeta] = useState<ProviderRuntimeMeta>(getLastAnalysisRuntimeMeta());
+  const [runtimeReported, setRuntimeReported] = useState(false);
   const [telemetry, setTelemetry] = useState(getProviderTelemetrySnapshot());
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -86,6 +88,7 @@ export default function App() {
       setResult(data);
       setResultProvenance(normalizeAnalysisProvenance(provenance, meta, sourceModel));
       setRuntimeMeta(meta);
+      setRuntimeReported(true);
       setTelemetry(getProviderTelemetrySnapshot());
       
       const newEntry: HistoryEntry = {
@@ -161,6 +164,7 @@ export default function App() {
               setAuditContext('');
               if (item.meta) {
                 setRuntimeMeta(item.meta);
+                setRuntimeReported(true);
               }
             }
           }}
@@ -467,9 +471,11 @@ export default function App() {
       {/* Footer Status Bar */}
       <footer className="border-t border-zinc-800 bg-zinc-950 px-4 md:px-6 py-3 md:py-2 flex flex-col md:flex-row items-center justify-between gap-4 text-[10px] font-mono text-zinc-600">
         <div className="flex flex-wrap justify-center gap-4 md:gap-6">
-          <span className="hidden xs:inline">AUDIT_MODE: SEMANTIC_DEEP_SCAN</span>
-          <span className="hidden sm:inline">PROVIDER: {runtimeMeta.providerLabel.toUpperCase()}</span>
-          <span className="hidden sm:inline">MODEL: {runtimeMeta.model.toUpperCase()}</span>
+          <AnalysisModeIndicator meta={runtimeReported || telemetry.totalAnalyses > 0 ? runtimeMeta : null} />
+          {(runtimeReported || telemetry.totalAnalyses > 0) && <>
+            <span className="hidden sm:inline">PROVIDER: {runtimeMeta.providerLabel.toUpperCase()}</span>
+            <span className="hidden sm:inline">MODEL: {runtimeMeta.model.toUpperCase()}</span>
+          </>}
           {runtimeMeta.usedFallback && <span className="text-amber-500">FALLBACK: ACTIVE</span>}
           <span className="hidden md:inline">
             FALLBACK_RATE: {telemetry.fallbackRatePercent}% ({telemetry.fallbackActivations}/{telemetry.totalAnalyses || 0})

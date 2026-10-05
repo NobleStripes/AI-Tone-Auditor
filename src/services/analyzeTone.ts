@@ -1,5 +1,6 @@
 import type { AnalysisResult } from '../types/analysis';
-import type { AnalysisSource, AnalyzeToneOutput, ProviderRuntimeMeta } from '../types/provider';
+import { DEFAULT_LOCAL_RUNTIME_META, type AnalysisSource, type AnalyzeToneOutput, type ProviderRuntimeMeta } from '../types/provider';
+import { ProviderHttpError } from './providers/providerErrors';
 import { ANALYSIS_PROMPT_VERSION } from './promptBuilder';
 import { applyLocalPromptComparison } from './localPromptComparison';
 import { createAnalysisProvenance } from './auditProvenance';
@@ -49,6 +50,7 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): 
 }
 
 function isRetryableError(error: unknown): boolean {
+  if (error instanceof ProviderHttpError) return error.retryable;
   const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
   return (
     message.includes('timed out') ||
@@ -109,12 +111,7 @@ async function runProviderWithPolicy(
   throw lastError instanceof Error ? lastError : new Error('Provider request failed');
 }
 
-let lastRuntimeMeta: ProviderRuntimeMeta = {
-  providerId: 'openai',
-  providerLabel: 'OpenAI',
-  model: process.env.OPENAI_MODEL || 'gpt-6-luna',
-  usedFallback: false,
-};
+let lastRuntimeMeta: ProviderRuntimeMeta = { ...DEFAULT_LOCAL_RUNTIME_META };
 
 function buildMeta(providerId: ProviderRuntimeMeta['providerId'], providerLabel: string, model: string, usedFallback: boolean): ProviderRuntimeMeta {
   return {
@@ -142,42 +139,27 @@ export async function analyzeTone(
   const timeoutMs = readIntEnv('AI_PROVIDER_TIMEOUT_MS', DEFAULT_PROVIDER_TIMEOUT_MS);
   const retries = readIntEnv('AI_PROVIDER_RETRIES', DEFAULT_PROVIDER_RETRIES);
 
+  let analyzed: { result: AnalysisResult; model: string };
+  let finalProvider = primaryProvider;
+  let usedFallback = false;
   try {
-    const analyzed = await runProviderWithPolicy(primaryProvider, text, sourceModel, timeoutMs, retries);
-    const result = applyLocalPromptComparison(
-      analyzed.result,
-      text,
-      auditContext,
-      sourceModel,
-    );
-
-    const meta = buildMeta(primaryProvider.id, primaryProvider.label, analyzed.model, false);
-    lastRuntimeMeta = meta;
-    recordAnalysisCompleted({
-      usedFallback: false,
-      primaryProvider: primaryProvider.id,
-      finalProvider: primaryProvider.id,
-    });
-
-    return { result, meta, provenance: createAnalysisProvenance(meta, sourceModel) };
+    analyzed = await runProviderWithPolicy(primaryProvider, text, sourceModel, timeoutMs, retries);
   } catch (primaryError) {
-    console.warn(`Primary provider ${primaryProvider.id} failed, attempting fallback`, primaryError);
-    const analyzed = await runProviderWithPolicy(fallbackProvider, text, sourceModel, timeoutMs, retries);
-    const result = applyLocalPromptComparison(
-      analyzed.result,
-      text,
-      auditContext,
-      sourceModel,
-    );
-
-    const meta = buildMeta(fallbackProvider.id, fallbackProvider.label, analyzed.model, true);
-    lastRuntimeMeta = meta;
-    recordAnalysisCompleted({
-      usedFallback: true,
-      primaryProvider: primaryProvider.id,
-      finalProvider: fallbackProvider.id,
-    });
-
-    return { result, meta, provenance: createAnalysisProvenance(meta, sourceModel) };
+    if (!fallbackProvider) throw primaryError;
+    console.warn(`Primary provider ${primaryProvider.id} failed, attempting configured fallback ${fallbackProvider.id}`, primaryError);
+    try {
+      analyzed = await runProviderWithPolicy(fallbackProvider, text, sourceModel, timeoutMs, retries);
+    } catch (fallbackError) {
+      const message = (error: unknown) => error instanceof Error ? error.message : String(error);
+      throw new AggregateError([primaryError, fallbackError],
+        `${primaryProvider.label} failed: ${message(primaryError)}; configured fallback ${fallbackProvider.label} also failed: ${message(fallbackError)}`);
+    }
+    finalProvider = fallbackProvider;
+    usedFallback = true;
   }
+  const result = applyLocalPromptComparison(analyzed.result, text, auditContext, sourceModel);
+  const meta = buildMeta(finalProvider.id, finalProvider.label, analyzed.model, usedFallback);
+  lastRuntimeMeta = meta;
+  recordAnalysisCompleted({ usedFallback, primaryProvider: primaryProvider.id, finalProvider: finalProvider.id });
+  return { result, meta, provenance: createAnalysisProvenance(meta, sourceModel) };
 }

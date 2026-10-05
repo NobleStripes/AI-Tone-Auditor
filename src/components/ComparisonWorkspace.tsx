@@ -15,6 +15,7 @@ import { ExportButton } from './ExportButton';
 import { downloadJson } from '../lib/download';
 import { createComparisonExport } from '../services/exportReport';
 import { normalizeAnalysisProvenance } from '../services/auditProvenance';
+import { AnalysisModeIndicator } from './AnalysisModeIndicator';
 
 interface ComparisonWorkspaceProps {
   active: boolean;
@@ -192,7 +193,10 @@ export function ComparisonWorkspace({ active, onBusyChange, onCompleted }: Compa
             <details key={item.id} className="border border-zinc-800 rounded-lg p-4">
               <summary className="cursor-pointer text-sm">Inspect {SOURCE_MODEL_LABELS[item.sourceModel]} response #{index + 1}</summary>
               <div className="mt-4 space-y-4">
-                <p className="text-xs text-zinc-400">Auditor: {item.analysis.meta.providerLabel} / {item.analysis.meta.model}{item.analysis.meta.usedFallback ? ' (fallback)' : ''}</p>
+                <p className="text-xs text-zinc-400">
+                  <AnalysisModeIndicator meta={item.analysis.meta} />{' - '}
+                  Auditor: {item.analysis.meta.providerLabel} / {item.analysis.meta.model}{item.analysis.meta.usedFallback ? ' (fallback)' : ''}
+                </p>
                 <p className="text-sm whitespace-pre-wrap break-words">{item.text}</p>
                 <p className="text-xs text-zinc-400">{item.analysis.result.summary}</p>
                 <ExportButton result={item.analysis.result} provenance={normalizeAnalysisProvenance(item.analysis.provenance, item.analysis.meta, item.sourceModel)} />

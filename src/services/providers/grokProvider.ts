@@ -2,6 +2,7 @@ import { ANALYSIS_RESULT_JSON_SCHEMA } from '../analysisSchema';
 import { buildToneAnalysisPrompt } from '../promptBuilder';
 import { validateAnalysisResult } from '../validation/analysisValidator';
 import type { AIProvider, AnalyzeToneInput } from '../../types/provider';
+import { ProviderHttpError, requireApiKey } from './providerErrors';
 
 interface GrokResponse {
   status?: string;
@@ -56,10 +57,7 @@ export const grokProvider: AIProvider = {
   label: 'Grok (xAI)',
   get model() { return getGrokModel(); },
   async analyzeTone(input: AnalyzeToneInput) {
-    const apiKey = process.env.XAI_API_KEY;
-    if (!apiKey) {
-      throw new Error('Missing XAI_API_KEY for Grok provider');
-    }
+    const apiKey = requireApiKey('XAI_API_KEY', 'Grok');
 
     const response = await fetch('https://api.x.ai/v1/responses', {
       method: 'POST',
@@ -86,7 +84,7 @@ export const grokProvider: AIProvider = {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Grok request failed (${response.status}): ${errorText}`);
+      throw new ProviderHttpError('Grok', 'XAI_API_KEY', response.status, errorText, apiKey);
     }
 
     const payload = (await response.json()) as GrokResponse;

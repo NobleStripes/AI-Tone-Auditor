@@ -1,13 +1,7 @@
-import type { AnalysisSource, AnalyzeToneOutput, ProviderRuntimeMeta } from '../types/provider';
+import { DEFAULT_LOCAL_RUNTIME_META, type AnalysisSource, type AnalyzeToneOutput, type ProviderRuntimeMeta } from '../types/provider';
 import type { ProviderTelemetrySnapshot } from './telemetry/providerTelemetry';
 import type { ComparisonRequest, ComparisonResult } from '../types/comparison';
-
-const DEFAULT_META: ProviderRuntimeMeta = {
-  providerId: 'openai',
-  providerLabel: 'OpenAI',
-  model: 'gpt-6-luna',
-  usedFallback: false,
-};
+import { truncateErrorText } from '../lib/errorText';
 
 const DEFAULT_TELEMETRY: ProviderTelemetrySnapshot = {
   totalAnalyses: 0,
@@ -26,19 +20,22 @@ const DEFAULT_TELEMETRY: ProviderTelemetrySnapshot = {
   },
 };
 
-let lastMeta: ProviderRuntimeMeta = { ...DEFAULT_META };
+let lastMeta: ProviderRuntimeMeta = { ...DEFAULT_LOCAL_RUNTIME_META };
 let lastTelemetry: ProviderTelemetrySnapshot = { ...DEFAULT_TELEMETRY };
 
 async function readAnalysisResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    let errorMessage = `Analysis request failed (${response.status})`;
+    const body = await response.text();
+    let detail = body;
     try {
-      const errorData = (await response.json()) as { error?: string };
-      if (errorData.error) errorMessage = errorData.error;
+      const errorData: unknown = JSON.parse(body);
+      if (errorData && typeof errorData === 'object' && 'error' in errorData && typeof errorData.error === 'string') {
+        detail = errorData.error;
+      }
     } catch {
-      // The status remains available when the error body is not JSON.
+      // Preserve plain-text, HTML and malformed JSON bodies for debugging.
     }
-    throw new Error(errorMessage);
+    throw new Error(`Analysis request failed (${response.status})${detail ? `: ${truncateErrorText(detail)}` : ''}`);
   }
   return response.json() as Promise<T>;
 }
