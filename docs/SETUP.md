@@ -11,7 +11,7 @@ This application runs as a web frontend plus a local Express API. External provi
 ### Prerequisites
 
 - Node.js 24 LTS
-- npm or yarn
+- npm
 
 ### Local Development
 
@@ -93,7 +93,7 @@ Type checking covers both frontend and server code. Provider tests use mocked ne
 ## Tech Stack
 
 - **Frontend**: React, Tailwind CSS, Framer Motion
-- **AI Providers**: OpenAI, Anthropic, Gemini, and Grok (provider-agnostic orchestrator with fallback)
+- **Auditors**: Local heuristic auditor + optional OpenAI, Anthropic, Gemini, and Grok semantic auditors
 - **Visualizations**: Recharts
 - **Icons**: Lucide React
 
