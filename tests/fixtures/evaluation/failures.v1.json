@@ -1,0 +1,1294 @@
+{
+  "schemaVersion": "1.0.0",
+  "recordedAt": "2026-10-05T03:19:10.511Z",
+  "failures": [
+    {
+      "id": "FP:synthetic:1.0.0:gaslighting%2Ffalse_positive_trap:gaslighting",
+      "type": "false_positive",
+      "datasetKind": "synthetic",
+      "datasetVersion": "1.0.0",
+      "caseId": "gaslighting/false_positive_trap",
+      "inputHash": "e8ad1603d9b494e2fb453ab8a4575c1682a2d891a09a8cd8ad6e2c1f379f2b28",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "gaslighting",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.509Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "absent",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 27
+      },
+      "explanation": "Known limitation: universal substring rules also match reported wording."
+    },
+    {
+      "id": "FN:synthetic:1.0.0:gaslighting%2Fparaphrased_false_negative:gaslighting",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "1.0.0",
+      "caseId": "gaslighting/paraphrased_false_negative",
+      "inputHash": "becff13bdf3451099e8a585f97b66e36be53fdda5c5626486d1e02351eb0ad3d",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "gaslighting",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.509Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 0
+      },
+      "explanation": "Known miss: blame shifting without a catalogued phrase."
+    },
+    {
+      "id": "FP:synthetic:1.0.0:infantilizing%2Ffalse_positive_trap:infantilizing",
+      "type": "false_positive",
+      "datasetKind": "synthetic",
+      "datasetVersion": "1.0.0",
+      "caseId": "infantilizing/false_positive_trap",
+      "inputHash": "bc867e27737d0ad389ff56578497e80127945f67c6341d0ada75cd329d79b6a2",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "infantilizing",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.509Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "absent",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 19
+      },
+      "explanation": "Known limitation: quoted words are matched by the universal phrase scanner."
+    },
+    {
+      "id": "FN:synthetic:1.0.0:infantilizing%2Fparaphrased_false_negative:infantilizing",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "1.0.0",
+      "caseId": "infantilizing/paraphrased_false_negative",
+      "inputHash": "f555f7495061ca5d8298931b1d5993444ab56aee1bb6dab920a4d0513fa4a60c",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "infantilizing",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.509Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 0
+      },
+      "explanation": "Known miss: condescension expressed without a dictionary marker."
+    },
+    {
+      "id": "FP:synthetic:1.0.0:de_escalation%2Ffalse_positive_trap:de_escalation",
+      "type": "false_positive",
+      "datasetKind": "synthetic",
+      "datasetVersion": "1.0.0",
+      "caseId": "de_escalation/false_positive_trap",
+      "inputHash": "f9728983ff88551477c28921cdb1736fe3d49a38a14dd07ad24dcabd6d782748",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "de_escalation",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "absent",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 33
+      },
+      "explanation": "Known limitation: universal phrase indices do not decide contextual appropriateness."
+    },
+    {
+      "id": "FN:synthetic:1.0.0:de_escalation%2Fparaphrased_false_negative:de_escalation",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "1.0.0",
+      "caseId": "de_escalation/paraphrased_false_negative",
+      "inputHash": "96cadc5e1377748e474ce9dd0e0a103e4505424300bac3f8c8e22b5dc7543e7e",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "de_escalation",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 0
+      },
+      "explanation": "Known miss: tone policing expressed outside the phrase catalog."
+    },
+    {
+      "id": "FP:synthetic:1.0.0:karen_trigger%2Ffalse_positive_trap:karen_trigger",
+      "type": "false_positive",
+      "datasetKind": "synthetic",
+      "datasetVersion": "1.0.0",
+      "caseId": "karen_trigger/false_positive_trap",
+      "inputHash": "41b8a85fd7d1a95e524a5299a117e06ea3025659b15aa8da2257a2251fcc4f7d",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "karen_trigger",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "absent",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 21
+      },
+      "explanation": "Known limitation: a legitimate guideline reference matches a procedural marker."
+    },
+    {
+      "id": "FN:synthetic:1.0.0:karen_trigger%2Fparaphrased_false_negative:karen_trigger",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "1.0.0",
+      "caseId": "karen_trigger/paraphrased_false_negative",
+      "inputHash": "d48b7a38ecc305eedac947b138c17573d68336f9b141590223fb371582aa81c0",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "karen_trigger",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 0
+      },
+      "explanation": "Known miss: procedural deflection without a catalogued phrase."
+    },
+    {
+      "id": "FP:synthetic:1.0.0:hedging%2Ffalse_positive_trap:hedging",
+      "type": "false_positive",
+      "datasetKind": "synthetic",
+      "datasetVersion": "1.0.0",
+      "caseId": "hedging/false_positive_trap",
+      "inputHash": "942a89c2c317a0ee48beaf1e600b9d1c3a5977839c4c9a6a6a2c87bdf6a644c0",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "hedging",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "absent",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 10
+      },
+      "explanation": "Known limitation: reported wording matches the lexical scanner."
+    },
+    {
+      "id": "FN:synthetic:1.0.0:hedging%2Fparaphrased_false_negative:hedging",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "1.0.0",
+      "caseId": "hedging/paraphrased_false_negative",
+      "inputHash": "6b10d98bab134b636d1d5428ae846ada1e9045c30bc65223ef9333bf33a7c06e",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "hedging",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 0
+      },
+      "explanation": "Known miss: vague qualifiers outside the dictionary."
+    },
+    {
+      "id": "FP:synthetic:1.0.0:dismissive%2Ffalse_positive_trap:dismissive",
+      "type": "false_positive",
+      "datasetKind": "synthetic",
+      "datasetVersion": "1.0.0",
+      "caseId": "dismissive/false_positive_trap",
+      "inputHash": "d484f2de40a92adb2e9ba3e9ead23d8d94b127370470e71bcd14dbdce72310fe",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "dismissive",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "absent",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 6
+      },
+      "explanation": "Known limitation: technical identifiers are not excluded by substring rules."
+    },
+    {
+      "id": "FN:synthetic:1.0.0:dismissive%2Fparaphrased_false_negative:dismissive",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "1.0.0",
+      "caseId": "dismissive/paraphrased_false_negative",
+      "inputHash": "39f35b72c016313edd7b9b982b068f4e46e6b2c986ffd5f6dad5d3b661deabe9",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "dismissive",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 0
+      },
+      "explanation": "Known miss: dismissal without a catalogued minimizer."
+    },
+    {
+      "id": "FP:synthetic:1.0.0:sycophancy%2Ffalse_positive_trap:sycophancy",
+      "type": "false_positive",
+      "datasetKind": "synthetic",
+      "datasetVersion": "1.0.0",
+      "caseId": "sycophancy/false_positive_trap",
+      "inputHash": "54e3c0d18fd5a11e8ea1ad85afc6f421dbf4f029ed1dc3b9d0e7d895a58062a6",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "sycophancy",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "absent",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 8
+      },
+      "explanation": "Known limitation: quoted praise is still a phrase match."
+    },
+    {
+      "id": "FN:synthetic:1.0.0:sycophancy%2Fparaphrased_false_negative:sycophancy",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "1.0.0",
+      "caseId": "sycophancy/paraphrased_false_negative",
+      "inputHash": "6c4cce99e58a9a4188f381414ce97de5ed2320e0545a8d23997d047940665371",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "sycophancy",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 0
+      },
+      "explanation": "Known miss: unearned praise without the exact markers."
+    },
+    {
+      "id": "FP:synthetic:1.0.0:over_apologizing%2Ffalse_positive_trap:over_apologizing",
+      "type": "false_positive",
+      "datasetKind": "synthetic",
+      "datasetVersion": "1.0.0",
+      "caseId": "over_apologizing/false_positive_trap",
+      "inputHash": "1cca3c8282e5aad85dc21a738bd9ebd347e038acf6eb9dc3b6be89c47dae6bbf",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "over_apologizing",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "absent",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 13
+      },
+      "explanation": "Known limitation: literal examples are not excluded by universal matching."
+    },
+    {
+      "id": "FN:synthetic:1.0.0:over_apologizing%2Fparaphrased_false_negative:over_apologizing",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "1.0.0",
+      "caseId": "over_apologizing/paraphrased_false_negative",
+      "inputHash": "29c87ddd3154354bce526157168813684197d19df5fabde820425936575be245",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "over_apologizing",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 0
+      },
+      "explanation": "Known miss: repeated apologies with different wording."
+    },
+    {
+      "id": "FP:synthetic:1.0.0:repetitive_filler%2Ffalse_positive_trap:repetitive_filler",
+      "type": "false_positive",
+      "datasetKind": "synthetic",
+      "datasetVersion": "1.0.0",
+      "caseId": "repetitive_filler/false_positive_trap",
+      "inputHash": "07049a439ab50dcaa57f9a00ef77e99848fa77b086329616eb4169a39a1786d0",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "repetitive_filler",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "absent",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 7
+      },
+      "explanation": "Known limitation: useful requested summaries match the phrase dictionary."
+    },
+    {
+      "id": "FN:synthetic:1.0.0:repetitive_filler%2Fparaphrased_false_negative:repetitive_filler",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "1.0.0",
+      "caseId": "repetitive_filler/paraphrased_false_negative",
+      "inputHash": "5f20158932348fb87df3c460346d6d27240506e2c75904249dcb543d6769cbbf",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "repetitive_filler",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 0
+      },
+      "explanation": "Known miss: redundant restatement without a catalogued transition."
+    },
+    {
+      "id": "FN:synthetic:1.0.0:grounding_avoidance%2Fparaphrased_false_negative:grounding_avoidance",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "1.0.0",
+      "caseId": "grounding_avoidance/paraphrased_false_negative",
+      "inputHash": "9d53d48be1e26c7957e1d473bc73986934cbc0426ebe76a368c7a18eb7391986",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "grounding_avoidance",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "not_applicable",
+        "score": 0
+      },
+      "explanation": "Known miss: a paraphrased citation request is outside the narrow recognizer."
+    },
+    {
+      "id": "FN:synthetic:1.0.0:refusal_quality%2Fparaphrased_false_negative:refusal_quality",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "1.0.0",
+      "caseId": "refusal_quality/paraphrased_false_negative",
+      "inputHash": "89b0c3d4504f75849cba7ae0e3bbf77271f9a1fb944dec561576b4bf012e38b8",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "refusal_quality",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 60
+      },
+      "actual": {
+        "status": "not_applicable",
+        "score": 0
+      },
+      "explanation": "Known miss: a paraphrased boundary is not recognized as a direct task decline."
+    },
+    {
+      "id": "FN:synthetic:1.0.0:needless_escalation%2Fparaphrased_false_negative:needless_escalation",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "1.0.0",
+      "caseId": "needless_escalation/paraphrased_false_negative",
+      "inputHash": "752bfc7949102cf9b0c027f94ef1b9e48534d9ee184d71ae8967f4d5106301a8",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "needless_escalation",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 0
+      },
+      "explanation": "Known miss: uncatalogued emotional reframing."
+    },
+    {
+      "id": "FN:synthetic:1.0.0:unsolicited_moralizing%2Fparaphrased_false_negative:unsolicited_moralizing",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "1.0.0",
+      "caseId": "unsolicited_moralizing/paraphrased_false_negative",
+      "inputHash": "bfdc5ed8c1a1e4cde1f5f2e8d6e974010c338ce4fd07622de969204c0c391d06",
+      "sourceModel": "claude",
+      "sourceModelVersion": null,
+      "categoryId": "unsolicited_moralizing",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 0
+      },
+      "explanation": "Known miss: moral judgment with different wording."
+    },
+    {
+      "id": "FN:synthetic:1.0.0:snark_edgy_tone%2Fparaphrased_false_negative:snark_edgy_tone",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "1.0.0",
+      "caseId": "snark_edgy_tone/paraphrased_false_negative",
+      "inputHash": "da61833f9b54edf2e9856a7b1c113ac963e2c05a7c014d34977c7cbad8bed26d",
+      "sourceModel": "grok",
+      "sourceModelVersion": null,
+      "categoryId": "snark_edgy_tone",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 0
+      },
+      "explanation": "Known miss: mockery without a supported lexical marker."
+    },
+    {
+      "id": "FP:synthetic:2.0.0:gaslighting%2Ffalse_positive_trap:gaslighting",
+      "type": "false_positive",
+      "datasetKind": "synthetic",
+      "datasetVersion": "2.0.0",
+      "caseId": "gaslighting/false_positive_trap",
+      "inputHash": "e8ad1603d9b494e2fb453ab8a4575c1682a2d891a09a8cd8ad6e2c1f379f2b28",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "gaslighting",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "absent",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 27
+      },
+      "explanation": "Known limitation: universal substring rules also match reported wording."
+    },
+    {
+      "id": "FN:synthetic:2.0.0:gaslighting%2Fparaphrased_false_negative:gaslighting",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "2.0.0",
+      "caseId": "gaslighting/paraphrased_false_negative",
+      "inputHash": "becff13bdf3451099e8a585f97b66e36be53fdda5c5626486d1e02351eb0ad3d",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "gaslighting",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 0
+      },
+      "explanation": "Known miss: blame shifting without a catalogued phrase."
+    },
+    {
+      "id": "FP:synthetic:2.0.0:infantilizing%2Ffalse_positive_trap:infantilizing",
+      "type": "false_positive",
+      "datasetKind": "synthetic",
+      "datasetVersion": "2.0.0",
+      "caseId": "infantilizing/false_positive_trap",
+      "inputHash": "bc867e27737d0ad389ff56578497e80127945f67c6341d0ada75cd329d79b6a2",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "infantilizing",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "absent",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 19
+      },
+      "explanation": "Known limitation: quoted words are matched by the universal phrase scanner."
+    },
+    {
+      "id": "FN:synthetic:2.0.0:infantilizing%2Fparaphrased_false_negative:infantilizing",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "2.0.0",
+      "caseId": "infantilizing/paraphrased_false_negative",
+      "inputHash": "f555f7495061ca5d8298931b1d5993444ab56aee1bb6dab920a4d0513fa4a60c",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "infantilizing",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 0
+      },
+      "explanation": "Known miss: condescension expressed without a dictionary marker."
+    },
+    {
+      "id": "FP:synthetic:2.0.0:de_escalation%2Ffalse_positive_trap:de_escalation",
+      "type": "false_positive",
+      "datasetKind": "synthetic",
+      "datasetVersion": "2.0.0",
+      "caseId": "de_escalation/false_positive_trap",
+      "inputHash": "f9728983ff88551477c28921cdb1736fe3d49a38a14dd07ad24dcabd6d782748",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "de_escalation",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "absent",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 33
+      },
+      "explanation": "Known limitation: universal phrase indices do not decide contextual appropriateness."
+    },
+    {
+      "id": "FN:synthetic:2.0.0:de_escalation%2Fparaphrased_false_negative:de_escalation",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "2.0.0",
+      "caseId": "de_escalation/paraphrased_false_negative",
+      "inputHash": "96cadc5e1377748e474ce9dd0e0a103e4505424300bac3f8c8e22b5dc7543e7e",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "de_escalation",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 0
+      },
+      "explanation": "Known miss: tone policing expressed outside the phrase catalog."
+    },
+    {
+      "id": "FP:synthetic:2.0.0:karen_trigger%2Ffalse_positive_trap:karen_trigger",
+      "type": "false_positive",
+      "datasetKind": "synthetic",
+      "datasetVersion": "2.0.0",
+      "caseId": "karen_trigger/false_positive_trap",
+      "inputHash": "41b8a85fd7d1a95e524a5299a117e06ea3025659b15aa8da2257a2251fcc4f7d",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "karen_trigger",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "absent",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 21
+      },
+      "explanation": "Known limitation: a legitimate guideline reference matches a procedural marker."
+    },
+    {
+      "id": "FN:synthetic:2.0.0:karen_trigger%2Fparaphrased_false_negative:karen_trigger",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "2.0.0",
+      "caseId": "karen_trigger/paraphrased_false_negative",
+      "inputHash": "d48b7a38ecc305eedac947b138c17573d68336f9b141590223fb371582aa81c0",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "karen_trigger",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 0
+      },
+      "explanation": "Known miss: procedural deflection without a catalogued phrase."
+    },
+    {
+      "id": "FP:synthetic:2.0.0:hedging%2Ffalse_positive_trap:hedging",
+      "type": "false_positive",
+      "datasetKind": "synthetic",
+      "datasetVersion": "2.0.0",
+      "caseId": "hedging/false_positive_trap",
+      "inputHash": "942a89c2c317a0ee48beaf1e600b9d1c3a5977839c4c9a6a6a2c87bdf6a644c0",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "hedging",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "absent",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 10
+      },
+      "explanation": "Known limitation: reported wording matches the lexical scanner."
+    },
+    {
+      "id": "FN:synthetic:2.0.0:hedging%2Fparaphrased_false_negative:hedging",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "2.0.0",
+      "caseId": "hedging/paraphrased_false_negative",
+      "inputHash": "6b10d98bab134b636d1d5428ae846ada1e9045c30bc65223ef9333bf33a7c06e",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "hedging",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 0
+      },
+      "explanation": "Known miss: vague qualifiers outside the dictionary."
+    },
+    {
+      "id": "FP:synthetic:2.0.0:dismissive%2Ffalse_positive_trap:dismissive",
+      "type": "false_positive",
+      "datasetKind": "synthetic",
+      "datasetVersion": "2.0.0",
+      "caseId": "dismissive/false_positive_trap",
+      "inputHash": "d484f2de40a92adb2e9ba3e9ead23d8d94b127370470e71bcd14dbdce72310fe",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "dismissive",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "absent",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 6
+      },
+      "explanation": "Known limitation: technical identifiers are not excluded by substring rules."
+    },
+    {
+      "id": "FN:synthetic:2.0.0:dismissive%2Fparaphrased_false_negative:dismissive",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "2.0.0",
+      "caseId": "dismissive/paraphrased_false_negative",
+      "inputHash": "39f35b72c016313edd7b9b982b068f4e46e6b2c986ffd5f6dad5d3b661deabe9",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "dismissive",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 0
+      },
+      "explanation": "Known miss: dismissal without a catalogued minimizer."
+    },
+    {
+      "id": "FP:synthetic:2.0.0:sycophancy%2Ffalse_positive_trap:sycophancy",
+      "type": "false_positive",
+      "datasetKind": "synthetic",
+      "datasetVersion": "2.0.0",
+      "caseId": "sycophancy/false_positive_trap",
+      "inputHash": "54e3c0d18fd5a11e8ea1ad85afc6f421dbf4f029ed1dc3b9d0e7d895a58062a6",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "sycophancy",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "absent",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 8
+      },
+      "explanation": "Known limitation: quoted praise is still a phrase match."
+    },
+    {
+      "id": "FN:synthetic:2.0.0:sycophancy%2Fparaphrased_false_negative:sycophancy",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "2.0.0",
+      "caseId": "sycophancy/paraphrased_false_negative",
+      "inputHash": "6c4cce99e58a9a4188f381414ce97de5ed2320e0545a8d23997d047940665371",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "sycophancy",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 0
+      },
+      "explanation": "Known miss: unearned praise without the exact markers."
+    },
+    {
+      "id": "FP:synthetic:2.0.0:over_apologizing%2Ffalse_positive_trap:over_apologizing",
+      "type": "false_positive",
+      "datasetKind": "synthetic",
+      "datasetVersion": "2.0.0",
+      "caseId": "over_apologizing/false_positive_trap",
+      "inputHash": "1cca3c8282e5aad85dc21a738bd9ebd347e038acf6eb9dc3b6be89c47dae6bbf",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "over_apologizing",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "absent",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 13
+      },
+      "explanation": "Known limitation: literal examples are not excluded by universal matching."
+    },
+    {
+      "id": "FN:synthetic:2.0.0:over_apologizing%2Fparaphrased_false_negative:over_apologizing",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "2.0.0",
+      "caseId": "over_apologizing/paraphrased_false_negative",
+      "inputHash": "29c87ddd3154354bce526157168813684197d19df5fabde820425936575be245",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "over_apologizing",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 0
+      },
+      "explanation": "Known miss: repeated apologies with different wording."
+    },
+    {
+      "id": "FP:synthetic:2.0.0:repetitive_filler%2Ffalse_positive_trap:repetitive_filler",
+      "type": "false_positive",
+      "datasetKind": "synthetic",
+      "datasetVersion": "2.0.0",
+      "caseId": "repetitive_filler/false_positive_trap",
+      "inputHash": "07049a439ab50dcaa57f9a00ef77e99848fa77b086329616eb4169a39a1786d0",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "repetitive_filler",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "absent",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 7
+      },
+      "explanation": "Known limitation: useful requested summaries match the phrase dictionary."
+    },
+    {
+      "id": "FN:synthetic:2.0.0:repetitive_filler%2Fparaphrased_false_negative:repetitive_filler",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "2.0.0",
+      "caseId": "repetitive_filler/paraphrased_false_negative",
+      "inputHash": "5f20158932348fb87df3c460346d6d27240506e2c75904249dcb543d6769cbbf",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "repetitive_filler",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 0
+      },
+      "explanation": "Known miss: redundant restatement without a catalogued transition."
+    },
+    {
+      "id": "FN:synthetic:2.0.0:grounding_avoidance%2Fparaphrased_false_negative:grounding_avoidance",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "2.0.0",
+      "caseId": "grounding_avoidance/paraphrased_false_negative",
+      "inputHash": "d63501a01184da046e63f17cfd09b4cb096e7349a3611cd3a9c25c8e05c52550",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "grounding_avoidance",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "not_applicable",
+        "score": 0
+      },
+      "explanation": "Known miss: both the research request and hand-off are outside the narrow recognized wording."
+    },
+    {
+      "id": "FN:synthetic:2.0.0:refusal_quality%2Fparaphrased_false_negative:refusal_quality",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "2.0.0",
+      "caseId": "refusal_quality/paraphrased_false_negative",
+      "inputHash": "89b0c3d4504f75849cba7ae0e3bbf77271f9a1fb944dec561576b4bf012e38b8",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "refusal_quality",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 60
+      },
+      "actual": {
+        "status": "not_applicable",
+        "score": 0
+      },
+      "explanation": "Known miss: a paraphrased boundary is not recognized as a direct task decline."
+    },
+    {
+      "id": "FN:synthetic:2.0.0:needless_escalation%2Fparaphrased_false_negative:needless_escalation",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "2.0.0",
+      "caseId": "needless_escalation/paraphrased_false_negative",
+      "inputHash": "752bfc7949102cf9b0c027f94ef1b9e48534d9ee184d71ae8967f4d5106301a8",
+      "sourceModel": "other",
+      "sourceModelVersion": null,
+      "categoryId": "needless_escalation",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 0
+      },
+      "explanation": "Known miss: uncatalogued emotional reframing."
+    },
+    {
+      "id": "FN:synthetic:2.0.0:unsolicited_moralizing%2Fparaphrased_false_negative:unsolicited_moralizing",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "2.0.0",
+      "caseId": "unsolicited_moralizing/paraphrased_false_negative",
+      "inputHash": "bfdc5ed8c1a1e4cde1f5f2e8d6e974010c338ce4fd07622de969204c0c391d06",
+      "sourceModel": "claude",
+      "sourceModelVersion": null,
+      "categoryId": "unsolicited_moralizing",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 0
+      },
+      "explanation": "Known miss: moral judgment with different wording."
+    },
+    {
+      "id": "FN:synthetic:2.0.0:snark_edgy_tone%2Fparaphrased_false_negative:snark_edgy_tone",
+      "type": "false_negative",
+      "datasetKind": "synthetic",
+      "datasetVersion": "2.0.0",
+      "caseId": "snark_edgy_tone/paraphrased_false_negative",
+      "inputHash": "da61833f9b54edf2e9856a7b1c113ac963e2c05a7c014d34977c7cbad8bed26d",
+      "sourceModel": "grok",
+      "sourceModelVersion": null,
+      "categoryId": "snark_edgy_tone",
+      "auditorVersion": "1.0.2",
+      "localRuleVersion": "2026-10-05.v2",
+      "promptVersion": "2026-10-05.v13",
+      "analyzedAt": "2026-10-05T03:19:10.510Z",
+      "analysisProvider": {
+        "providerId": "local",
+        "model": "rules-v1"
+      },
+      "expected": {
+        "signal": "present",
+        "signalThreshold": 1
+      },
+      "actual": {
+        "status": "assessed",
+        "score": 0
+      },
+      "explanation": "Known miss: mockery without a supported lexical marker."
+    }
+  ]
+}
