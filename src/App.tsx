@@ -25,7 +25,7 @@ import { TRIGGER_WORDS } from './constants';
 import { cn } from './lib/utils';
 import type { AnalysisResult } from './types/analysis';
 import { parseAuditHistory, type HistoryEntry } from './types/history';
-import { ANALYSIS_SOURCES, type AnalysisSource, type ProviderRuntimeMeta } from './types/provider';
+import { ANALYSIS_SOURCES, SOURCE_MODEL_LABELS, type AnalysisSource, type ProviderRuntimeMeta } from './types/provider';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { TriggerHighlighter } from './components/TriggerHighlighter';
@@ -36,17 +36,11 @@ import { ExportButton } from './components/ExportButton';
 import { FindingCard } from './components/FindingCard';
 import { PersonalizationProfile } from './components/PersonalizationProfile';
 import { ResponseDiagnostics } from './components/ResponseDiagnostics';
-
-const SOURCE_MODEL_LABELS: Record<AnalysisSource, string> = {
-  unknown: 'Unknown / model-agnostic',
-  chatgpt: 'ChatGPT',
-  claude: 'Claude',
-  gemini: 'Gemini',
-  grok: 'Grok',
-  other: 'Other',
-};
+import { ComparisonWorkspace } from './components/ComparisonWorkspace';
 
 export default function App() {
+  const [auditMode, setAuditMode] = useState<'single' | 'comparison'>('single');
+  const [isComparing, setIsComparing] = useState(false);
   const [inputText, setInputText] = useState('');
   const [sourceModel, setSourceModel] = useState<AnalysisSource>('unknown');
   const [auditContext, setAuditContext] = useState('');
@@ -119,7 +113,7 @@ export default function App() {
 
   // Auto Audit Logic
   useEffect(() => {
-    if (isAutoAudit && !isAnalyzing && inputText.trim().length >= minAuditLength) {
+    if (auditMode === 'single' && isAutoAudit && !isAnalyzing && inputText.trim().length >= minAuditLength) {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
       
       debounceTimer.current = setTimeout(() => {
@@ -130,7 +124,7 @@ export default function App() {
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
-  }, [inputText, isAutoAudit, isAnalyzing, minAuditLength, sourceModel, auditContext]);
+  }, [inputText, isAutoAudit, isAnalyzing, minAuditLength, sourceModel, auditContext, auditMode]);
 
   useEffect(() => {
     try {
@@ -153,6 +147,7 @@ export default function App() {
           onSelect={(id) => {
             const item = history.find(h => h.id === id);
             if (item) {
+              setAuditMode('single');
               setResult(item.data);
               setInputText(item.responseText);
               setSourceModel(item.sourceModel);
@@ -171,6 +166,25 @@ export default function App() {
         />
 
         <main className="flex-1 overflow-y-auto p-4 md:p-8 max-w-6xl mx-auto w-full">
+          <div role="tablist" aria-label="Audit mode" className="flex gap-3 mb-6" onKeyDown={(event) => {
+            if (isAnalyzing || isComparing || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+            event.preventDefault();
+            const nextMode = event.key === 'Home' ? 'single' : event.key === 'End' ? 'comparison' : auditMode === 'single' ? 'comparison' : 'single';
+            setAuditMode(nextMode);
+            event.currentTarget.querySelector<HTMLButtonElement>(nextMode === 'single' ? '#single-audit-tab' : '#comparison-tab')?.focus();
+          }}>
+            <button role="tab" id="single-audit-tab" tabIndex={auditMode === 'single' ? 0 : -1} aria-controls="single-audit-panel" aria-selected={auditMode === 'single'} disabled={isAnalyzing || isComparing}
+              onClick={() => setAuditMode('single')} className={cn('px-4 py-2 rounded border text-sm', auditMode === 'single' ? 'border-red-500 text-red-400' : 'border-zinc-800 text-zinc-400')}>Single response</button>
+            <button role="tab" id="comparison-tab" tabIndex={auditMode === 'comparison' ? 0 : -1} aria-controls="comparison-panel" aria-selected={auditMode === 'comparison'} disabled={isAnalyzing || isComparing}
+              onClick={() => setAuditMode('comparison')} className={cn('px-4 py-2 rounded border text-sm', auditMode === 'comparison' ? 'border-red-500 text-red-400' : 'border-zinc-800 text-zinc-400')}>Multi-model comparison</button>
+          </div>
+          <div role="tabpanel" id="comparison-panel" aria-labelledby="comparison-tab" hidden={auditMode !== 'comparison'}>
+            <ComparisonWorkspace active={auditMode === 'comparison'} onBusyChange={setIsComparing} onCompleted={() => {
+              setRuntimeMeta(getLastAnalysisRuntimeMeta());
+              setTelemetry(getProviderTelemetrySnapshot());
+            }} />
+          </div>
+          <div role="tabpanel" id="single-audit-panel" aria-labelledby="single-audit-tab" hidden={auditMode !== 'single'}>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
             
             {/* Input Section */}
@@ -438,6 +452,7 @@ export default function App() {
               )}
             </AnimatePresence>
 
+          </div>
           </div>
         </main>
       </div>

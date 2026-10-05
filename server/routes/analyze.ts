@@ -1,21 +1,17 @@
 import type { Request, Response } from 'express';
 import { ANALYSIS_SOURCES, type AnalysisSource } from '../../src/types/provider';
 import { analyzeTone, getProviderTelemetrySnapshot } from '../../src/services/analyzeTone';
+import { validateResponseText } from '../../src/services/comparisonValidation';
+import { MAX_ORIGINAL_PROMPT_LENGTH } from '../../src/types/comparison';
 
-const MAX_TEXT_LENGTH = 50_000;
-const MAX_AUDIT_CONTEXT_LENGTH = 5_000;
-const MIN_TEXT_LENGTH = 10;
+const MAX_AUDIT_CONTEXT_LENGTH = MAX_ORIGINAL_PROMPT_LENGTH;
 
 export async function analyzeRoute(req: Request, res: Response): Promise<void> {
   const { text, sourceModel, auditContext } = req.body as { text?: unknown; sourceModel?: unknown; auditContext?: unknown };
 
-  if (typeof text !== 'string' || text.trim().length < MIN_TEXT_LENGTH) {
-    res.status(400).json({ error: `text must be a string of at least ${MIN_TEXT_LENGTH} characters` });
-    return;
-  }
-
-  if (text.length > MAX_TEXT_LENGTH) {
-    res.status(400).json({ error: `text exceeds maximum length of ${MAX_TEXT_LENGTH} characters` });
+  const textError = validateResponseText(text);
+  if (textError || typeof text !== 'string') {
+    res.status(400).json({ error: textError });
     return;
   }
 

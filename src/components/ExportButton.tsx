@@ -4,6 +4,7 @@ import { cn } from '../lib/utils';
 import type { AnalysisResult } from '../types/analysis';
 import { CATEGORY_REGISTRY } from '../constants';
 import { DIAGNOSTIC_GROUPS, METHOD_LABELS, formatDiagnosticScore } from '../types/diagnostics';
+import { downloadJson } from '../lib/download';
 
 interface ExportButtonProps {
   result: AnalysisResult;
@@ -69,13 +70,7 @@ export function ExportButton({ result }: ExportButtonProps) {
   const [copiedMd, setCopiedMd] = useState(false);
 
   const exportJson = () => {
-    const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `tone-audit-${Date.now()}.json`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    downloadJson(result, `tone-audit-${Date.now()}.json`);
   };
 
   const copyMarkdown = () => {

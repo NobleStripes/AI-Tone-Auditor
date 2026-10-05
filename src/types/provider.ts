@@ -3,6 +3,14 @@ import { AnalysisResult } from './analysis';
 export type ProviderId = 'openai' | 'anthropic' | 'gemini' | 'grok' | 'local';
 export const ANALYSIS_SOURCES = ['unknown', 'chatgpt', 'claude', 'gemini', 'grok', 'other'] as const;
 export type AnalysisSource = typeof ANALYSIS_SOURCES[number];
+export const SOURCE_MODEL_LABELS: Record<AnalysisSource, string> = {
+  unknown: 'Unknown / model-agnostic',
+  chatgpt: 'ChatGPT',
+  claude: 'Claude',
+  gemini: 'Gemini',
+  grok: 'Grok',
+  other: 'Other',
+};
 
 export interface ProviderContext {
   promptVersion: string;

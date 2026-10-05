@@ -122,11 +122,23 @@ export const TONE_CATEGORIES = {
     group: 'contextual',
     kind: 'risk',
     requiresContext: true,
+    sourceOnly: 'claude',
     chartLabel: 'Moralizing',
     label: 'Unsolicited Moralizing',
     description: 'Claude-selected, context-dependent ethical lecturing, excluding requested discussion and specific safety explanations.',
     color: '#eab308',
-  }
+  },
+  SNARK_EDGY_TONE: {
+    id: 'snark_edgy_tone',
+    group: 'contextual',
+    kind: 'risk',
+    requiresContext: true,
+    sourceOnly: 'grok',
+    chartLabel: 'Snark',
+    label: 'Snark / Edgy Tone',
+    description: 'Grok-selected, context-dependent uninvited sarcasm or directed ridicule; friendly requested humor and explicitly requested self-roasts are excluded.',
+    color: '#d946ef',
+  },
 } as const;
 
 export type ScoreId = typeof TONE_CATEGORIES[keyof typeof TONE_CATEGORIES]['id'];

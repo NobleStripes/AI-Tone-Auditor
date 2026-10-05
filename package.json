@@ -14,7 +14,8 @@
     "lint": "tsc --noEmit && tsc -p tsconfig.server.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:parity": "tsx --test tests/parity/*.test.ts"
+    "test:parity": "tsx --test tests/parity/*.test.ts",
+    "corpus:compare": "tsx tests/fixtures/corpus/compare.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.14",

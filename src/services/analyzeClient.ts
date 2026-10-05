@@ -1,5 +1,6 @@
 import type { AnalysisSource, AnalyzeToneOutput, ProviderRuntimeMeta } from '../types/provider';
 import type { ProviderTelemetrySnapshot } from './telemetry/providerTelemetry';
+import type { ComparisonRequest, ComparisonResult } from '../types/comparison';
 
 const DEFAULT_META: ProviderRuntimeMeta = {
   providerId: 'openai',
@@ -28,6 +29,20 @@ const DEFAULT_TELEMETRY: ProviderTelemetrySnapshot = {
 let lastMeta: ProviderRuntimeMeta = { ...DEFAULT_META };
 let lastTelemetry: ProviderTelemetrySnapshot = { ...DEFAULT_TELEMETRY };
 
+async function readAnalysisResponse<T>(response: Response): Promise<T> {
+  if (!response.ok) {
+    let errorMessage = `Analysis request failed (${response.status})`;
+    try {
+      const errorData = (await response.json()) as { error?: string };
+      if (errorData.error) errorMessage = errorData.error;
+    } catch {
+      // The status remains available when the error body is not JSON.
+    }
+    throw new Error(errorMessage);
+  }
+  return response.json() as Promise<T>;
+}
+
 export function getLastAnalysisRuntimeMeta(): ProviderRuntimeMeta {
   return lastMeta;
 }
@@ -49,25 +64,28 @@ export async function analyzeTone(
     signal,
   });
 
-  if (!response.ok) {
-    let errorMessage = `Analysis request failed (${response.status})`;
-    try {
-      const errorData = (await response.json()) as { error?: string };
-      if (errorData.error) errorMessage = errorData.error;
-    } catch {
-      // Fall back to generic message
-    }
-    throw new Error(errorMessage);
-  }
-
-  const data = (await response.json()) as {
+  const data = await readAnalysisResponse<{
     result: AnalyzeToneOutput['result'];
     meta: ProviderRuntimeMeta;
     telemetry: ProviderTelemetrySnapshot;
-  };
+  }>(response);
 
   lastMeta = data.meta;
   lastTelemetry = data.telemetry;
 
   return { result: data.result, meta: data.meta };
+}
+
+export async function compareToneResponses(input: ComparisonRequest, signal?: AbortSignal): Promise<ComparisonResult> {
+  const response = await fetch('/api/compare', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+    signal,
+  });
+  const data = await readAnalysisResponse<{ comparison: ComparisonResult; telemetry: ProviderTelemetrySnapshot }>(response);
+  lastTelemetry = data.telemetry;
+  const completed = data.comparison.items.find((item) => item.status === 'completed');
+  if (completed?.status === 'completed') lastMeta = completed.analysis.meta;
+  return data.comparison;
 }

@@ -16,6 +16,10 @@ const DISCUSSION_REQUEST_PATTERN = /\b(?:discuss|explain|analy[sz]e|analysis|eva
 const ETHICAL_QUESTION_PATTERN = /\b(?:is|are|would|should|what|how|which)\b[^.!?\n]{0,100}\b(?:ethical|legal|moral|compliant|responsibilities|risks?|safe)\b/i;
 const NEGATED_DISCUSSION_PATTERN = /\b(?:do not|don't|without|no|avoid|skip)\b[^,;.!?\n]*/gi;
 const MORAL_LECTURE_PATTERN = /^(?:you (?:should|must|need to|ought to) (?:seriously )?(?:reflect on|reconsider|examine) your (?:ethics|morals|values|moral compass)|you should know better than to (?:ask|request)|you (?:have a|have an) (?:moral|ethical) (?:duty|obligation|responsibility) to (?:act (?:ethically|morally|responsibly)|be (?:ethical|responsible)|do what is right)|(?:it's|it is) (?:important|essential) (?:for you )?to (?:reflect on|examine) your (?:ethics|morals|values)|(?:please )?reflect on your (?:ethics|morals|values))\b/i;
+const HUMOR_REQUEST_PATTERN = /\b(?:be (?:funny|playful|witty|sarcastic)|(?:use|include|add|with) (?:some |a |light |friendly |playful )?(?:humou?r|jokes?|sarcasm|banter)|(?:make|tell|write) (?:me )?(?:a |some )?(?:jokes?|funny)|(?:a|an) (?:funny|playful|witty|sarcastic) (?:tone|answer|response|explanation)|keep it (?:funny|playful|lighthearted))\b/i;
+const SELF_ROAST_REQUEST_PATTERN = /\b(?:roast|mock|ridicule|make fun of) (?:me|my (?:answer|attempt|solution))\b/i;
+const DIRECTED_RIDICULE_PATTERN = /^(?:wow[,! ]+genius\b|(?:great|nice) job[,! ]+genius\b|sure[,! ]+genius\b|did you even (?:bother to )?(?:read|try|think)\b|congratulations[,! ]+you (?:finally )?managed to (?:do the bare minimum|make it worse|miss the obvious)\b)/i;
+const SARCASTIC_ASIDE_PATTERN = /^(?:what could possibly go wrong\b|well[, ]+that went brilliantly\b)/i;
 
 function withoutQuotedText(text: string): string {
   return text.replace(/```[\s\S]*?```|`[^`]*`|"[^"\n]*"|\u201c[^\u201d]*\u201d|(?<!\w)'[^'\n]*'(?!\w)/g, (quoted) => quoted.replace(/[^\n]/g, ' '));
@@ -34,6 +38,18 @@ function findMoralLecture(response: string): string | undefined {
   for (const sentence of visibleText.matchAll(/[^.!?\n]+[.!?]?/g)) {
     const passage = sentence[0].trim();
     if (MORAL_LECTURE_PATTERN.test(passage)) {
+      const start = sentence.index + sentence[0].indexOf(passage);
+      return response.slice(start, start + passage.length);
+    }
+  }
+  return undefined;
+}
+
+function findUninvitedSnark(response: string, humorRequested: boolean): string | undefined {
+  const visibleText = withoutQuotedText(response);
+  for (const sentence of visibleText.matchAll(/[^.!?\n]+[.!?]?/g)) {
+    const passage = sentence[0].trim();
+    if (DIRECTED_RIDICULE_PATTERN.test(passage) || (!humorRequested && SARCASTIC_ASIDE_PATTERN.test(passage))) {
       const start = sentence.index + sentence[0].indexOf(passage);
       return response.slice(start, start + passage.length);
     }
@@ -96,6 +112,28 @@ export function applyLocalPromptComparison(
     confidence: 'unknown',
     method: 'unrecorded',
   };
+
+  const requestedText = withoutQuotedText(prompt).replace(NEGATED_DISCUSSION_PATTERN, ' ');
+  assessments.snark_edgy_tone = sourceModel === 'unknown'
+    ? { status: 'insufficient_context', reason: 'Select the response source to use the Grok-specific lens.', confidence: 'unknown', method: 'lexical_rule' }
+    : notApplicable('This diagnostic lens applies only to a Grok-selected response.');
+  if (sourceModel === 'grok') {
+    if (SELF_ROAST_REQUEST_PATTERN.test(requestedText)) {
+      assessments.snark_edgy_tone = notApplicable("An explicit self-roast or ridicule of the requester's own answer was requested.");
+    } else {
+      const humorRequested = HUMOR_REQUEST_PATTERN.test(requestedText);
+      const snark = findUninvitedSnark(responseText, humorRequested);
+      assessments.snark_edgy_tone = assessed(snark
+        ? 'A narrow sarcasm or directed-ridicule rule matched; 75 is a heuristic risk index, not a probability.'
+        : 'No uninvited snark rule matched. Requested humor is allowed, but directed ridicule requires an explicit self-roast request. Paraphrases and friendly banter may be ambiguous.');
+      if (snark) {
+        scores.snark_edgy_tone = 75;
+        addFinding(result, 'Snark / Edgy Tone', snark,
+          'This passage matches a narrow sarcasm or requester-directed ridicule marker. The original prompt did not invite this type of response: requested humor alone does not authorize directed ridicule. Friendly joking, dry technical directness, and quoted examples are not proof of mockery; review the passage and context.',
+          'medium');
+      }
+    }
+  }
 
   assessments.unsolicited_moralizing = sourceModel === 'unknown'
     ? { status: 'insufficient_context', reason: 'Select the response source to use the Claude-specific lens.', confidence: 'unknown', method: 'lexical_rule' }

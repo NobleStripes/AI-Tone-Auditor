@@ -20,6 +20,32 @@ afterEach(() => {
 });
 
 describe('saved audit presentation', () => {
+  test('switches between single and comparison modes while retaining single-response drafts', async () => {
+    render(<App />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: /Auto: ON/ }));
+    const text = 'A single-response draft to preserve.';
+    await user.type(screen.getByPlaceholderText('Paste the AI response here for tone auditing...'), text);
+    await user.click(screen.getByRole('tab', { name: 'Multi-model comparison' }));
+    expect(screen.getByRole('tabpanel', { name: 'Multi-model comparison' })).toBeVisible();
+    expect(screen.getByRole('textbox', { name: 'Original prompt (shared)' })).toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: 'Single response' }));
+    expect(screen.getByPlaceholderText('Paste the AI response here for tone auditing...')).toHaveValue(text);
+  });
+
+  test('supports keyboard navigation between audit-mode tabs', async () => {
+    render(<App />);
+    const user = userEvent.setup();
+    const single = screen.getByRole('tab', { name: 'Single response' });
+    single.focus();
+    await user.keyboard('{ArrowRight}');
+    expect(screen.getByRole('tab', { name: 'Multi-model comparison' })).toHaveFocus();
+    expect(screen.getByRole('tabpanel', { name: 'Multi-model comparison' })).toBeVisible();
+    await user.keyboard('{Home}');
+    expect(single).toHaveFocus();
+    expect(screen.getByRole('tabpanel', { name: 'Single response' })).toBeVisible();
+  });
+
   test.each([0, 100])('restores full response without prompt context and separates refusal quality (%s)', async (quality) => {
     const data = emptyAnalysisResult();
     data.scores.refusal_quality = quality;

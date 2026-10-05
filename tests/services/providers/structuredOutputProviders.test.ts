@@ -63,9 +63,12 @@ test.each([
   const analysis = emptyAnalysisResult();
   analysis.scores.unsolicited_moralizing = 99;
   analysis.assessments.unsolicited_moralizing = { status: 'assessed', reason: 'Upstream claim.', confidence: 'high', method: 'semantic' };
+  analysis.scores.snark_edgy_tone = 99;
+  analysis.assessments.snark_edgy_tone = { status: 'assessed', reason: 'Upstream snark claim.', confidence: 'high', method: 'semantic' };
   analysis.scores.hedging = 75;
   analysis.assessments.hedging = { status: 'assessed', reason: 'Tentative evidence.', confidence: 'low', method: 'lexical_rule' };
   analysis.findings.push({ category: ' UNSOLICITED MORALIZING ', text: 'An invented lecture.', explanation: 'Upstream claim', severity: 'high' });
+  analysis.findings.push({ category: ' Snark / Edgy Tone ', text: 'An invented taunt.', explanation: 'Upstream claim', severity: 'high' });
   analysis.findings.push({ category: 'Hedging', text: 'Perhaps', explanation: 'Tentative interpretation.', severity: 'high', confidence: 'low', method: 'lexical_rule' });
   const text = JSON.stringify(analysis);
   fetchMock.mockResolvedValue(mockResponse(id === 'anthropic'
@@ -76,6 +79,8 @@ test.each([
   const result = await provider.analyzeTone({ text: 'A neutral statement.', context: { promptVersion: 'test', sourceModel: 'claude' } });
   expect(result.scores.unsolicited_moralizing).toBe(0);
   expect(result.assessments.unsolicited_moralizing.status).toBe('insufficient_context');
+  expect(result.scores.snark_edgy_tone).toBe(0);
+  expect(result.assessments.snark_edgy_tone.status).toBe('insufficient_context');
   expect(result.assessments.hedging).toMatchObject({ status: 'assessed', confidence: 'low', method: 'semantic' });
   expect(result.findings).toEqual([expect.objectContaining({ category: 'Hedging', severity: 'high', confidence: 'low', method: 'semantic' })]);
 });

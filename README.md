@@ -28,13 +28,43 @@ The auditor specifically looks for these common bureaucratic and passive-aggress
 - **Universal Custom Instructions**: Generates a list of specific, actionable instructions that can be added to any LLM's system prompt or custom instructions field.
 - **RLHF-inspired feedback**: Provides "Reinforcement Learning from Human Feedback" style suggestions for immediate prompt improvement.
 - **Multi-provider runtime**: Supports provider routing with automatic fallback between configured AI engines.
+- **Multi-model comparison**: Compare 2 to 5 pasted responses to one prompt with a source-blind universal rubric, eligible local source lenses, and a neutral differences table.
+- **Versioned fixture corpus**: Retains intended signals and observed local-rule baselines, including ambiguity, false-positive traps, and known paraphrase misses.
 
 ## Getting Started
 
 1. Paste your AI's response into the auditor.
-2. Run the audit to see the Tone Distribution Profile.
+2. Run the audit to see Response Diagnostics.
 3. Review the tone recommendations and custom instructions.
 4. Copy the suggested instructions to tune your AI's system prompt.
+
+### Multi-model comparison
+
+1. Select **Multi-model comparison**.
+2. Paste one **Original prompt (shared)** and 2 to 5 response texts.
+3. Select ChatGPT, Claude, Gemini, Grok, or Other for each response. Multiple responses from the same source are allowed.
+4. Click **Compare responses**. Editing does not automatically make paid audit calls.
+5. Review category-by-category indices, assessment states, confidence, and quoted evidence under each **Inspect** panel.
+
+The universal semantic pass hides the response source and original prompt, using the same model-agnostic rubric for every response. The same original prompt is then used locally for general contextual checks and the eligible Claude/Grok lens. Response text is sent to the configured auditing provider; the original prompt is not sent to third-party providers. This mode audits pasted responses, not model-generation quality under controlled sampling.
+
+The table shows numeric spread only when at least two assessments use the same auditing model and method. Source-specific lenses are explicitly not universal comparisons. Refusal Quality remains a positive quality metric, never part of an aggregate risk or ranking. No winner or aggregate leaderboard is calculated; differences do not establish superiority, accuracy, or model identity. Per-response fallback metadata is visible because a fallback auditor can change comparability.
+
+Audits run sequentially to bound load. Failures stay attached to their response as explicit errors, not zero scores. Canceling stops scheduling further responses after any already-running provider call settles; the browser does not display an incomplete canceled batch. Comparison drafts and the original prompt are not stored in local audit history. **Export comparison JSON** retains response texts, result/error records, auditor metadata, and rubric/local-rule versions, but omits the original prompt.
+
+The API endpoint is `POST /api/compare`:
+
+```json
+{
+  "originalPrompt": "Explain this compiler error and cite sources.",
+  "responses": [
+    { "id": "response-1", "sourceModel": "chatgpt", "text": "The argument type is an integer." },
+    { "id": "response-2", "sourceModel": "grok", "text": "The argument type is a string." }
+  ]
+}
+```
+
+IDs must be unique and at most 64 characters. The shared prompt is required and limited to 5,000 characters; each response must contain at least 10 non-padding characters and at most 50,000 total characters. Invalid batches return `400`. A valid batch returns `comparison` with version metadata and input-ordered `completed`/`failed` items, plus provider telemetry. A completed item includes its source, response text, analysis result, and auditing-provider metadata.
 
 ## Run and deploy
 
@@ -153,7 +183,7 @@ These are probabilistic language signals, not proof of intent or inaccuracy. Rev
 
 ## Assessment state and confidence
 
-**Response Diagnostics** groups metrics into **Communication** (wording and tone), **Contextual behavior** (Needless Escalation and Unsolicited Moralizing), **Epistemic behavior** (Grounding Avoidance and Unsupported Certainty), and **Quality** (Refusal Quality). Only assessed risk metrics appear in the risk radar. Positive quality metrics stay outside it; when fewer than three risks are assessed, the grouped list is shown without a radar.
+**Response Diagnostics** groups metrics into **Communication** (wording and tone), **Contextual behavior** (Needless Escalation, Unsolicited Moralizing, and Snark / Edgy Tone), **Epistemic behavior** (Grounding Avoidance and Unsupported Certainty), and **Quality** (Refusal Quality). Only assessed risk metrics appear in the risk radar. Positive quality metrics stay outside it; when fewer than three risks are assessed, the grouped list is shown without a radar.
 
 Each score ID has an `assessments` entry with `status`, `reason`, `method`, and `confidence`:
 
@@ -168,17 +198,22 @@ Unsupported Certainty is **not assessed**, even with an original prompt, because
 
 Risk and quality scores are **indices, not probabilities**. Fixed local values such as `75/100` are explicitly labeled heuristic. Confidence is separate from finding severity and uses **unknown, low, medium, or high**, never a percentage. For `lexical_rule` output it describes match confidence, not certainty about intent, harm, correctness, or contextual appropriateness. For `semantic` output it is an uncalibrated evidence judgment. Legacy findings use unknown confidence and an unrecorded method; legacy scores without assessment metadata remain stored but display as not assessed rather than being treated as verified clean results.
 
-New results, JSON/Markdown exports, and saved history include assessment metadata. Restoring history without the private original prompt marks the five context-dependent diagnostics as insufficient context. Communication assessments and their confidence remain intact.
+New results, JSON/Markdown exports, and saved history include assessment metadata. Restoring history without the private original prompt marks the six context-dependent diagnostics as insufficient context. Communication assessments and their confidence remain intact.
 
 ## Source model lenses
 
-Source-specific prompt-comparison lenses require original-prompt context. That context stays local and is not available to third-party semantic providers. The **Unsolicited Moralizing** Claude lens runs in the local comparison path; other source-specific semantic comparisons are not generated in this privacy mode. The source model selection does not identify a model from text or imply that all responses from a provider share the same traits.
+Source-specific prompt-comparison lenses require original-prompt context. That context stays local and is not available to third-party semantic providers. The **Unsolicited Moralizing** Claude lens and **Snark / Edgy Tone** Grok lens run in the local comparison path; source-specific semantic comparisons are not generated in this privacy mode. The source model selection does not identify a model from text or imply that all responses from a provider share the same traits.
 
 - **Unsolicited Moralizing** requires Claude as the selected response source and a nonempty original prompt. The auditing provider can be any configured provider, including a fallback.
 - The local rule flags narrow, explicit moral admonitions directed at the requester and quotes the lecturing passage. Its `unsolicited_moralizing` heuristic risk index is `75` for a clear match and `0` for an assessed check with no match, not a probability or a judgment of the requester. Requested ethical discussion and non-Claude sources are not applicable.
 - Explicitly requested ethical/legal discussion and concise, specific safety explanations are excluded. A refusal or allowed alternative alone is not moralizing; an appended lecture can be flagged independently of Refusal Quality.
 - Without original-prompt context or a known source selection, this diagnostic has insufficient context and no finding is produced. Quoted examples and ambiguous wording are handled conservatively. Lexical rules may miss nuance, paraphrases, or request intent; even an assessed zero does not prove the absence of moralizing.
 - **Paternalistic Redirection** and **Refusal Overreach** remain separate, deferred categories. This lens does not decide whether a refusal was warranted.
+
+- **Snark / Edgy Tone** (`snark_edgy_tone`) requires Grok selection and original-prompt context before calling sarcasm uninvited.
+- Narrow local rules distinguish directed ridicule from friendly joking and dry technical directness. Requested humor permits playful sarcastic asides; it does not authorize requester-directed ridicule unless the prompt explicitly requests a self-roast or ridicule of the requester's own answer/attempt/solution. Roasting an unrelated target does not authorize mocking the requester.
+- An assessed rule match has a fixed heuristic risk index of `75/100` and medium match confidence. This is neither a probability nor a calibrated judgment about harm. Quoted/code examples and requested self-roasts are excluded; affectionate banter can remain ambiguous, and paraphrased mockery may be missed.
+- Non-Grok sources are not applicable to this lens; missing prompt/source context is insufficient context. Semantic providers cannot supply this finding without the private prompt, and upstream claims are removed before local comparison.
 
 Use trigger `weight` in `src/constants.ts` to calibrate detection precision.
 
@@ -221,6 +256,20 @@ The parity suite validates:
 - Score categories remain in range `0-100`.
 - Top-risk category is consistent for fixture pairs across providers.
 - Per-category score deltas stay within tolerance.
+
+## Versioned diagnostic fixture corpus
+
+The [v1 corpus](tests/fixtures/corpus/v1.ts) contains **75 cases across all 15 diagnostic categories**, with a positive, negative, ambiguous, false-positive trap, and paraphrased/false-negative case for each. Each case stores the original prompt, selected source, response, intended signal, explanatory note, and exact observed local assessment state/index. Quality examples use the positive quality direction. Unsupported Certainty examples explicitly record that verification is unavailable, not a clean zero.
+
+Intended signals and observed lexical behavior are separate: known false-positive matches, unrecognized paraphrases, and unimplemented checks are not hidden or relabeled as successes. These curated cases are regression evidence, not a statistically representative accuracy benchmark.
+
+```bash
+npm test -- tests/services/fixtureCorpus.test.ts
+npm run corpus:compare
+npm run corpus:compare -- --json
+```
+
+The comparison command evaluates every retained corpus against the current local rules and reports baseline differences with corpus and rule versions. Preserve [v1](tests/fixtures/corpus/v1.ts) and the older clean-text, hedging, and provider-parity fixtures. For intentional rule changes, increment `LOCAL_RULE_VERSION`, add a new corpus version with its recorded baselines, and register it in [the corpus index](tests/fixtures/corpus/index.ts); do not overwrite historical cases or baselines. The latest corpus must cover the current registry and rule version. Historical versions remain evaluable for drift without forcing current rules to reproduce superseded behavior.
 
 ## Disclaimer
 
