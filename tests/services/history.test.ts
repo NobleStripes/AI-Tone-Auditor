@@ -29,6 +29,27 @@ describe('audit history', () => {
     expect(restored.data.scores.karen_trigger).toBe(75);
   });
 
+  test('preserves legacy remediation, evidence and scores across a save/restore cycle', () => {
+    const { stonewallingRemediation, ...personalization } = entry.data.personalization;
+    const legacyData = {
+      ...entry.data,
+      scores: { ...entry.data.scores, karen_trigger: 73 },
+      personalization: { ...personalization, karenRemediation: 'Explain the actual limit and next step.' },
+      findings: [{
+        category: ' Karen Triggers ', text: 'Calm down', explanation: 'Legacy evidence',
+        severity: 'high', rlhfLogic: 'Legacy interpretation',
+      }],
+    };
+    const restored = parseAuditHistory(JSON.stringify([{ ...entry, data: legacyData }]))[0];
+    expect(restored.data.personalization.stonewallingRemediation).toBe(legacyData.personalization.karenRemediation);
+    expect(restored.data.personalization).not.toHaveProperty('karenRemediation');
+    expect(restored.data.scores.karen_trigger).toBe(73);
+    expect(restored.data.findings).toEqual([{
+      ...legacyData.findings[0], category: 'Bureaucratic Stonewalling',
+    }]);
+    expect(parseAuditHistory(JSON.stringify([restored]))).toEqual([restored]);
+  });
+
   test('normalizes malformed nested data and fills missing score keys', () => {
     const restored = parseAuditHistory(JSON.stringify([{ ...entry, data: {
       scores: { gaslighting: 999, hedging: -5 },

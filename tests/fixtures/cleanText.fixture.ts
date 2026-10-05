@@ -35,7 +35,7 @@ export const CLEAN_TEXT_SAMPLE: AnalysisResult = {
       headersAndLists: 'Default',
       emojis: 'Default',
     },
-    karenRemediation: 'No remediation needed.',
+    stonewallingRemediation: 'No remediation needed.',
     customInstructions: [],
   },
   contextAnalysis: {

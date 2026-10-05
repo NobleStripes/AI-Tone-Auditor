@@ -151,10 +151,10 @@ describe('localHeuristicProvider', () => {
     expect(totalScore).toBeLessThan(30);
   });
 
-  test('gives high karen_trigger score for known high-weight phrases', async () => {
+  test('gives high stonewalling score for procedural deflection phrases', async () => {
     const { localHeuristicProvider } = await import('../../src/services/providers/localHeuristicProvider');
     const result = await localHeuristicProvider.analyzeTone({
-      text: "As an AI language model, I'm sorry you feel that way. Let's keep this professional.",
+      text: "As an AI language model, I cannot fulfill this request. My programming prevents it.",
       context: { promptVersion: 'test' },
     });
     expect(result.scores.karen_trigger).toBeGreaterThan(50);

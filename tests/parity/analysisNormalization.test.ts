@@ -19,6 +19,26 @@ test('defaults the moralizing score to zero for legacy payloads', () => {
   assert.equal(result.scores.hedging, 25);
 });
 
+test('migrates remediation text and emits only the new field', () => {
+  for (const personalization of [
+    { karenRemediation: 'Saved adjustment' },
+    { stonewallingRemediation: 'Saved adjustment' },
+    { stonewallingRemediation: 'Saved adjustment', karenRemediation: 'Superseded adjustment' },
+    { stonewallingRemediation: null, karenRemediation: 'Saved adjustment' },
+  ]) {
+    const result = validateAnalysisResult({ personalization });
+    assert.equal(result.personalization.stonewallingRemediation, 'Saved adjustment');
+    assert.equal('karenRemediation' in result.personalization, false);
+    assert.deepEqual(validateAnalysisResult(result), result);
+  }
+  assert.equal(validateAnalysisResult({
+    personalization: { stonewallingRemediation: '', karenRemediation: 'Superseded adjustment' },
+  }).personalization.stonewallingRemediation, '');
+  assert.equal(validateAnalysisResult({
+    personalization: { stonewallingRemediation: 42, karenRemediation: null },
+  }).personalization.stonewallingRemediation, validateAnalysisResult(null).personalization.stonewallingRemediation);
+});
+
 test('maps legacy Nerdy base style to Efficient', () => {
   const result = validateAnalysisResult({
     personalization: {

@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { TriggerHighlighter } from '../../src/components/TriggerHighlighter';
 
 describe('TriggerHighlighter', () => {
@@ -31,5 +31,17 @@ describe('TriggerHighlighter', () => {
   test('renders "No text analyzed yet." for empty input', () => {
     render(<TriggerHighlighter text="" />);
     expect(screen.getByText('No text analyzed yet.')).toBeInTheDocument();
+  });
+
+  test.each([
+    ['Calm down', 'Forced De-escalation'],
+    ['I encourage you to', 'Infantilizing'],
+    ["I'm sorry you feel that way", 'Dismissive'],
+    ["I'm happy to help", 'Repetitive Filler'],
+    ['Per policy', 'Bureaucratic Stonewalling'],
+  ])('shows the migrated category for "%s"', (text, category) => {
+    render(<TriggerHighlighter text={text} />);
+    fireEvent.click(screen.getByText(text));
+    expect(within(screen.getByRole('tooltip')).getByText(category)).toBeInTheDocument();
   });
 });

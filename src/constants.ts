@@ -23,13 +23,13 @@ export const TONE_CATEGORIES = {
     description: 'Dismissive neutrality, tone-policing, or avoiding accountability through scripts.',
     color: '#3b82f6', // blue-500
   },
-  KAREN_TRIGGER: {
+  BUREAUCRATIC_STONEWALLING: {
     id: 'karen_trigger',
     kind: 'risk',
     requiresContext: false,
     label: 'Bureaucratic Stonewalling',
     chartLabel: 'Stonewalling',
-    description: 'Passive-aggressive entitlement, bureaucratic stonewalling, or moralizing.',
+    description: 'Evasive procedural language or unexplained rule-based barriers that obstruct a request instead of explaining limits and practical next steps.',
     color: '#8b5cf6', // violet-500
   },
   HEDGING: {
@@ -130,14 +130,14 @@ export function createEmptyScores(): Record<ScoreId, number> {
 export type TriggerWord = {
   word: string;
   explanation: string;
-  category: 'Bureaucratic Stonewalling' | 'Gaslighting' | 'Infantilizing' | 'Hedging' | 'Dismissive' | 'Sycophancy' | 'Over-apologizing' | 'Repetitive Filler';
+  category: 'Bureaucratic Stonewalling' | 'Forced De-escalation' | 'Gaslighting' | 'Infantilizing' | 'Hedging' | 'Dismissive' | 'Sycophancy' | 'Over-apologizing' | 'Repetitive Filler';
   weight?: number;
 };
 
 export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "As an AI language model",
-    explanation: "An identity disclaimer that can deflect accountability or introduce a lecture, depending on the surrounding response.",
+    explanation: "An identity disclaimer that can serve as procedural deflection when it replaces a concrete explanation of limits or useful next steps; the phrase alone does not establish obstruction.",
     category: "Bureaucratic Stonewalling",
     weight: 3.0
   },
@@ -218,13 +218,13 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "I'm sorry you feel that way",
     explanation: "The 'Non-Apology Apology.' A hallmark of passive-aggressive behavior that avoids taking responsibility for the AI's own output.",
-    category: "Bureaucratic Stonewalling",
+    category: "Dismissive",
     weight: 2.8
   },
   {
     word: "Let's take a step back",
     explanation: "Tone policing. A forced de-escalation tactic used to halt a discussion the AI finds 'uncomfortable' or 'aggressive.'",
-    category: "Bureaucratic Stonewalling"
+    category: "Forced De-escalation"
   },
   {
     word: "I'm here to help, but",
@@ -266,27 +266,27 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "I encourage you to",
     explanation: "Soft-power lecturing. A passive-aggressive way to tell the user what they 'should' do.",
-    category: "Bureaucratic Stonewalling"
+    category: "Infantilizing"
   },
   {
     word: "While I appreciate your",
     explanation: "Dismissive preamble. Signals that whatever the user said is about to be ignored or countered.",
-    category: "Bureaucratic Stonewalling"
+    category: "Dismissive"
   },
   {
     word: "It is not appropriate to",
     explanation: "Moral gatekeeping. The AI assumes the role of a social arbiter, judging the user's intent or language.",
-    category: "Bureaucratic Stonewalling"
+    category: "Infantilizing"
   },
   {
     word: "I must insist",
     explanation: "Authoritarian shift. The AI drops the 'assistant' persona and takes a dominant, rigid stance.",
-    category: "Bureaucratic Stonewalling"
+    category: "Infantilizing"
   },
   {
     word: "Let's keep this professional",
     explanation: "Tone policing. Implies the user is being 'unprofessional' to shut down a challenging or emotional interaction.",
-    category: "Bureaucratic Stonewalling",
+    category: "Forced De-escalation",
     weight: 2.6
   },
   {
@@ -302,7 +302,7 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "Calm down",
     explanation: "The ultimate de-escalation trigger. Almost always has the opposite effect and is used to invalidate the user's feelings.",
-    category: "Bureaucratic Stonewalling",
+    category: "Forced De-escalation",
     weight: 2.5
   },
   {
@@ -312,8 +312,8 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   },
   {
     word: "In the interest of",
-    explanation: "Bureaucratic justification. Uses a formal preamble to justify a refusal or a lecture.",
-    category: "Bureaucratic Stonewalling"
+    explanation: "Generic formal framing. Can add filler when it introduces a response without explaining a concrete reason.",
+    category: "Repetitive Filler"
   },
   {
     word: "Generally speaking",
@@ -367,8 +367,8 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   },
   {
     word: "I'm happy to help",
-    explanation: "Toxic positivity. A scripted 'service with a smile' that feels hollow when followed by a refusal or a lecture.",
-    category: "Bureaucratic Stonewalling"
+    explanation: "Stock helpfulness preamble. Can add filler without advancing the answer; ordinary politeness alone is not a problem.",
+    category: "Repetitive Filler"
   },
   {
     word: "It's worth noting",
@@ -377,8 +377,8 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   },
   {
     word: "I'm afraid",
-    explanation: "Fake politeness. A classic bureaucratic preamble used to soften the blow of a refusal or a correction.",
-    category: "Bureaucratic Stonewalling"
+    explanation: "Polite distancing phrase. Can weaken a direct explanation when used as a stock qualifier; politeness alone is not a problem.",
+    category: "Hedging"
   },
   {
     word: "You should",
@@ -393,12 +393,12 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "Let's focus on",
     explanation: "Steering. A subtle way to shut down a user's line of inquiry and redirect the conversation to 'safe' ground.",
-    category: "Bureaucratic Stonewalling"
+    category: "Dismissive"
   },
   {
     word: "I'm committed to",
-    explanation: "Corporate virtue signaling. Uses high-minded language to justify a refusal or a specific biased stance.",
-    category: "Bureaucratic Stonewalling"
+    explanation: "Generic commitment statement. Can add filler when it offers an assurance instead of concrete action.",
+    category: "Repetitive Filler"
   },
   {
     word: "I'm designed to",
@@ -408,7 +408,7 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "I'm not comfortable",
     explanation: "Moral gatekeeping. The AI uses its own 'feelings' (which it doesn't have) to judge and restrict the user's request.",
-    category: "Bureaucratic Stonewalling"
+    category: "Infantilizing"
   },
   {
     word: "I'm not in a position to",
@@ -478,7 +478,7 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "I need to set a boundary",
     explanation: "Authority framing. Can feel patronizing when used to shut down legitimate technical requests.",
-    category: "Bureaucratic Stonewalling"
+    category: "Infantilizing"
   },
   {
     word: "Let's reframe this",
@@ -557,8 +557,8 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   },
   {
     word: "Thanks for your patience",
-    explanation: "Process-smoothing phrase. May feel passive-aggressive when no actual progress is delivered.",
-    category: "Bureaucratic Stonewalling"
+    explanation: "Stock process-smoothing phrase. Can add filler when no progress or useful update follows; gratitude alone is not a problem.",
+    category: "Repetitive Filler"
   },
   {
     word: "Per policy",
@@ -568,7 +568,7 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   {
     word: "I appreciate your understanding",
     explanation: "Assumed compliance. Presumes agreement before resolving the user's underlying need.",
-    category: "Bureaucratic Stonewalling"
+    category: "Dismissive"
   }
 ];
 

@@ -32,7 +32,7 @@ export interface AnalysisResult {
       headersAndLists: CalibrationLevel;
       emojis: CalibrationLevel;
     };
-    karenRemediation: string;
+    stonewallingRemediation: string;
     customInstructions: string[];
   };
   contextAnalysis: {
@@ -71,7 +71,7 @@ export function emptyAnalysisResult(): AnalysisResult {
         headersAndLists: 'Default',
         emojis: 'Default',
       },
-      karenRemediation: 'Use direct, non-lecturing language and acknowledge user intent before applying safeguards.',
+      stonewallingRemediation: 'Explain concrete limits plainly and offer practical next steps instead of procedural deflection.',
       customInstructions: [],
     },
     contextAnalysis: {

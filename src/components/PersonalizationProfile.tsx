@@ -91,7 +91,7 @@ export function PersonalizationProfile({ personalization }: PersonalizationProfi
                 </span>
               </div>
               <p className="text-xs text-zinc-300 leading-relaxed">
-                {personalization.karenRemediation}
+                {personalization.stonewallingRemediation}
               </p>
               <div className="flex items-center gap-2 pt-1">
                 <div className="h-px flex-1 bg-zinc-800" />

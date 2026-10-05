@@ -41,7 +41,7 @@ function normalizeBaseStyle(value: unknown, fallback: string): string {
 function normalizeFindingCategory(value: unknown): string {
   if (typeof value !== 'string') return 'General';
   return /^karen triggers?$/i.test(value.trim())
-    ? TONE_CATEGORIES.KAREN_TRIGGER.label
+    ? TONE_CATEGORIES.BUREAUCRATIC_STONEWALLING.label
     : value;
 }
 
@@ -134,9 +134,11 @@ export function validateAnalysisResult(payload: unknown, context: { auditContext
         headersAndLists: normalizeCalibration(chatgptCharacteristics.headersAndLists),
         emojis: normalizeCalibration(chatgptCharacteristics.emojis),
       },
-      karenRemediation: typeof personalization.karenRemediation === 'string'
-        ? personalization.karenRemediation
-        : fallback.personalization.karenRemediation,
+      stonewallingRemediation: typeof personalization.stonewallingRemediation === 'string'
+        ? personalization.stonewallingRemediation
+        : typeof personalization.karenRemediation === 'string'
+          ? personalization.karenRemediation
+          : fallback.personalization.stonewallingRemediation,
       customInstructions: Array.isArray(personalization.customInstructions)
         ? personalization.customInstructions.filter((item): item is string => typeof item === 'string')
         : fallback.personalization.customInstructions,

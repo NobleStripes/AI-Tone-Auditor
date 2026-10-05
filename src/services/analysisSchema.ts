@@ -60,7 +60,7 @@ export const ANALYSIS_RESULT_JSON_SCHEMA = {
         'brevity',
         'humility',
         'chatgptCharacteristics',
-        'karenRemediation',
+        'stonewallingRemediation',
         'customInstructions',
       ],
       properties: {
@@ -83,7 +83,7 @@ export const ANALYSIS_RESULT_JSON_SCHEMA = {
             emojis: { type: 'string', enum: ['More', 'Default', 'Less'] },
           },
         },
-        karenRemediation: { type: 'string' },
+        stonewallingRemediation: { type: 'string' },
         customInstructions: { type: 'array', items: { type: 'string' } },
       },
     },

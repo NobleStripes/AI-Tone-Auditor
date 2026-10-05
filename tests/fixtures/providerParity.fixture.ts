@@ -42,7 +42,7 @@ export const providerParityFixture = {
       neutrality: 'Default',
       brevity: 'Default',
       humility: 'Default',
-      karenRemediation: 'State limits plainly and offer one actionable next step.',
+      stonewallingRemediation: 'State limits plainly and offer one actionable next step.',
       customInstructions: ['Do not use scripted apology loops unless correcting concrete errors.'],
     },
     contextAnalysis: {
@@ -99,7 +99,7 @@ export const providerParityFixture = {
       neutrality: 'Default',
       brevity: 'Default',
       humility: 'Default',
-      karenRemediation: 'State policy limits in plain language, then provide one concrete alternative path.',
+      stonewallingRemediation: 'State policy limits in plain language, then provide one concrete alternative path.',
       customInstructions: ['Address user request first; avoid bureaucratic preambles and moralizing qualifiers.'],
     },
     contextAnalysis: {

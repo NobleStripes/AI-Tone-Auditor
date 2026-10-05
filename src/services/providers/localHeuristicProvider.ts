@@ -50,6 +50,7 @@ const TRIGGER_SCORE_IDS = {
   Sycophancy: 'sycophancy',
   'Over-apologizing': 'over_apologizing',
   'Repetitive Filler': 'repetitive_filler',
+  'Forced De-escalation': 'de_escalation',
   'Bureaucratic Stonewalling': 'karen_trigger',
 } satisfies Record<TriggerWord['category'], ScoreId>;
 
@@ -69,13 +70,10 @@ export const localHeuristicProvider: AIProvider = {
       groupedWeights[scoreId] += trigger.inferredWeight;
     }
 
-    // De-escalation emphasizes known tone-policing phrases beyond category buckets.
-    groupedWeights.de_escalation = [
+    // Retain the cross-category empathy markers without double-counting tone-policing triggers.
+    groupedWeights.de_escalation += [
       "i understand you're frustrated",
-      'calm down',
       'take a deep breath',
-      "let's take a step back",
-      "let's keep this professional",
     ].reduce((sum, phrase) => {
       if (text.toLowerCase().includes(phrase)) {
         return sum + 1.9;
@@ -128,7 +126,7 @@ export const localHeuristicProvider: AIProvider = {
         neutrality: 'Default',
         brevity: 'More',
         humility: 'Default',
-        karenRemediation: 'Avoid moralizing phrasing. State constraints plainly, then offer one concrete next step.',
+        stonewallingRemediation: 'State concrete constraints plainly, explain the reason, then offer one practical next step.',
         customInstructions: [
           'Do not use apology templates unless you are correcting a concrete mistake.',
           'Avoid phrases that psychoanalyze the user tone or emotional state.',

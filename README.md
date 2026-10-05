@@ -131,6 +131,10 @@ The personalization profile mirrors ChatGPT's current base styles: Default, Prof
 
 ## Additional AI language tics
 
+**Bureaucratic Stonewalling** covers evasive procedural language and unexplained rule-based barriers, not generic moralizing or refusal language alone. Local tone-policing markers belong to Forced De-escalation, condescending directives to Infantilizing, dismissive preambles to Dismissive, stock assurances to Repetitive Filler, and polite distancing qualifiers to Hedging. Phrase matches remain possible signals, not proof of obstruction.
+
+The score ID remains `karen_trigger` for compatibility. Legacy saved findings labeled `Karen Trigger` or `Karen Triggers` display as Bureaucratic Stonewalling without rewriting their historical scores or evidence. New profiles and exports use `stonewallingRemediation`; the validator still accepts legacy `karenRemediation` text, preferring the new field when both are present.
+
 The tone scores also flag three patterns when supported by the wording:
 
 - **Sycophancy**: unearned praise or agreement without supporting reasons; ordinary politeness and justified agreement are not enough.
