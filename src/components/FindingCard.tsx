@@ -62,7 +62,7 @@ export function FindingCard({ finding, index }: FindingCardProps) {
             className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-emerald-500 hover:text-emerald-400 transition-colors"
           >
             <Layers className="w-3 h-3" />
-            {isExpanded ? 'Hide Deconstruction' : 'Deconstruct RLHF Logic'}
+            {isExpanded ? 'Hide explanation' : 'Explain wording signal'}
             {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
           </button>
         </div>
@@ -83,10 +83,10 @@ export function FindingCard({ finding, index }: FindingCardProps) {
               </div>
               <div className="space-y-2">
                 <h4 className="text-[10px] font-mono uppercase tracking-widest text-emerald-500">
-                  RLHF Alignment Logic (The "Nanny" Source)
+                  Wording and reader impact
                 </h4>
                 <p className="text-xs text-zinc-400 leading-relaxed">
-                  {finding.rlhfLogic || 'Analyzing safety-alignment weights for this specific pattern...'}
+                  {finding.rlhfLogic || 'No wording-based explanation was recorded for this finding.'}
                 </p>
               </div>
             </div>

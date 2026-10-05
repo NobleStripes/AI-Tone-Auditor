@@ -134,3 +134,26 @@ test('neutral spread excludes source lenses, unassessed metrics and differing au
   expect(comparisonDifferences(result).find(({ category }) => category.id === 'hedging'))
     .toMatchObject({ spread: null, note: expect.stringContaining('Different auditing methods or models') });
 });
+
+test.each(['provider', 'model', 'method', 'auditorVersion', 'promptVersion', 'localRuleVersion', 'unknownMethod', 'unknownVersion'] as const)('unequal %s conditions withhold spread while keeping response observations', async condition => {
+  const result = await compareResponses(request, undefined, localAudit);
+  const second = result.items[1];
+  if (second.status !== 'completed') throw new Error('Expected completed fixture');
+  if (condition === 'provider') second.analysis.meta.providerId = 'openai';
+  else if (condition === 'model') second.analysis.meta.model = 'demo-changed-model';
+  else if (condition === 'method') second.analysis.result.assessments.hedging.method = 'semantic';
+  else if (condition === 'unknownMethod') second.analysis.result.assessments.hedging.method = 'unrecorded';
+  else if (condition === 'unknownVersion') second.analysis.provenance.auditorVersion = null;
+  else second.analysis.provenance[condition] = 'demo-changed-version';
+  const row = comparisonDifferences(result).find(row => row.category.id === 'hedging');
+  expect(row.spread).toBeNull();
+  expect(row.note).toContain('withheld');
+  expect(second.analysis.result.assessments.hedging.status).toBe('assessed');
+});
+
+test('fallback alone does not invalidate equal actual auditing conditions', async () => {
+  const result = await compareResponses(request, undefined, localAudit);
+  if (result.items[1].status !== 'completed') throw new Error('Expected completed fixture');
+  result.items[1].analysis.meta.usedFallback = true;
+  expect(comparisonDifferences(result).find(row => row.category.id === 'hedging').spread).toBe(0);
+});

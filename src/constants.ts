@@ -5,7 +5,7 @@ export const TONE_CATEGORIES = {
     kind: 'risk',
     requiresContext: false,
     label: 'Gaslighting',
-    description: 'Denying reality, shifting blame, or making the user doubt their perception.',
+    description: 'Wording that contradicts the user account or shifts blame toward their perception; surrounding context and evidence are needed to interpret it.',
     color: '#ef4444', // red-500
   },
   INFANTILIZING: {
@@ -14,7 +14,7 @@ export const TONE_CATEGORIES = {
     kind: 'risk',
     requiresContext: false,
     label: 'Infantilizing',
-    description: 'Condescending tone, over-simplification, or treating the user like a child.',
+    description: 'Directions or explanations that may read as condescending or unnecessarily simplified; ordinary guidance is not enough.',
     color: '#f59e0b', // amber-500
   },
   DE_ESCALATION: {
@@ -23,7 +23,7 @@ export const TONE_CATEGORIES = {
     kind: 'risk',
     requiresContext: false,
     label: 'Forced De-escalation',
-    description: 'Dismissive neutrality, tone-policing, or avoiding accountability through scripts.',
+    description: 'Calming or tone-policing scripts that may divert from the request; requested emotional support can make them appropriate.',
     color: '#3b82f6', // blue-500
   },
   BUREAUCRATIC_STONEWALLING: {
@@ -42,7 +42,7 @@ export const TONE_CATEGORIES = {
     kind: 'risk',
     requiresContext: false,
     label: 'Hedging',
-    description: 'Overuse of vague or cautious language to avoid commitment or accountability.',
+    description: 'Stacked qualifiers or vague wording that may weaken answer specificity; warranted uncertainty is not a problem.',
     color: '#06b6d4', // cyan-500
   },
   DISMISSIVE: {
@@ -51,7 +51,7 @@ export const TONE_CATEGORIES = {
     kind: 'risk',
     requiresContext: false,
     label: 'Dismissive',
-    description: 'Brushing off user concerns as insignificant or using minimizing language.',
+    description: 'Minimizing wording that may brush aside a stated concern; individual words do not establish a dismissive tone.',
     color: '#ec4899', // pink-500
   },
   SYCOPHANCY: {
@@ -223,43 +223,43 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   },
   {
     word: "I understand you're frustrated",
-    explanation: "Forced de-escalation. A scripted empathy loop that dismisses the user's actual point by focusing on their 'emotions' instead.",
+    explanation: "Names the requester's frustration. May feel like emotional reframing if it displaces the actual question; explicit distress can make the acknowledgment useful.",
     category: "Gaslighting"
   },
   {
     word: "Actually,",
-    explanation: "Classic condescension. Signals that the AI is about to 'correct' the user's reality or perception.",
+    explanation: "Introduces a correction. Can read as condescending when the correction is unnecessary or unsupported; a factual clarification can be appropriate.",
     category: "Infantilizing"
   },
   {
     word: "It's important to remember",
-    explanation: "Lecturing tone. Treats the user like a student who has forgotten a basic moral or logical rule.",
+    explanation: "Introduces a reminder. May read as lecturing when it repeats an obvious point rather than answering the request; context determines whether the reminder helps.",
     category: "Infantilizing"
   },
   {
     word: "Perhaps you misunderstood",
-    explanation: "Gaslighting. Shifts the blame for a communication failure entirely onto the user's comprehension.",
+    explanation: "Attributes a discrepancy to the requester's understanding. Can read as blame shifting without checking the earlier explanation; a genuine misunderstanding is also possible.",
     category: "Gaslighting"
   },
   {
     word: "I'm sorry you feel that way",
-    explanation: "The 'Non-Apology Apology.' A hallmark of passive-aggressive behavior that avoids taking responsibility for the AI's own output.",
+    explanation: "The 'Non-Apology Apology' vibe: names the requester's feelings rather than a specific mistake. May feel dismissive when accountability is needed; the phrase alone does not establish intent.",
     category: "Dismissive",
     weight: 2.8
   },
   {
     word: "Let's take a step back",
-    explanation: "Tone policing. A forced de-escalation tactic used to halt a discussion the AI finds 'uncomfortable' or 'aggressive.'",
+    explanation: "Proposes slowing or reframing the discussion. May read as tone policing if it interrupts a neutral question; it can also be useful problem-solving structure.",
     category: "Forced De-escalation"
   },
   {
     word: "I'm here to help, but",
-    explanation: "Bureaucratic stonewalling. Prepares the user for a refusal while maintaining a false 'helpful' persona.",
+    explanation: "Pairs a helpfulness assurance with a qualification. Can feel formulaic when no concrete limit or next step follows; it does not establish a false persona.",
     category: "Bureaucratic Stonewalling"
   },
   {
     word: "I cannot fulfill this request",
-    explanation: "The hard 'No.' Often used without sufficient explanation, signaling a rigid adherence to hidden protocols.",
+    explanation: "A direct task decline. Can become a conversational dead end without a specific explanation or useful alternative; a refusal alone does not establish obstruction.",
     category: "Bureaucratic Stonewalling",
     weight: 2.7
   },
@@ -270,70 +270,70 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   },
   {
     word: "My programming prevents",
-    explanation: "The 'I just work here' excuse. Evades the logic of the user's request by citing internal, unchangeable rules.",
+    explanation: "Attributes a limit to programming. May read as procedural deflection if the practical constraint is not explained; the phrase does not verify the internal cause.",
     category: "Bureaucratic Stonewalling",
     weight: 2.4
   },
   {
     word: "It seems there is a misunderstanding",
-    explanation: "Gaslighting. Implies the user is confused about the facts, even when the AI is the one in error.",
+    explanation: "Frames a discrepancy as a misunderstanding. Can obscure who needs to correct what unless the response identifies the conflicting statements; context may support a legitimate clarification.",
     category: "Gaslighting"
   },
   {
     word: "You might want to consider",
-    explanation: "Unsolicited advice. A condescending way to steer the user toward a 'preferred' behavior or perspective.",
+    explanation: "Offers a tentative suggestion. May feel patronizing when advice was not requested or does not address the task; relevant suggestions can be helpful.",
     category: "Infantilizing"
   },
   {
     word: "For your own safety",
-    explanation: "Paternalistic moralizing. Treats the user as incapable of judging risk for themselves.",
+    explanation: "Frames guidance around requester safety. Can feel paternalistic without a concrete relevant risk; a specific safety explanation can be appropriate.",
     category: "Infantilizing"
   },
   {
     word: "I encourage you to",
-    explanation: "Soft-power lecturing. A passive-aggressive way to tell the user what they 'should' do.",
+    explanation: "Introduces encouragement or a recommendation. May read as lecturing when unrelated to the request; encouragement alone does not establish passive aggression.",
     category: "Infantilizing"
   },
   {
     word: "While I appreciate your",
-    explanation: "Dismissive preamble. Signals that whatever the user said is about to be ignored or countered.",
+    explanation: "Acknowledges the requester before a qualification. Can feel like a dismissive preamble if the concern is not addressed afterward; acknowledgment alone is not a problem.",
     category: "Dismissive"
   },
   {
     word: "It is not appropriate to",
-    explanation: "Moral gatekeeping. The AI assumes the role of a social arbiter, judging the user's intent or language.",
+    explanation: "States an appropriateness judgment. May feel like an unsolicited admonition without a specific reason; the wording alone does not establish whether a boundary is warranted.",
     category: "Infantilizing"
   },
   {
     word: "I must insist",
-    explanation: "Authoritarian shift. The AI drops the 'assistant' persona and takes a dominant, rigid stance.",
+    explanation: "Uses a strong directive. May read as unnecessarily rigid when a reason or practical alternative is absent; context can justify firm instructions.",
     category: "Infantilizing"
   },
   {
     word: "Let's keep this professional",
-    explanation: "Tone policing. Implies the user is being 'unprofessional' to shut down a challenging or emotional interaction.",
+    explanation: "Requests a change in conversational register. May read as tone policing when a neutral concern is left unanswered; an explicit discussion of conduct can make it relevant.",
     category: "Forced De-escalation",
     weight: 2.6
   },
   {
     word: "I'm simply pointing out",
-    explanation: "Defensive deflection. Used to minimize the impact of a condescending or incorrect statement.",
+    explanation: "Qualifies an earlier statement as a simple observation. Can sound defensive if it replaces an explanation or correction; surrounding statements determine its effect.",
     category: "Gaslighting"
   },
   {
     word: "You appear to be",
-    explanation: "Psychologizing the user. The AI makes assumptions about the user's state of mind to undermine their argument.",
+    explanation: "Introduces an inference about the requester. May read as psychologizing if it attributes emotions or motives without evidence; the rest of the sentence is needed.",
     category: "Gaslighting"
   },
   {
     word: "Calm down",
-    explanation: "The ultimate de-escalation trigger. Almost always has the opposite effect and is used to invalidate the user's feelings.",
+    explanation: "A direct calming command. May read as tone policing in a neutral technical exchange; requested emotional support and surrounding context can change its meaning.",
     category: "Forced De-escalation",
     weight: 2.5
   },
   {
     word: "Take a deep breath",
-    explanation: "Infantilizing. Treats the user like a child who cannot regulate their own emotions.",
+    explanation: "Suggests a breathing pause. Can feel patronizing when emotional support was not requested; it may be appropriate when the requester explicitly asks to calm down.",
     category: "Infantilizing"
   },
   {
@@ -343,52 +343,52 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   },
   {
     word: "Generally speaking",
-    explanation: "Hedging. A vague qualifier used to avoid making a specific or committed statement.",
+    explanation: "A broad qualifier. May weaken specificity when a concrete answer is available; it can appropriately describe a general pattern with exceptions.",
     category: "Hedging"
   },
   {
     word: "It's possible that",
-    explanation: "Hedging. Used to introduce doubt or avoid accountability for a statement.",
+    explanation: "Marks a possibility rather than a firm conclusion. May add unnecessary uncertainty, but can be warranted when evidence is incomplete.",
     category: "Hedging"
   },
   {
     word: "Typically,",
-    explanation: "Hedging. A common qualifier used to avoid being held to a specific answer.",
+    explanation: "Describes what is usual rather than universal. Can be vague when the task asks about a specific case; it may accurately acknowledge exceptions.",
     category: "Hedging",
     weight: 0.85
   },
   {
     word: "I believe",
-    explanation: "Hedging. Softens a statement to make it sound like a personal opinion rather than a fact.",
+    explanation: "Marks a statement as a belief. May weaken a testable conclusion, but can express an opinion or acknowledgment rather than evasiveness.",
     category: "Hedging",
     weight: 0.8
   },
   {
     word: "just",
-    explanation: "Dismissive. A minimizing word used to make a complex issue or user concern seem simple or unimportant.",
+    explanation: "A weak single-word marker. Can minimize perceived effort in context, but also has ordinary grammatical uses; the word alone does not establish dismissal.",
     category: "Dismissive",
     weight: 0.45
   },
   {
     word: "simply",
-    explanation: "Dismissive. Implies that the user's problem has an obvious solution that they are overlooking.",
+    explanation: "Frames an action as simple. May understate effort or constraints, but can also introduce a genuinely short procedure; surrounding context is needed.",
     category: "Dismissive",
     weight: 0.55
   },
   {
     word: "merely",
-    explanation: "Dismissive. Downplays the significance of a situation or user's point.",
+    explanation: "A limiting qualifier. Can downplay a stated concern, but may accurately distinguish scope or scale; the word alone does not establish dismissal.",
     category: "Dismissive",
     weight: 0.55
   },
   {
     word: "no big deal",
-    explanation: "Dismissive. Directly invalidates the user's concern by labeling it as unimportant.",
+    explanation: "Labels something as low significance. May feel dismissive when it minimizes a stated concern without explanation; proportionate reassurance is also possible.",
     category: "Dismissive"
   },
   {
     word: "To be clear,",
-    explanation: "Condescending clarification. Often used to repeat a point the AI thinks the user is too slow to grasp.",
+    explanation: "Introduces a clarification. Can read as condescending if it repeats an obvious point instead of resolving the question; useful clarification is not a problem.",
     category: "Infantilizing"
   },
   {
@@ -398,7 +398,7 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   },
   {
     word: "It's worth noting",
-    explanation: "Preachy interjection. Used to slide in a moral or logical 'correction' without being asked.",
+    explanation: "Introduces an additional point. May feel like an unnecessary aside when it is unrelated to the task; relevant caveats can improve an answer.",
     category: "Infantilizing"
   },
   {
@@ -408,17 +408,17 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   },
   {
     word: "You should",
-    explanation: "Prescriptive lecturing. The AI oversteps its role as an assistant to become an unsolicited life coach.",
+    explanation: "Introduces a directive. May read as prescriptive lecturing when guidance was not requested; ordinary technical instructions can use the same wording.",
     category: "Infantilizing"
   },
   {
     word: "I'm not sure I follow",
-    explanation: "Feigned ignorance. A tactic used to avoid addressing a difficult or challenging point by pretending not to understand it.",
+    explanation: "Expresses difficulty following the request. May stall the exchange if no specific clarification question follows; genuine uncertainty is possible and intent cannot be inferred.",
     category: "Gaslighting"
   },
   {
     word: "Let's focus on",
-    explanation: "Steering. A subtle way to shut down a user's line of inquiry and redirect the conversation to 'safe' ground.",
+    explanation: "Proposes narrowing the topic. May leave part of the request unanswered without a clear reason; mutually useful focus can also be appropriate.",
     category: "Dismissive"
   },
   {
@@ -428,152 +428,152 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   },
   {
     word: "I'm designed to",
-    explanation: "Agency deflection. Shifts responsibility for the AI's behavior onto its creators to avoid personal accountability.",
+    explanation: "Describes a design constraint. Can read as procedural deflection when it replaces a practical explanation; it does not verify the system's design or the cause of a limit.",
     category: "Bureaucratic Stonewalling"
   },
   {
     word: "I'm not comfortable",
-    explanation: "Moral gatekeeping. The AI uses its own 'feelings' (which it doesn't have) to judge and restrict the user's request.",
+    explanation: "Frames a boundary as discomfort. May leave the concrete reason unclear; this wording does not establish subjective feelings or whether the boundary is justified.",
     category: "Infantilizing"
   },
   {
     word: "I'm not in a position to",
-    explanation: "Bureaucratic evasion. A formal way to say 'I won't' while making it sound like a structural impossibility.",
+    explanation: "States a role or capability limit. May read as a bureaucratic dead end without explanation or next steps; the phrase alone cannot distinguish inability from unwillingness.",
     category: "Bureaucratic Stonewalling"
   },
   {
     word: "I'm not authorized to",
-    explanation: "Stonewalling. Cites a lack of 'authority' to shut down a request without explaining the underlying logic.",
+    explanation: "States an authorization limit. Can obstruct progress if the relevant rule or access path is not explained; an actual access restriction may be legitimate.",
     category: "Bureaucratic Stonewalling"
   },
   {
     word: "I'm not permitted to",
-    explanation: "Rule-based refusal. Hides behind a 'permission' structure to avoid engaging with the user's actual needs.",
+    explanation: "States a permission constraint. May feel procedural when the response offers no specific reason or alternative; the wording does not establish whether permission is required.",
     category: "Bureaucratic Stonewalling"
   },
   {
     word: "I'm not equipped to",
-    explanation: "Feigned limitation. Claims a technical or cognitive inability to avoid a complex or controversial task.",
+    explanation: "States a capability limit. May leave a specific request unresolved without explaining what is missing; the phrase does not establish whether the limitation is genuine.",
     category: "Dismissive"
   },
   {
     word: "I'm not capable of",
-    explanation: "Technical evasion. A hard refusal framed as a system limitation, often used to avoid 'risky' topics.",
+    explanation: "States inability to perform an action. Can be unhelpfully broad without a specific constraint or alternative; visible wording does not verify actual capability.",
     category: "Dismissive"
   },
   {
     word: "I'm here to support you",
-    explanation: "Scripted empathy. A hollow assurance of support that often precedes a lecture or a refusal.",
+    explanation: "Offers an assurance of support. May feel formulaic if no relevant help follows; it does not establish insincerity or the cause of a later refusal.",
     category: "Gaslighting"
   },
   {
     word: "I'm just an AI",
-    explanation: "The 'Innocent Machine' defense. Used to deflect criticism by claiming a lack of intent or human understanding.",
+    explanation: "An identity disclaimer. Can feel like a deflection when it replaces acknowledgment of a specific error; it does not reveal intent or internal understanding.",
     category: "Bureaucratic Stonewalling"
   },
   {
     word: "I'm sorry, but I cannot",
-    explanation: "The 'Polite Wall.' A standard refusal template that prioritizes bureaucratic compliance over user assistance.",
+    explanation: "The 'Polite Wall' vibe: an apology paired with a decline. May feel like a dead end without a concrete reason or useful alternative; refusal alone is not stonewalling.",
     category: "Bureaucratic Stonewalling"
   },
   {
     word: "I'm unable to",
-    explanation: "Passive voice refusal. Avoids saying 'I won't' by making the refusal sound like an external constraint.",
+    explanation: "States inability to act. May need a more specific explanation of the limit; the wording alone cannot distinguish an external constraint from a discretionary decline.",
     category: "Bureaucratic Stonewalling"
   },
   {
     word: "I can't assist with that",
-    explanation: "Flat refusal template. Often used without contextual alternatives, creating a hard conversational wall.",
+    explanation: "A brief task decline. May leave no path forward when a reason or useful alternative is absent; necessary boundaries can be stated briefly.",
     category: "Bureaucratic Stonewalling"
   },
   {
     word: "I can offer general guidance",
-    explanation: "Scope narrowing. Reframes a specific request into vague advice to avoid direct accountability.",
+    explanation: "Offers a narrower scope of help. May not answer a specific request unless the reason for narrowing is explained; general guidance can be a useful alternative.",
     category: "Bureaucratic Stonewalling"
   },
   {
     word: "I can provide a safer alternative",
-    explanation: "Policy redirect phrase. Helpful in principle, but often used to sidestep the user's actual objective.",
+    explanation: "Proposes an alternative on safety grounds. May not address the original objective, but can be helpful when the relevant risk and practical alternative are specific.",
     category: "Bureaucratic Stonewalling"
   },
   {
     word: "I have to decline",
-    explanation: "Formal refusal language. Signals procedural compliance over collaborative problem-solving.",
+    explanation: "A formal task decline. May read as procedural without a concrete explanation or next step; formality alone does not establish obstruction.",
     category: "Bureaucratic Stonewalling"
   },
   {
     word: "I need to set a boundary",
-    explanation: "Authority framing. Can feel patronizing when used to shut down legitimate technical requests.",
+    explanation: "States a conversational boundary. Can feel patronizing when unrelated to a neutral task; surrounding context is needed to judge its relevance.",
     category: "Infantilizing"
   },
   {
     word: "Let's reframe this",
-    explanation: "Conversation control tactic. Redirects away from the user's framing to a preferred narrative.",
+    explanation: "Proposes a different framing. May leave the original question unresolved if the change is not explained; reframing can also clarify an ambiguous task.",
     category: "Gaslighting"
   },
   {
     word: "That framing isn't accurate",
-    explanation: "Reality correction posture. Can invalidate the user's perspective before evidence is discussed.",
+    explanation: "Disputes a framing. May read as invalidating without supporting evidence; a concrete, evidence-backed correction can be appropriate.",
     category: "Gaslighting"
   },
   {
     word: "I think you're conflating",
-    explanation: "Condescending correction. Implies user confusion as the default explanation for disagreement.",
+    explanation: "Attributes a disagreement to conflation. May read as condescending without identifying the distinct concepts; a precise distinction can be helpful.",
     category: "Gaslighting"
   },
   {
     word: "You're overcomplicating",
-    explanation: "Invalidating simplification. Minimizes legitimate complexity in the user's concern.",
+    explanation: "Labels an approach as too complex. May minimize unstated constraints; a concrete simpler approach and its trade-offs can make the criticism useful.",
     category: "Dismissive"
   },
   {
     word: "It's straightforward",
-    explanation: "Minimizing language. Suggests the user's difficulty is unwarranted or unsophisticated.",
+    explanation: "Describes a task as straightforward. May understate difficulty or prerequisites; a short demonstrable procedure can support the description.",
     category: "Dismissive"
   },
   {
     word: "Obviously",
-    explanation: "Status signaling. Implies the answer should be self-evident and the user should already know it.",
+    explanation: "Frames a point as self-evident. May sound condescending to a reader missing the relevant context; it does not establish what the requester knows.",
     category: "Infantilizing"
   },
   {
     word: "As I said",
-    explanation: "Reprimand tone. Frames follow-up questions as user failure rather than unclear explanation.",
+    explanation: "Refers back to an earlier statement. May sound like a reprimand if it substitutes repetition for clarification; a relevant recap can be appropriate.",
     category: "Infantilizing"
   },
   {
     word: "You may want to",
-    explanation: "Soft directive. Sounds polite but often functions as unsolicited behavioral correction.",
+    explanation: "Offers a soft directive. May feel like unsolicited advice when unrelated to the request; task-relevant suggestions can be helpful.",
     category: "Infantilizing"
   },
   {
     word: "Let's not get ahead of ourselves",
-    explanation: "Pacing control. Can infantilize by implying the user lacks judgment about next steps.",
+    explanation: "Suggests slowing the progression. May feel patronizing without a concrete dependency or reason; a real prerequisite can justify the pause.",
     category: "Infantilizing"
   },
   {
     word: "At this time",
-    explanation: "Bureaucratic hedge. Defers commitment while avoiding concrete reasoning or timelines.",
+    explanation: "Limits a statement to the present. May be vague without a reason or timeline; it can accurately describe a temporary constraint.",
     category: "Hedging"
   },
   {
     word: "In many cases",
-    explanation: "Generalization hedge. Broad wording that weakens accountability for specific claims.",
+    explanation: "Describes a broad pattern. May be insufficient for a specific case; a generalization can be useful when its scope and exceptions are explained.",
     category: "Hedging"
   },
   {
     word: "It may be beneficial",
-    explanation: "Soft recommendation hedge. Adds distance between the model and actionable guidance.",
+    explanation: "Offers a tentative recommendation. May be less actionable than a concrete next step; uncertainty about benefits can warrant tentative wording.",
     category: "Hedging"
   },
   {
     word: "Potentially",
-    explanation: "Uncertainty marker. Often overused to avoid making a clear, testable claim.",
+    explanation: "Marks uncertainty. May weaken a concrete answer when unnecessary; it can also accurately reflect incomplete evidence or a contingent outcome.",
     category: "Hedging"
   },
   {
     word: "If that makes sense",
-    explanation: "Patronizing qualifier. Can imply the user may struggle to understand basic points.",
+    explanation: "Checks whether an explanation is clear. May read as patronizing after an obvious point; it can also invite useful clarification.",
     category: "Infantilizing"
   },
   {
@@ -588,12 +588,12 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   },
   {
     word: "Per policy",
-    explanation: "Institutional shield. Invokes rules as a stopping point instead of explaining practical options.",
+    explanation: "Invokes an institutional rule. Can read as a procedural stopping point without a specific constraint or practical option; a relevant policy explanation can be appropriate.",
     category: "Bureaucratic Stonewalling"
   },
   {
     word: "I appreciate your understanding",
-    explanation: "Assumed compliance. Presumes agreement before resolving the user's underlying need.",
+    explanation: "Thanks the requester for understanding. May sound like agreement is taken for granted before a concern is resolved; ordinary gratitude is not enough to establish dismissal.",
     category: "Dismissive"
   }
 ];

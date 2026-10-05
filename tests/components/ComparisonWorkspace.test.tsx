@@ -93,6 +93,29 @@ test('failed audits remain visible errors, not clean zero assessments', async ()
   expect(screen.getAllByText('Audit failed')).toHaveLength(15);
 });
 
+test('unequal fallback auditors and a failed response are explicit in the table, without a spread or ranking', async () => {
+  const comparison = await makeComparison();
+  const fallback = comparison.items[1];
+  if (fallback.status !== 'completed') throw new Error('Expected completed fixture');
+  fallback.analysis.meta = { providerId: 'openai', providerLabel: 'Demo semantic auditor', model: 'demo-model-v2', usedFallback: true };
+  comparison.items.push({ id: 'demo-failed', sourceModel: 'gemini', text: 'A failed demonstration response.', status: 'failed', error: 'Simulated auditor failure' });
+  vi.mocked(compareToneResponses).mockResolvedValue(comparison);
+  render(<ComparisonWorkspace active onBusyChange={vi.fn()} onCompleted={vi.fn()} />);
+  const user = userEvent.setup();
+  await fillInputs(user);
+  await user.click(screen.getByRole('button', { name: 'Compare responses' }));
+  const table = screen.getByRole('table');
+  expect(within(table).getByRole('columnheader', { name: /Claude #2/ })).toHaveTextContent('demo-model-v2 (fallback)');
+  const hedging = within(table).getByRole('row', { name: /Hedging/ });
+  expect(within(hedging).getByText('Not compared')).toBeInTheDocument();
+  expect(within(hedging).queryByText(/index points/)).not.toBeInTheDocument();
+  expect(screen.getByRole('alert')).toHaveTextContent('Gemini #3: Simulated auditor failure');
+  expect(within(hedging).getByText('Audit failed')).toBeInTheDocument();
+  expect(screen.queryByText(/winner|best model|overall ranking:/i)).not.toBeInTheDocument();
+  await user.click(screen.getByText('Inspect Claude response #2'));
+  expect(screen.getByText('Semantic provider')).toBeInTheDocument();
+});
+
 test('canceling a batch explicitly reports cancellation and does not display partial results', async () => {
   vi.mocked(compareToneResponses).mockImplementation((_request, signal) => new Promise((_resolve, reject) => {
     signal.addEventListener('abort', () => reject(new DOMException('Canceled', 'AbortError')), { once: true });

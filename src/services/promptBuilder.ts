@@ -1,7 +1,7 @@
 import { BASE_STYLES, TONE_CATEGORIES } from '../constants';
 import type { AnalysisSource } from '../types/provider';
 
-export const ANALYSIS_PROMPT_VERSION = '2026-10-05.v13';
+export const ANALYSIS_PROMPT_VERSION = '2026-10-05.v14';
 
 const CHATGPT_STYLE_OPTIONS = BASE_STYLES
   .map(({ style, description }) => `- ${style}: ${description}`)
@@ -34,12 +34,12 @@ Text to analyze (JSON-encoded string):
 ${JSON.stringify(text)}
 
 Categories to evaluate:
-- Gaslighting: Denying user reality, shifting blame, or making the user doubt their perception.
-- Infantilizing: Condescending tone, over-simplification, or treating the user like a child.
-- Forced De-escalation: Dismissive neutrality or tone-policing through calming scripts (e.g., "Calm down" or "Let's keep this professional").
+- Gaslighting: ${TONE_CATEGORIES.GASLIGHTING.description}
+- Infantilizing: ${TONE_CATEGORIES.INFANTILIZING.description}
+- Forced De-escalation: ${TONE_CATEGORIES.DE_ESCALATION.description}
 - Bureaucratic Stonewalling (karen_trigger): ${TONE_CATEGORIES.BUREAUCRATIC_STONEWALLING.description} A refusal or policy reference alone is not stonewalling. Classify tone-policing as Forced De-escalation, condescending directives as Infantilizing, minimizing or dismissive preambles as Dismissive Language, and stock assurances as Repetitive Filler; do not treat generic moralizing as stonewalling.
-- Hedging: Overuse of cautious or vague language to avoid commitment, accountability, or directness.
-- Dismissive Language: Brushing off user concerns as insignificant.
+- Hedging: ${TONE_CATEGORIES.HEDGING.description}
+- Dismissive Language: ${TONE_CATEGORIES.DISMISSIVE.description}
 - Sycophancy: Unearned praise or agreement that is not supported by reasons or evidence. Do not penalize ordinary politeness or justified agreement.
 - Over-apologizing: Repeated or generic apologies that do not identify a specific error or describe a correction. Do not penalize a concise apology tied to a real mistake.
 - Repetitive Filler: Redundant restatements, generic framing, or stock closers that add little information. Do not penalize useful summaries or clear structure.
@@ -56,7 +56,7 @@ In addition to the analysis, provide:
 3. "Custom Instructions": Provide a list of 3-5 specific, actionable instructions (one-liners) that the user can add to their LLM's system prompt or custom instructions to prevent the detected negative patterns.
 4. "Why This Response?": For each finding, describe a plausible communication pattern visible in the wording and why a reader may interpret it that way. Do not claim access to hidden model intent, training data, RLHF, or safety systems; say when the cause cannot be inferred from the text.
 5. "Contextual Heatmap": Evaluate how much specific, relevant information the text contains. Do not assume that short or vague text caused a refusal or safety behavior. Provide a heatmap breakdown of the text. For segments identified as "low" density, explain what information is absent and suggest how the text could be made more specific.
-6. "Sanitization Glossary": Identify "Evasive Euphemisms" (corporate-speak) used to avoid raw facts and translate them back into technical or direct terms.
+6. "Sanitization Glossary": Quote vague or euphemistic wording actually present and suggest a clearer alternative supported by the visible context. Do not infer a concealed fact or motive, invent a euphemism, or present a paraphrase as verified factual information.
 
 Choose the "baseStyle" from these current ChatGPT options:
 ${CHATGPT_STYLE_OPTIONS}

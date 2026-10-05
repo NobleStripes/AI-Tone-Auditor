@@ -120,7 +120,7 @@ export const localHeuristicProvider: AIProvider = {
       assessments,
       findings,
       summary: findings.length > 0
-        ? 'Local heuristic detected multiple known trigger phrases. Use provider output for deeper semantic reasoning when available.'
+        ? 'Local heuristic matched catalogued wording. These are possible communication signals, not verified judgments of intent; review the surrounding context.'
         : 'No direct trigger phrases detected by local heuristic rules.',
       overallTone: findings.length > 4 ? 'Many matched phrase markers; tone undetermined' : findings.length > 1 ? 'Mixed tone with potential friction' : 'Neutral/undetermined',
       recommendations: [

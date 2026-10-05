@@ -156,7 +156,16 @@ export function ComparisonWorkspace({ active, onBusyChange, onCompleted }: Compa
               <thead>
                 <tr className="text-left">
                   <th scope="col" className="p-3">Diagnostic</th>
-                  {comparison.items.map((item, index) => <th scope="col" key={item.id} className="p-3 min-w-36">{SOURCE_MODEL_LABELS[item.sourceModel]} #{index + 1}</th>)}
+                  {comparison.items.map((item, index) => (
+                    <th scope="col" key={item.id} className="p-3 min-w-36">
+                      {SOURCE_MODEL_LABELS[item.sourceModel]} #{index + 1}
+                      <span className="block mt-1 font-normal text-zinc-400">
+                        {item.status === 'completed'
+                          ? `${item.analysis.meta.providerLabel} / ${item.analysis.meta.model}${item.analysis.meta.usedFallback ? ' (fallback)' : ''}`
+                          : 'No audit result'}
+                      </span>
+                    </th>
+                  ))}
                   <th scope="col" className="p-3 min-w-40">Observed spread</th>
                 </tr>
               </thead>
