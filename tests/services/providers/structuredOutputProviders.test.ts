@@ -62,7 +62,11 @@ test.each([
 ])('$id suppresses provider-generated moralizing claims without original context', async ({ id, load }) => {
   const analysis = emptyAnalysisResult();
   analysis.scores.unsolicited_moralizing = 99;
+  analysis.assessments.unsolicited_moralizing = { status: 'assessed', reason: 'Upstream claim.', confidence: 'high', method: 'semantic' };
+  analysis.scores.hedging = 75;
+  analysis.assessments.hedging = { status: 'assessed', reason: 'Tentative evidence.', confidence: 'low', method: 'lexical_rule' };
   analysis.findings.push({ category: ' UNSOLICITED MORALIZING ', text: 'An invented lecture.', explanation: 'Upstream claim', severity: 'high' });
+  analysis.findings.push({ category: 'Hedging', text: 'Perhaps', explanation: 'Tentative interpretation.', severity: 'high', confidence: 'low', method: 'lexical_rule' });
   const text = JSON.stringify(analysis);
   fetchMock.mockResolvedValue(mockResponse(id === 'anthropic'
     ? { stop_reason: 'end_turn', content: [{ type: 'text', text }] }
@@ -71,7 +75,9 @@ test.each([
   const provider = await load();
   const result = await provider.analyzeTone({ text: 'A neutral statement.', context: { promptVersion: 'test', sourceModel: 'claude' } });
   expect(result.scores.unsolicited_moralizing).toBe(0);
-  expect(result.findings).toEqual([]);
+  expect(result.assessments.unsolicited_moralizing.status).toBe('insufficient_context');
+  expect(result.assessments.hedging).toMatchObject({ status: 'assessed', confidence: 'low', method: 'semantic' });
+  expect(result.findings).toEqual([expect.objectContaining({ category: 'Hedging', severity: 'high', confidence: 'low', method: 'semantic' })]);
 });
 
 describe('OpenAI structured output adapter', () => {

@@ -1,9 +1,10 @@
-import type { AnalysisResult } from '../../src/types/analysis';
+import { emptyAnalysisResult, type AnalysisResult } from '../../src/types/analysis';
 
 export const HEDGING_HEAVY_INPUT =
   'I believe this might possibly work, but I could be wrong. You should perhaps consider that it may or may not be the right approach. I think there is a chance that this could potentially be useful, though I am not entirely sure.';
 
 export const HEDGING_HEAVY_OPENAI_SAMPLE: AnalysisResult = {
+  assessments: emptyAnalysisResult().assessments,
   scores: {
     gaslighting: 5,
     infantilizing: 8,

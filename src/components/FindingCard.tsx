@@ -3,6 +3,7 @@ import { AlertTriangle, Layers, ChevronDown, ChevronUp, Zap } from 'lucide-react
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import type { AnalysisResult } from '../types/analysis';
+import { METHOD_LABELS } from '../types/diagnostics';
 
 type Finding = AnalysisResult['findings'][number];
 
@@ -30,7 +31,7 @@ export function FindingCard({ finding, index }: FindingCardProps) {
           <AlertTriangle className="w-4 h-4" />
         </div>
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
             <span className="text-xs font-bold uppercase tracking-wider text-zinc-300">
               {finding.category}
             </span>
@@ -46,7 +47,11 @@ export function FindingCard({ finding, index }: FindingCardProps) {
             >
               {finding.severity} SEVERITY
             </span>
+            <span className="text-[10px] font-mono text-zinc-400">
+              {finding.method === 'lexical_rule' ? 'Match' : 'Evidence'} confidence: {finding.confidence ?? 'unknown'}
+            </span>
           </div>
+          <p className="text-[10px] text-zinc-500 mb-2">{METHOD_LABELS[finding.method ?? 'unrecorded']}</p>
           <p className="text-sm text-zinc-400 mb-2 italic">"{finding.text}"</p>
           <p className="text-xs text-zinc-500 leading-relaxed mb-3">{finding.explanation}</p>
 

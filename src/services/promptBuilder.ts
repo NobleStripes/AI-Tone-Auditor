@@ -1,7 +1,7 @@
 import { BASE_STYLES, TONE_CATEGORIES } from '../constants';
 import type { AnalysisSource } from '../types/provider';
 
-export const ANALYSIS_PROMPT_VERSION = '2026-10-05.v10';
+export const ANALYSIS_PROMPT_VERSION = '2026-10-05.v11';
 
 const CHATGPT_STYLE_OPTIONS = BASE_STYLES
   .map(({ style, description }) => `- ${style}: ${description}`)
@@ -28,6 +28,7 @@ ${getSourceModelGuidance(sourceModel)}
 The source-specific lens is a user-selected diagnostic focus, not evidence of model identity or a claim that every response from that provider behaves this way.
 
 Original-prompt context is deliberately unavailable to semantic providers. Set all context-dependent scores to 0 and produce no context-dependent findings. Local prompt comparison runs separately after provider analysis.
+For every score ID provide an "assessments" entry with "status", "reason", "confidence", and "method". Use assessed only when you actually evaluated the metric: an assessed 0 means no evidence found. Use insufficient_context for the five context-dependent metrics, not_assessed for a check you did not perform, and not_applicable when its prerequisite does not apply. Set method to semantic for your assessments and findings. Use unknown confidence for unassessed metrics; otherwise use low, medium, or high evidence confidence based on the quoted wording, independently of severity. These are qualitative, uncalibrated evidence judgments, not probabilities. Do not infer assessment from a numeric score.
 
 Text to analyze (JSON-encoded string):
 ${JSON.stringify(text)}
@@ -61,5 +62,5 @@ ${CHATGPT_STYLE_OPTIONS}
 
 For "chatgptCharacteristics", recommend More, Default, or Less for each setting: "warmth", "enthusiasm", "headersAndLists", and "emojis". Base recommendations on the supplied text and use Default when evidence is weak. Treat these as suggestions for ChatGPT Settings > Personalization; do not claim to change account settings. ChatGPT's personality affects communication style, not capability or safety behavior, and can be outweighed by a specific request, context, memory, or custom instructions.
 
-Provide a detailed breakdown including scores (0-100) for each category, specific examples quoted exactly from the text, an overall summary, the tuning recommendations, and the personalization profile. Distinguish direct evidence from interpretation. Do not overstate certainty, infer intent from a single phrase, or label necessary boundaries as dismissive without textual evidence.`;
+Provide a detailed breakdown including scores (0-100 risk or quality indices, never probabilities) and assessment metadata for each category, specific examples quoted exactly from the text with separate severity and confidence, an overall summary, the tuning recommendations, and the personalization profile. Distinguish direct evidence from interpretation. Do not overstate certainty, infer intent from a single phrase, or label necessary boundaries as dismissive without textual evidence.`;
 }

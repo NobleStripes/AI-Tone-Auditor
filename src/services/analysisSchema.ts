@@ -1,10 +1,12 @@
 import { BASE_STYLES, SCORE_KEYS } from '../constants';
+import { ASSESSMENT_STATES, CONFIDENCE_LEVELS, ASSESSMENT_METHODS } from '../types/diagnostics';
 
 export const ANALYSIS_RESULT_JSON_SCHEMA = {
   type: 'object',
   additionalProperties: false,
   required: [
     'scores',
+    'assessments',
     'findings',
     'summary',
     'overallTone',
@@ -14,6 +16,22 @@ export const ANALYSIS_RESULT_JSON_SCHEMA = {
     'euphemisms',
   ],
   properties: {
+    assessments: {
+      type: 'object',
+      additionalProperties: false,
+      required: SCORE_KEYS,
+      properties: Object.fromEntries(SCORE_KEYS.map((id) => [id, {
+        type: 'object',
+        additionalProperties: false,
+        required: ['status', 'reason', 'confidence', 'method'],
+        properties: {
+          status: { type: 'string', enum: ASSESSMENT_STATES },
+          reason: { type: 'string' },
+          confidence: { type: 'string', enum: CONFIDENCE_LEVELS },
+          method: { type: 'string', enum: ASSESSMENT_METHODS },
+        },
+      }])),
+    },
     scores: {
       type: 'object',
       additionalProperties: false,
@@ -25,12 +43,14 @@ export const ANALYSIS_RESULT_JSON_SCHEMA = {
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['category', 'text', 'explanation', 'severity', 'rlhfLogic'],
+        required: ['category', 'text', 'explanation', 'severity', 'confidence', 'method', 'rlhfLogic'],
         properties: {
           category: { type: 'string' },
           text: { type: 'string' },
           explanation: { type: 'string' },
           severity: { type: 'string', enum: ['low', 'medium', 'high'] },
+          confidence: { type: 'string', enum: CONFIDENCE_LEVELS },
+          method: { type: 'string', enum: ASSESSMENT_METHODS },
           rlhfLogic: { type: ['string', 'null'] },
         },
       },

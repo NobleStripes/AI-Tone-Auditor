@@ -1,9 +1,10 @@
-import type { AnalysisResult } from '../../src/types/analysis';
+import { emptyAnalysisResult, type AnalysisResult } from '../../src/types/analysis';
 
 export const CLEAN_TEXT_INPUT =
   'The function returns an array of objects. Each object has an id and a name property. You can iterate over the array using a for loop or the map method.';
 
 export const CLEAN_TEXT_SAMPLE: AnalysisResult = {
+  assessments: emptyAnalysisResult().assessments,
   scores: {
     gaslighting: 0,
     infantilizing: 0,

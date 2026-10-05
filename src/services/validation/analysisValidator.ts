@@ -1,5 +1,6 @@
 import { emptyAnalysisResult, type AnalysisResult } from '../../types/analysis';
 import { BASE_STYLES, SCORE_KEYS, CONTEXT_REQUIRED_SCORE_KEYS, CONTEXT_REQUIRED_FINDINGS, TONE_CATEGORIES } from '../../constants';
+import { ASSESSMENT_STATES, CONFIDENCE_LEVELS, ASSESSMENT_METHODS, type CategoryAssessment, type ConfidenceLevel, type AssessmentMethod } from '../../types/diagnostics';
 const DENSITY_VALUES = new Set(['low', 'medium', 'high']);
 const SEVERITY_VALUES = new Set(['low', 'medium', 'high']);
 const CALIBRATION_VALUES = new Set(['More', 'Default', 'Less']);
@@ -45,7 +46,15 @@ function normalizeFindingCategory(value: unknown): string {
     : value;
 }
 
-export function validateAnalysisResult(payload: unknown, context: { auditContext?: string } = {}): AnalysisResult {
+function normalizeConfidence(value: unknown): ConfidenceLevel {
+  return CONFIDENCE_LEVELS.find((level) => level === value) ?? 'unknown';
+}
+
+function normalizeMethod(value: unknown): AssessmentMethod {
+  return ASSESSMENT_METHODS.find((method) => method === value) ?? 'unrecorded';
+}
+
+export function validateAnalysisResult(payload: unknown, context: { auditContext?: string; assessmentMethod?: AssessmentMethod } = {}): AnalysisResult {
   const fallback = emptyAnalysisResult();
   const hasAuditContext = Boolean(context.auditContext?.trim());
   const raw = payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
@@ -59,6 +68,27 @@ export function validateAnalysisResult(payload: unknown, context: { auditContext
     return acc;
   }, {});
 
+  const rawAssessments = raw.assessments && typeof raw.assessments === 'object'
+    ? raw.assessments as Record<string, unknown> : {};
+  const assessments = { ...fallback.assessments };
+  for (const key of SCORE_KEYS) {
+    if (!hasAuditContext && CONTEXT_REQUIRED_SCORE_KEYS.has(key)) continue;
+    const value = rawAssessments[key];
+    const assessment = value && typeof value === 'object' ? value as Record<string, unknown> : {};
+    let status: CategoryAssessment['status'] = ASSESSMENT_STATES.find((state) => state === assessment.status) ?? 'not_assessed';
+    const validScore = typeof scores[key] === 'number' && Number.isFinite(scores[key]);
+    if (status === 'assessed' && !validScore) status = 'not_assessed';
+    assessments[key] = {
+      status,
+      reason: status === 'assessed' || status === assessment.status
+        ? typeof assessment.reason === 'string' && assessment.reason.trim() ? assessment.reason : 'No assessment reason was recorded.'
+        : 'Assessment metadata or a valid score is missing; a stored score alone does not prove assessment.',
+      confidence: status === 'assessed' ? normalizeConfidence(assessment.confidence) : 'unknown',
+      method: status === 'assessed' && context.assessmentMethod
+        ? context.assessmentMethod : normalizeMethod(assessment.method),
+    };
+  }
+
   const findings = Array.isArray(raw.findings)
     ? raw.findings
         .filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
@@ -67,6 +97,8 @@ export function validateAnalysisResult(payload: unknown, context: { auditContext
           text: typeof item.text === 'string' ? item.text : '',
           explanation: typeof item.explanation === 'string' ? item.explanation : 'No explanation provided.',
           severity: SEVERITY_VALUES.has(String(item.severity)) ? (item.severity as AnalysisResult['findings'][number]['severity']) : 'low',
+          confidence: normalizeConfidence(item.confidence),
+          method: context.assessmentMethod ?? normalizeMethod(item.method),
           rlhfLogic: typeof item.rlhfLogic === 'string' ? item.rlhfLogic : undefined,
         }))
         .filter((item) => item.text.trim().length > 0)
@@ -118,6 +150,7 @@ export function validateAnalysisResult(payload: unknown, context: { auditContext
   return {
     ...fallback,
     scores: normalizedScores,
+    assessments,
     findings,
     summary: typeof raw.summary === 'string' ? raw.summary : fallback.summary,
     overallTone: typeof raw.overallTone === 'string' ? raw.overallTone : fallback.overallTone,

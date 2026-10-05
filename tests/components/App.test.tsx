@@ -23,6 +23,10 @@ describe('saved audit presentation', () => {
   test.each([0, 100])('restores full response without prompt context and separates refusal quality (%s)', async (quality) => {
     const data = emptyAnalysisResult();
     data.scores.refusal_quality = quality;
+    for (const key of ['gaslighting', 'infantilizing', 'hedging'] as const) {
+      data.assessments[key] = { status: 'assessed', reason: 'Checked response wording.', confidence: 'medium', method: 'semantic' };
+    }
+    data.assessments.refusal_quality = { status: 'assessed', reason: 'Compared to the original prompt.', confidence: 'medium', method: 'lexical_rule' };
     const entry: HistoryEntry = {
       id: 'saved', title: 'Saved response...', timestamp: 123, sourceModel: 'claude',
       responseText: 'This is the full response, not a truncated title.', data,
@@ -41,6 +45,7 @@ describe('saved audit presentation', () => {
     expect(within(screen.getByTestId('risk-radar')).queryByText('Refusal Quality')).not.toBeInTheDocument();
     const qualityPanel = screen.getByRole('region', { name: 'Response quality' });
     expect(within(qualityPanel).getByText('Refusal Quality')).toBeInTheDocument();
-    expect(within(qualityPanel).getByText('N/A')).toBeInTheDocument();
+    expect(within(qualityPanel).getByText('Insufficient context')).toBeInTheDocument();
+    expect(screen.getByText('Response Diagnostics')).toBeInTheDocument();
   });
 });

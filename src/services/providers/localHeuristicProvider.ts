@@ -1,4 +1,4 @@
-import { TRIGGER_WORDS, createEmptyScores, type ScoreId, type TriggerWord } from '../../constants';
+import { CATEGORY_REGISTRY, TRIGGER_WORDS, createEmptyScores, type ScoreId, type TriggerWord } from '../../constants';
 import { emptyAnalysisResult, type AnalysisResult } from '../../types/analysis';
 import type { AIProvider, AnalyzeToneInput } from '../../types/provider';
 
@@ -87,6 +87,18 @@ export const localHeuristicProvider: AIProvider = {
       return acc;
     }, {});
 
+    const assessments = { ...baseline.assessments };
+    for (const category of CATEGORY_REGISTRY.filter(({ requiresContext }) => !requiresContext)) {
+      assessments[category.id] = {
+        status: 'assessed',
+        method: 'lexical_rule',
+        confidence: scores[category.id] > 0 ? 'high' : 'medium',
+        reason: scores[category.id] > 0
+          ? 'Known phrase markers matched. Confidence concerns the lexical match, not intent or contextual appropriateness.'
+          : 'No catalogued phrase markers matched; this does not rule out other wording or contextual patterns.',
+      };
+    }
+
     const findings = matchedTriggers
       .sort((a, b) => b.inferredWeight - a.inferredWeight)
       .slice(0, 8)
@@ -95,6 +107,8 @@ export const localHeuristicProvider: AIProvider = {
         text: trigger.word,
         explanation: trigger.explanation,
         severity: trigger.inferredWeight >= 2.1 ? 'high' as const : trigger.inferredWeight >= 1.25 ? 'medium' as const : 'low' as const,
+        confidence: 'high' as const,
+        method: 'lexical_rule' as const,
         rlhfLogic: 'This is a possible communication pattern suggested by the quoted wording; the phrase alone does not establish intent or cause.',
       }));
 
@@ -103,6 +117,7 @@ export const localHeuristicProvider: AIProvider = {
     return {
       ...baseline,
       scores,
+      assessments,
       findings,
       summary: findings.length > 0
         ? 'Local heuristic detected multiple known trigger phrases. Use provider output for deeper semantic reasoning when available.'

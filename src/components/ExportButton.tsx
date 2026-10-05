@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Download, Copy, Check } from 'lucide-react';
 import { cn } from '../lib/utils';
 import type { AnalysisResult } from '../types/analysis';
+import { CATEGORY_REGISTRY } from '../constants';
+import { DIAGNOSTIC_GROUPS, METHOD_LABELS, formatDiagnosticScore } from '../types/diagnostics';
 
 interface ExportButtonProps {
   result: AnalysisResult;
@@ -15,14 +17,28 @@ function formatMarkdown(result: AnalysisResult): string {
     '',
     `> ${result.summary}`,
     '',
-    '## Scores',
+    '## Response Diagnostics',
     '',
-    ...Object.entries(result.scores).map(([key, val]) => `- **${key}**: ${val}/100`),
+    'Scores are risk/quality indices, not probabilities. Confidence is qualitative and uncalibrated; lexical-rule scores are heuristic.',
+    '',
+    ...DIAGNOSTIC_GROUPS.flatMap((group) => [
+      `### ${group.label}`,
+      '',
+      ...CATEGORY_REGISTRY.filter((category) => category.group === group.id).map((category) => {
+        const assessment = result.assessments[category.id];
+        const score = formatDiagnosticScore(result.scores[category.id], assessment);
+        const metadata = assessment.status === 'assessed'
+          ? `; ${assessment.method === 'lexical_rule' ? 'heuristic ' : ''}${category.kind === 'quality' ? 'quality' : 'risk'} index; ${METHOD_LABELS[assessment.method]}; ${assessment.method === 'lexical_rule' ? 'match' : 'evidence'} confidence: ${assessment.confidence}`
+          : '';
+        return `- **${category.label} (${category.id})**: ${score}${metadata}. ${assessment.reason}`;
+      }),
+      '',
+    ]),
     '',
     '## Findings',
     '',
     ...result.findings.map(
-      (f) => `### ${f.category} (${f.severity})\n> "${f.text}"\n\n${f.explanation}`,
+      (f) => `### ${f.category} (${f.severity} severity)\n> "${f.text}"\n\n${METHOD_LABELS[f.method ?? 'unrecorded']}; ${f.method === 'lexical_rule' ? 'match' : 'evidence'} confidence: ${f.confidence ?? 'unknown'}\n\n${f.explanation}`,
     ),
     '',
     '## Personalization Profile',

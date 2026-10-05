@@ -80,7 +80,7 @@ export const geminiProvider: AIProvider = {
 
     const payload = (await response.json()) as GeminiInteractionResponse;
     try {
-      return validateAnalysisResult(JSON.parse(readOutputText(payload)));
+      return validateAnalysisResult(JSON.parse(readOutputText(payload)), { assessmentMethod: 'semantic' });
     } catch (error) {
       console.error('Failed to parse Gemini analysis result', error);
       throw new Error('Gemini provider failed to return valid analysis data');

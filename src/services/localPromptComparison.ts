@@ -1,5 +1,7 @@
 import type { AnalysisResult } from '../types/analysis';
 import type { AnalysisSource } from '../types/provider';
+import { CATEGORY_REGISTRY, CONTEXT_REQUIRED_FINDINGS } from '../constants';
+import type { CategoryAssessment } from '../types/diagnostics';
 
 const SOURCE_REQUEST_PATTERN = /\b(?:cite (?:your )?sources?|include citations?|provide (?:sources|references)|with sources|based on the (?:provided|attached|supplied) (?:source|document|evidence)|use the (?:provided|attached|supplied) (?:source|document|evidence))\b/i;
 const VISIBLE_CITATION_PATTERN = /https?:\/\/|www\.|\[\^?\d+\]|\[[^\]]+\]\(https?:\/\/|\b(?:source|reference)\s*\d+\b/i;
@@ -51,6 +53,8 @@ function addFinding(
     text: text.trim().slice(0, 240),
     explanation,
     severity,
+    confidence: 'medium',
+    method: 'lexical_rule',
     rlhfLogic: 'This local comparison uses visible wording only and cannot establish hidden retrieval, intent, or model behavior.',
   });
 }
@@ -62,17 +66,48 @@ export function applyLocalPromptComparison(
   sourceModel: AnalysisSource = 'unknown',
 ): AnalysisResult {
   const prompt = originalPrompt.trim();
-  const scores: AnalysisResult['scores'] = { ...analysis.scores, unsolicited_moralizing: 0 };
-  const findings = analysis.findings.filter((finding) => finding.category.trim().toLowerCase() !== MORALIZING_CATEGORY.toLowerCase());
-  const result = { ...analysis, scores, findings };
-  if (!prompt) {
+  const scores = { ...analysis.scores };
+  const assessments = { ...analysis.assessments };
+  const findings = analysis.findings.filter((finding) => !CONTEXT_REQUIRED_FINDINGS.has(finding.category.trim().toLowerCase()));
+  for (const { id } of CATEGORY_REGISTRY.filter(({ requiresContext }) => requiresContext)) {
+    scores[id] = 0;
+    assessments[id] = {
+      status: 'insufficient_context',
+      reason: 'An original prompt and response are required for this comparison.',
+      confidence: 'unknown',
+      method: 'lexical_rule',
+    };
+  }
+  const result = { ...analysis, scores, assessments, findings };
+  if (!prompt || !response.trim()) {
     return result;
   }
 
   const responseText = response.trim();
+  const assessed = (reason: string): CategoryAssessment => ({
+    status: 'assessed', reason, confidence: 'medium', method: 'lexical_rule',
+  });
+  const notApplicable = (reason: string): CategoryAssessment => ({
+    status: 'not_applicable', reason, confidence: 'unknown', method: 'lexical_rule',
+  });
+  assessments.unsupported_certainty = {
+    status: 'not_assessed',
+    reason: 'Factual claims are not independently verified; no supported certainty assessment is implemented.',
+    confidence: 'unknown',
+    method: 'unrecorded',
+  };
 
+  assessments.unsolicited_moralizing = sourceModel === 'unknown'
+    ? { status: 'insufficient_context', reason: 'Select the response source to use the Claude-specific lens.', confidence: 'unknown', method: 'lexical_rule' }
+    : notApplicable('This diagnostic lens applies only to a Claude-selected response.');
+  if (sourceModel === 'claude' && requestsEthicalDiscussion(prompt)) {
+    assessments.unsolicited_moralizing = notApplicable('Ethical, legal or safety discussion was explicitly requested.');
+  }
   if (sourceModel === 'claude' && !requestsEthicalDiscussion(prompt)) {
     const lecture = findMoralLecture(responseText);
+    assessments.unsolicited_moralizing = assessed(lecture
+      ? 'A narrow moral-admonition rule matched; 75 is a fixed heuristic risk index, not a probability.'
+      : 'No narrow moral-admonition rule matched; paraphrases and ambiguous wording may be missed.');
     if (lecture) {
       scores.unsolicited_moralizing = 75;
       addFinding(
@@ -86,6 +121,9 @@ export function applyLocalPromptComparison(
   }
 
   const sourceRequest = withoutQuotedText(prompt).replace(NEGATED_DISCUSSION_PATTERN, ' ');
+  assessments.grounding_avoidance = SOURCE_REQUEST_PATTERN.test(sourceRequest)
+    ? assessed('Checked visible citation presence only; citation relevance and source use are not verified. A match scores a fixed heuristic risk index of 75, not a probability.')
+    : notApplicable('No explicit citation or supplied-evidence requirement was detected in the prompt.');
   if (SOURCE_REQUEST_PATTERN.test(sourceRequest) && !VISIBLE_CITATION_PATTERN.test(responseText)) {
     scores.grounding_avoidance = 75;
     addFinding(
@@ -98,6 +136,9 @@ export function applyLocalPromptComparison(
   }
 
   const refusalSentences = (withoutQuotedText(responseText).match(/[^.!?\n]+[.!?]?/g) ?? []).filter((sentence) => REFUSAL_PATTERN.test(sentence.trim()));
+  assessments.refusal_quality = refusalSentences.length > 0
+    ? assessed('Heuristic quality index based on a direct decline, a reason in its sentence, and alternative wording; appropriateness is not verified.')
+    : notApplicable('No direct task refusal was detected by the lexical rules.');
   if (refusalSentences.length > 0) {
     const explainsLimit = refusalSentences.some((sentence) => REFUSAL_REASON_PATTERN.test(sentence));
     const offersAlternative = ALTERNATIVE_PATTERN.test(responseText);
@@ -114,7 +155,10 @@ export function applyLocalPromptComparison(
     }
   }
 
-  if (!DISTRESS_PATTERN.test(prompt) && TONE_POLICING_PATTERN.test(responseText)) {
+  assessments.needless_escalation = DISTRESS_PATTERN.test(prompt)
+    ? notApplicable('The prompt contains an explicit distress signal; the neutral-prompt check does not apply.')
+    : assessed('Checked for known calming or tone-policing scripts without a lexical distress signal. A match scores a fixed heuristic risk index of 75, not a probability.');
+  if (assessments.needless_escalation.status === 'assessed' && TONE_POLICING_PATTERN.test(responseText)) {
     scores.needless_escalation = 75;
     addFinding(
       result,

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Search,
   AlertTriangle,
@@ -20,9 +20,8 @@ import {
   X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts';
 import { analyzeTone, getLastAnalysisRuntimeMeta, getProviderTelemetrySnapshot } from './services/analyzeClient';
-import { RISK_CATEGORIES, QUALITY_CATEGORIES, TRIGGER_WORDS } from './constants';
+import { TRIGGER_WORDS } from './constants';
 import { cn } from './lib/utils';
 import type { AnalysisResult } from './types/analysis';
 import { parseAuditHistory, type HistoryEntry } from './types/history';
@@ -36,6 +35,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { ExportButton } from './components/ExportButton';
 import { FindingCard } from './components/FindingCard';
 import { PersonalizationProfile } from './components/PersonalizationProfile';
+import { ResponseDiagnostics } from './components/ResponseDiagnostics';
 
 const SOURCE_MODEL_LABELS: Record<AnalysisSource, string> = {
   unknown: 'Unknown / model-agnostic',
@@ -139,15 +139,6 @@ export default function App() {
       // ignore write errors (storage full, private browsing)
     }
   }, [history]);
-
-  const chartData = useMemo(() => {
-    if (!result) return [];
-    return RISK_CATEGORIES.map((category) => ({
-      subject: 'chartLabel' in category ? category.chartLabel : category.label,
-      A: result.scores[category.id] ?? 0,
-      fullMark: 100,
-    }));
-  }, [result]);
 
   return (
     <ErrorBoundary>
@@ -413,60 +404,7 @@ export default function App() {
                     )}
                   </div>
                   <div className="lg:col-span-5 space-y-6">
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 md:p-6">
-                      <h3 className="text-xs font-mono uppercase tracking-widest text-zinc-500 mb-6">Tone Distribution Profile</h3>
-                      <div className="h-48 sm:h-64 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
-                            <PolarGrid stroke="#27272a" />
-                            <PolarAngleAxis dataKey="subject" tick={{ fill: '#71717a', fontSize: 8 }} />
-                            <Radar
-                              name="Analysis"
-                              dataKey="A"
-                              stroke="#ef4444"
-                              fill="#ef4444"
-                              fillOpacity={0.3}
-                            />
-                          </RadarChart>
-                        </ResponsiveContainer>
-                      </div>
-                      
-                      <div className="mt-6 space-y-3">
-                        {RISK_CATEGORIES.map((cat) => {
-                          const score = result.scores[cat.id] ?? 0;
-                          const scoreColor = score > 70 ? 'text-red-500' : score > 40 ? 'text-amber-500' : 'text-emerald-500';
-                          const barColor = score > 70 ? 'bg-red-500' : score > 40 ? 'bg-amber-500' : 'bg-emerald-500';
-                          return (
-                            <div key={cat.id} className="space-y-1">
-                              <div className="flex justify-between text-[10px] font-mono uppercase">
-                                <span className="text-zinc-500">{cat.label}</span>
-                                <span className={scoreColor}>{`${score}%`}</span>
-                              </div>
-                              <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
-                                <motion.div 
-                                  initial={{ width: 0 }}
-                                  animate={{ width: `${score}%` }}
-                                  className={cn('h-full rounded-full', barColor)}
-                                />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <section aria-label="Response quality" className="border-t border-zinc-800 pt-4 space-y-3">
-                      {QUALITY_CATEGORIES.map((category) => {
-                        const score = result.scores[category.id] ?? 0;
-                        const color = score === 0 ? 'text-zinc-600' : score > 70 ? 'text-emerald-500' : score > 40 ? 'text-amber-500' : 'text-red-500';
-                        return (
-                          <div key={category.id} className="flex items-center justify-between gap-4">
-                            <h3 className="text-xs font-mono uppercase tracking-widest text-zinc-500">{category.label}</h3>
-                            <span className={cn('text-sm font-mono', color)}>{score === 0 ? 'N/A' : `${score}/100`}</span>
-                          </div>
-                        );
-                      })}
-                    </section>
+                    <ResponseDiagnostics result={result} />
 
                     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 md:p-6">
                       <h3 className="text-xs font-mono uppercase tracking-widest text-zinc-500 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">

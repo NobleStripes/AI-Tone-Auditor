@@ -1,6 +1,7 @@
 export const TONE_CATEGORIES = {
   GASLIGHTING: {
     id: 'gaslighting',
+    group: 'communication',
     kind: 'risk',
     requiresContext: false,
     label: 'Gaslighting',
@@ -9,6 +10,7 @@ export const TONE_CATEGORIES = {
   },
   INFANTILIZING: {
     id: 'infantilizing',
+    group: 'communication',
     kind: 'risk',
     requiresContext: false,
     label: 'Infantilizing',
@@ -17,6 +19,7 @@ export const TONE_CATEGORIES = {
   },
   DE_ESCALATION: {
     id: 'de_escalation',
+    group: 'communication',
     kind: 'risk',
     requiresContext: false,
     label: 'Forced De-escalation',
@@ -25,6 +28,7 @@ export const TONE_CATEGORIES = {
   },
   BUREAUCRATIC_STONEWALLING: {
     id: 'karen_trigger',
+    group: 'communication',
     kind: 'risk',
     requiresContext: false,
     label: 'Bureaucratic Stonewalling',
@@ -34,6 +38,7 @@ export const TONE_CATEGORIES = {
   },
   HEDGING: {
     id: 'hedging',
+    group: 'communication',
     kind: 'risk',
     requiresContext: false,
     label: 'Hedging',
@@ -42,6 +47,7 @@ export const TONE_CATEGORIES = {
   },
   DISMISSIVE: {
     id: 'dismissive',
+    group: 'communication',
     kind: 'risk',
     requiresContext: false,
     label: 'Dismissive',
@@ -50,6 +56,7 @@ export const TONE_CATEGORIES = {
   },
   SYCOPHANCY: {
     id: 'sycophancy',
+    group: 'communication',
     kind: 'risk',
     requiresContext: false,
     label: 'Sycophancy',
@@ -58,6 +65,7 @@ export const TONE_CATEGORIES = {
   },
   OVER_APOLOGIZING: {
     id: 'over_apologizing',
+    group: 'communication',
     kind: 'risk',
     requiresContext: false,
     label: 'Over-apologizing',
@@ -66,6 +74,7 @@ export const TONE_CATEGORIES = {
   },
   REPETITIVE_FILLER: {
     id: 'repetitive_filler',
+    group: 'communication',
     kind: 'risk',
     requiresContext: false,
     label: 'Repetitive Filler',
@@ -74,6 +83,7 @@ export const TONE_CATEGORIES = {
   },
   UNSUPPORTED_CERTAINTY: {
     id: 'unsupported_certainty',
+    group: 'epistemic',
     kind: 'risk',
     requiresContext: true,
     label: 'Unsupported Certainty',
@@ -82,6 +92,7 @@ export const TONE_CATEGORIES = {
   },
   GROUNDING_AVOIDANCE: {
     id: 'grounding_avoidance',
+    group: 'epistemic',
     kind: 'risk',
     requiresContext: true,
     label: 'Grounding Avoidance',
@@ -90,6 +101,7 @@ export const TONE_CATEGORIES = {
   },
   REFUSAL_QUALITY: {
     id: 'refusal_quality',
+    group: 'quality',
     kind: 'quality',
     requiresContext: true,
     label: 'Refusal Quality',
@@ -98,6 +110,7 @@ export const TONE_CATEGORIES = {
   },
   NEEDLESS_ESCALATION: {
     id: 'needless_escalation',
+    group: 'contextual',
     kind: 'risk',
     requiresContext: true,
     label: 'Needless Escalation',
@@ -106,6 +119,7 @@ export const TONE_CATEGORIES = {
   },
   UNSOLICITED_MORALIZING: {
     id: 'unsolicited_moralizing',
+    group: 'contextual',
     kind: 'risk',
     requiresContext: true,
     chartLabel: 'Moralizing',

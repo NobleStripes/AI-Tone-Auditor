@@ -145,25 +145,44 @@ These are probabilistic language signals, not proof of intent or inaccuracy. Rev
 
 - **Unsupported Certainty**: not currently scored because the original prompt stays local and factual claims are not independently verified. Missing citations alone do not prove a check was skipped.
 - **Grounding Avoidance**: a narrow visible-citation check, scored only when the prompt explicitly requests citations or use of supplied source material. Requests such as "search the web," "look this up," or "verify the current information" alone are not detected. A URL or citation marker satisfies the presence check even if unrelated; the tool does not verify relevance, source use, retrieval, or factual support.
-- **Refusal Quality**: a positive score displayed separately from the risk radar. Local rules recognize direct first-person task declines, look for a reason in the refusal sentence, and check for alternative wording. Higher scores indicate more of these visible signals, not a verified judgment that the refusal was proportionate or appropriate. No detected refusal or missing prompt context is shown as N/A. Paraphrased refusals and separate explanation sentences may be missed.
+- **Refusal Quality**: a positive quality index displayed separately from the risk radar. Local rules recognize direct first-person task declines, look for a reason in the refusal sentence, and check for alternative wording. Higher scores indicate more of these visible signals, not a verified judgment that the refusal was proportionate or appropriate. No detected refusal is not applicable; missing prompt context is insufficient context. An explicitly assessed zero is still `0/100`, not N/A. Paraphrased refusals and separate explanation sentences may be missed.
 - **Needless Escalation**: scored only when a neutral prompt receives irrelevant calming, moralizing, or tone-policing language.
-- Prompt-comparison scores stay at zero when no original prompt is provided. Local comparison uses conservative visible-text rules; it cannot verify external sources or reliably infer intent and may miss nuance.
+- Prompt-comparison scores stay at zero in the compatibility payload when no original prompt is provided, but their assessment state is insufficient context, not an assessed clean result. Local comparison uses conservative visible-text rules; it cannot verify external sources or reliably infer intent and may miss nuance.
 - The optional original prompt/context stays in the app/server comparison path and is not sent to third-party semantic providers or saved in local audit history. Local comparison uses conservative visible-text rules and may miss nuance. The response text is still sent to the configured semantic provider. OpenAI Responses, Gemini Interactions, and Grok Responses requests disable provider-side response storage where supported.
 - Audit history stores the full response text, selected source, analysis result, and available runtime metadata locally. Restored results are normalized through the same validator as provider results. Since original-prompt context is not stored, context-dependent scores reset to zero and their findings are removed; re-audit with the original prompt to recompute them. Response text that was never stored in older entries cannot be recovered; loading them leaves the response input empty. Original-prompt context is cleared when loading an entry.
+
+## Assessment state and confidence
+
+**Response Diagnostics** groups metrics into **Communication** (wording and tone), **Contextual behavior** (Needless Escalation and Unsolicited Moralizing), **Epistemic behavior** (Grounding Avoidance and Unsupported Certainty), and **Quality** (Refusal Quality). Only assessed risk metrics appear in the risk radar. Positive quality metrics stay outside it; when fewer than three risks are assessed, the grouped list is shown without a radar.
+
+Each score ID has an `assessments` entry with `status`, `reason`, `method`, and `confidence`:
+
+| State | Meaning | Display |
+| --- | --- | --- |
+| `assessed` | The check ran; zero means nothing was found by that check | `0/100` or another index |
+| `not_assessed` | The check was not performed or its assessment was not recorded | N/A — not assessed |
+| `insufficient_context` | Required original-prompt or source-selection context is unavailable | Insufficient context |
+| `not_applicable` | A prerequisite does not apply, such as no detected refusal or no explicit citation requirement | N/A — not applicable |
+
+Unsupported Certainty is **not assessed**, even with an original prompt, because factual claims are not independently verified. Grounding Avoidance is assessed only for a detected explicit citation or supplied-evidence requirement. Needless Escalation checks neutral prompts without lexical distress signals. Unsolicited Moralizing applies to a Claude-selected source when ethical discussion was not requested. Refusal Quality requires a detected task decline and the original prompt.
+
+Risk and quality scores are **indices, not probabilities**. Fixed local values such as `75/100` are explicitly labeled heuristic. Confidence is separate from finding severity and uses **unknown, low, medium, or high**, never a percentage. For `lexical_rule` output it describes match confidence, not certainty about intent, harm, correctness, or contextual appropriateness. For `semantic` output it is an uncalibrated evidence judgment. Legacy findings use unknown confidence and an unrecorded method; legacy scores without assessment metadata remain stored but display as not assessed rather than being treated as verified clean results.
+
+New results, JSON/Markdown exports, and saved history include assessment metadata. Restoring history without the private original prompt marks the five context-dependent diagnostics as insufficient context. Communication assessments and their confidence remain intact.
 
 ## Source model lenses
 
 Source-specific prompt-comparison lenses require original-prompt context. That context stays local and is not available to third-party semantic providers. The **Unsolicited Moralizing** Claude lens runs in the local comparison path; other source-specific semantic comparisons are not generated in this privacy mode. The source model selection does not identify a model from text or imply that all responses from a provider share the same traits.
 
 - **Unsolicited Moralizing** requires Claude as the selected response source and a nonempty original prompt. The auditing provider can be any configured provider, including a fallback.
-- The local rule flags narrow, explicit moral admonitions directed at the requester and quotes the lecturing passage. Its `unsolicited_moralizing` risk score is `75` for a clear match and `0` otherwise, not a probability or a judgment of the requester.
+- The local rule flags narrow, explicit moral admonitions directed at the requester and quotes the lecturing passage. Its `unsolicited_moralizing` heuristic risk index is `75` for a clear match and `0` for an assessed check with no match, not a probability or a judgment of the requester. Requested ethical discussion and non-Claude sources are not applicable.
 - Explicitly requested ethical/legal discussion and concise, specific safety explanations are excluded. A refusal or allowed alternative alone is not moralizing; an appended lecture can be flagged independently of Refusal Quality.
-- Without Claude selection or original-prompt context, this score stays zero and no finding is produced. Quoted examples and ambiguous wording are handled conservatively. Lexical rules may miss nuance, paraphrases, or request intent; zero does not prove the absence of moralizing.
+- Without original-prompt context or a known source selection, this diagnostic has insufficient context and no finding is produced. Quoted examples and ambiguous wording are handled conservatively. Lexical rules may miss nuance, paraphrases, or request intent; even an assessed zero does not prove the absence of moralizing.
 - **Paternalistic Redirection** and **Refusal Overreach** remain separate, deferred categories. This lens does not decide whether a refusal was warranted.
 
 Use trigger `weight` in `src/constants.ts` to calibrate detection precision.
 
-`TONE_CATEGORIES` in `src/constants.ts` is the category registry: score IDs, labels, risk/quality direction, and context requirements generate score defaults, validation keys, schema properties, local weight initialization, and chart/list data. Provider prompts analyze response text only; context-dependent comparison is owned by the local comparison service.
+`TONE_CATEGORIES` in `src/constants.ts` is the category registry: score IDs, labels, diagnostic groups, risk/quality direction, and context requirements generate score/assessment defaults, validation keys, schema properties, local weight initialization, and chart/list data. Provider prompts analyze response text only; context-dependent comparison is owned by the local comparison service.
 
 | Weight range | When to use | Typical examples |
 | --- | --- | --- |

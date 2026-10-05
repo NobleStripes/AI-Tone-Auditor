@@ -46,6 +46,7 @@ describe('audit history', () => {
     expect(restored.data.scores.karen_trigger).toBe(73);
     expect(restored.data.findings).toEqual([{
       ...legacyData.findings[0], category: 'Bureaucratic Stonewalling',
+      confidence: 'unknown', method: 'unrecorded',
     }]);
     expect(parseAuditHistory(JSON.stringify([restored]))).toEqual([restored]);
   });
@@ -80,7 +81,23 @@ describe('audit history', () => {
     expect(restored.data.scores.unsolicited_moralizing).toBe(0);
     expect(restored.data.scores.refusal_quality).toBe(0);
     expect(restored.data.findings).toEqual([]);
+    expect(restored.data.assessments.unsolicited_moralizing.status).toBe('insufficient_context');
+    expect(restored.data.assessments.refusal_quality.status).toBe('insufficient_context');
     expect(restored).not.toHaveProperty('auditContext');
+  });
+
+  test('retains recorded communication confidence but does not invent it for legacy scores', () => {
+    const data = emptyAnalysisResult();
+    data.scores.hedging = 0;
+    data.assessments.hedging = {
+      status: 'assessed', reason: 'Checked the wording.', confidence: 'low', method: 'semantic',
+    };
+    const restored = parseAuditHistory(JSON.stringify([{ ...entry, data }]))[0];
+    expect(restored.data.assessments.hedging).toEqual(data.assessments.hedging);
+    const { assessments, ...legacyData } = data;
+    const legacy = parseAuditHistory(JSON.stringify([{ ...entry, data: legacyData }]))[0];
+    expect(legacy.data.assessments.hedging.status).toBe('not_assessed');
+    expect(legacy.data.assessments.hedging.confidence).toBe('unknown');
   });
 
   test.each([null, '{bad', '{}', '[null, 42, {}]'])('handles invalid storage: %s', (stored) => {
