@@ -29,7 +29,7 @@ async function readAnalysisResponse<T>(response: Response): Promise<T> {
     let detail = body;
     try {
       const errorData: unknown = JSON.parse(body);
-      if (errorData && typeof errorData === 'object' && 'error' in errorData && typeof errorData.error === 'string') {
+      if (errorData && typeof errorData === 'object' && 'error' in errorData && typeof errorData.error === 'string' && errorData.error.trim()) {
         detail = errorData.error;
       }
     } catch {

@@ -16,7 +16,7 @@ export class ProviderHttpError extends Error {
       if (key) detail = detail.split(key).join('[REDACTED]');
     }
     const authFailure = status === 401 || status === 403
-      || /(?:invalid|incorrect|expired)[^\n]{0,40}(?:api[_ -]?key)|api[_ -]?key[^\n]{0,40}(?:invalid|incorrect|expired)/i.test(detail);
+      || /(?:invalid|incorrect|expired)[^\n]{0,40}(?:api[_ -]?key)|api[_ -]?key[^\n]{0,40}(?:invalid|incorrect|expired|not[_ ]valid)/i.test(detail);
     super(`${label} request failed (${status})${authFailure ? `: authentication failed; check ${keyName} and provider access` : ''}.${detail ? ` ${truncateErrorText(detail)}` : ''}`);
     this.name = 'ProviderHttpError';
     this.retryable = !authFailure && [429, 500, 502, 503, 504].includes(status);

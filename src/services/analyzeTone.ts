@@ -1,6 +1,7 @@
 import type { AnalysisResult } from '../types/analysis';
 import { DEFAULT_LOCAL_RUNTIME_META, type AnalysisSource, type AnalyzeToneOutput, type ProviderRuntimeMeta } from '../types/provider';
 import { ProviderHttpError } from './providers/providerErrors';
+import { MAX_ERROR_BODY_LENGTH, truncateErrorText } from '../lib/errorText';
 import { ANALYSIS_PROMPT_VERSION } from './promptBuilder';
 import { applyLocalPromptComparison } from './localPromptComparison';
 import { createAnalysisProvenance } from './auditProvenance';
@@ -150,7 +151,8 @@ export async function analyzeTone(
     try {
       analyzed = await runProviderWithPolicy(fallbackProvider, text, sourceModel, timeoutMs, retries);
     } catch (fallbackError) {
-      const message = (error: unknown) => error instanceof Error ? error.message : String(error);
+      const message = (error: unknown) => truncateErrorText(
+        error instanceof Error ? error.message : String(error), Math.floor(MAX_ERROR_BODY_LENGTH / 3));
       throw new AggregateError([primaryError, fallbackError],
         `${primaryProvider.label} failed: ${message(primaryError)}; configured fallback ${fallbackProvider.label} also failed: ${message(fallbackError)}`);
     }

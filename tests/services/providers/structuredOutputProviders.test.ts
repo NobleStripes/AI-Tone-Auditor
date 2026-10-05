@@ -285,11 +285,15 @@ describe('Grok structured output adapter', () => {
   });
 });
 
-test('resolves Gemini and Grok provider IDs and defaults their fallback to OpenAI', async () => {
+test('resolves Gemini and Grok provider IDs without inventing an external fallback', async () => {
+  vi.stubEnv('AI_FALLBACK_PROVIDER', undefined);
   const { resolveFallbackProvider, resolveProvider } = await import('../../../src/services/providers/factory');
 
   expect(resolveProvider('gemini').id).toBe('gemini');
   expect(resolveProvider('grok').id).toBe('grok');
-  expect(resolveFallbackProvider('gemini').id).toBe('openai');
-  expect(resolveFallbackProvider('grok').id).toBe('openai');
+  expect(resolveFallbackProvider('gemini')).toBeNull();
+  expect(resolveFallbackProvider('grok')).toBeNull();
+  vi.stubEnv('AI_FALLBACK_PROVIDER', 'openai');
+  expect(resolveFallbackProvider('gemini')?.id).toBe('openai');
+  expect(resolveFallbackProvider('grok')?.id).toBe('openai');
 });
