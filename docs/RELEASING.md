@@ -1,5 +1,7 @@
 # Release discipline
 
+[Back to README](../README.md)
+
 ## Version responsibilities
 
 - **Auditor/package version** identifies a reviewed application release and appears in audit/export provenance. Use a minor release for meaningful features, a patch for compatible fixes/copy improvements, and a major release for breaking contracts.
