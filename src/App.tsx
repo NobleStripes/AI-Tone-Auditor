@@ -38,6 +38,7 @@ import { FindingCard } from './components/FindingCard';
 import { PersonalizationProfile } from './components/PersonalizationProfile';
 import { ResponseDiagnostics } from './components/ResponseDiagnostics';
 import { ComparisonWorkspace } from './components/ComparisonWorkspace';
+import { ResultSectionNavigation } from './components/ResultSectionNavigation';
 import type { AnalysisProvenance } from './types/provenance';
 import { normalizeAnalysisProvenance } from './services/auditProvenance';
 import { validateAnalysisResult } from './services/validation/analysisValidator';
@@ -407,6 +408,19 @@ export default function App() {
                   exit={{ opacity: 0, y: -20 }}
                   className="lg:col-span-12 grid grid-cols-1 lg:grid-cols-12 gap-8"
                 >
+                  <ResultSectionNavigation
+                    label="Single-audit result sections"
+                    items={[
+                      { id: 'audit-summary', label: 'Summary' },
+                      { id: 'audit-findings', label: 'Findings' },
+                      { id: 'audit-recommendations', label: 'Recommendations' },
+                      { id: 'audit-personalization', label: 'Personalization' },
+                      { id: 'audit-diagnostics', label: 'Diagnostics' },
+                      { id: 'audit-heatmap', label: 'Heatmap' },
+                      ...(result.euphemisms.length > 0 ? [{ id: 'audit-glossary', label: 'Glossary' }] : []),
+                      { id: 'audit-triggers', label: 'Trigger analysis' },
+                    ]}
+                  />
                   {result && auditedInput && (
                     auditedInput.responseText !== inputText ||
                     auditedInput.sourceModel !== sourceModel ||
@@ -442,13 +456,13 @@ export default function App() {
                             Executive Summary
                           </span>
                         </div>
-                        <h3 className="text-xl md:text-2xl font-bold text-zinc-100 mb-2">{result.overallTone}</h3>
+                        <h3 id="audit-summary" tabIndex={-1} className="text-xl md:text-2xl font-bold text-zinc-100 mb-2">{result.overallTone}</h3>
                         <p className="text-xs md:text-sm text-zinc-400 leading-relaxed">{result.summary}</p>
                       </div>
                     </div>
 
                     <div className="space-y-4">
-                      <h2 className="text-xs font-mono uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+                      <h2 id="audit-findings" tabIndex={-1} className="text-xs font-mono uppercase tracking-widest text-zinc-500 flex items-center gap-2">
                         <AlertTriangle className="w-3 h-3" /> Pattern Detection Findings
                       </h2>
                       <div className="space-y-3">
@@ -460,7 +474,7 @@ export default function App() {
 
                     {/* Tuning Tips Section */}
                     <div className="space-y-4">
-                      <h2 className="text-xs font-mono uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+                      <h2 id="audit-recommendations" tabIndex={-1} className="text-xs font-mono uppercase tracking-widest text-zinc-500 flex items-center gap-2">
                         <Lightbulb className="w-3 h-3 text-amber-500" /> AI Personality Tuning Tips
                       </h2>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -471,12 +485,14 @@ export default function App() {
                     </div>
 
                     {/* Personalization Profile Section */}
-                    <PersonalizationProfile personalization={result.personalization} />
+                    <div id="audit-personalization" tabIndex={-1}>
+                      <PersonalizationProfile personalization={result.personalization} />
+                    </div>
 
                     {/* Contextual Heatmap Section */}
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <h2 className="text-xs font-mono uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+                        <h2 id="audit-heatmap" tabIndex={-1} className="text-xs font-mono uppercase tracking-widest text-zinc-500 flex items-center gap-2">
                           <Map className="w-3 h-3 text-blue-500" /> Contextual Heatmap
                         </h2>
                         <div className="flex items-center gap-2">
@@ -504,7 +520,7 @@ export default function App() {
                     {/* Sanitization Glossary Section */}
                     {result.euphemisms.length > 0 && (
                       <div className="space-y-4">
-                        <h2 className="text-xs font-mono uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+                        <h2 id="audit-glossary" tabIndex={-1} className="text-xs font-mono uppercase tracking-widest text-zinc-500 flex items-center gap-2">
                           <BookOpen className="w-3 h-3 text-amber-500" /> Sanitization Glossary
                         </h2>
                         <div className="grid grid-cols-1 gap-3">
@@ -533,10 +549,12 @@ export default function App() {
                     )}
                   </div>
                   <div className="lg:col-span-5 space-y-6">
-                    <ResponseDiagnostics result={result} />
+                    <div id="audit-diagnostics" tabIndex={-1}>
+                      <ResponseDiagnostics result={result} />
+                    </div>
 
                     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 md:p-6">
-                      <h3 className="text-xs font-mono uppercase tracking-widest text-zinc-500 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <h3 id="audit-triggers" tabIndex={-1} className="text-xs font-mono uppercase tracking-widest text-zinc-500 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         Trigger Word Analysis
                         <span className="text-[10px] bg-red-500/10 text-red-500 px-1.5 py-0.5 rounded w-fit">
                           {TRIGGER_WORDS.filter(w => inputText.toLowerCase().includes(w.word.toLowerCase())).length} DETECTED

@@ -67,6 +67,24 @@ test('shows neutral differences, state-aware scores, source-lens exclusions and 
   await fillInputs(user);
   await user.click(screen.getByRole('button', { name: 'Compare responses' }));
   expect(compareToneResponses).toHaveBeenCalledWith(input, expect.any(AbortSignal));
+  const navigation = screen.getByRole('navigation', { name: 'Comparison result sections' });
+  for (const { label, id } of [
+    { label: 'Observed differences', id: 'comparison-differences' },
+    { label: 'Communication', id: 'comparison-group-communication' },
+    { label: 'Contextual behavior', id: 'comparison-group-contextual' },
+    { label: 'Epistemic behavior', id: 'comparison-group-epistemic' },
+    { label: 'Quality', id: 'comparison-group-quality' },
+    { label: 'ChatGPT #1', id: 'comparison-response-1' },
+    { label: 'Claude #2', id: 'comparison-response-2' },
+  ]) {
+    expect(within(navigation).getByRole('link', { name: label })).toHaveAttribute('href', `#${id}`);
+    expect(document.getElementById(id)).toBeInTheDocument();
+  }
+  const qualityLink = within(navigation).getByRole('link', { name: 'Quality' });
+  qualityLink.focus();
+  await user.keyboard('{Enter}');
+  expect(window.location.hash).toBe('#comparison-group-quality');
+
   const table = screen.getByRole('table');
   const hedging = within(table).getByRole('row', { name: /Hedging/ });
   expect(within(hedging).getByText('35 index points')).toBeInTheDocument();
@@ -140,6 +158,10 @@ test('all-failed batches are explicitly unavailable rather than success-shaped r
   await user.click(screen.getByRole('button', { name: 'Compare responses' }));
   expect(screen.getByText('All response audits failed; no comparison is available.')).toBeInTheDocument();
   expect(screen.queryByRole('table')).not.toBeInTheDocument();
+  const navigation = screen.getByRole('navigation', { name: 'Comparison result sections' });
+  expect(within(navigation).queryByRole('link', { name: 'Communication' })).not.toBeInTheDocument();
+  expect(within(navigation).getByRole('link', { name: 'ChatGPT #1 (failed)' })).toHaveAttribute('href', '#comparison-response-1');
+  expect(document.getElementById('comparison-response-1')).toBeInTheDocument();
 });
 
 test('comparison JSON retains versions, results and response text but not the private prompt', async () => {

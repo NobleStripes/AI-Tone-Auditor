@@ -25,6 +25,56 @@ afterEach(() => {
 });
 
 describe('saved audit presentation', () => {
+  test('provides keyboard-operable links to the rendered single-audit sections', async () => {
+    const result = emptyAnalysisResult();
+    result.euphemisms.push({ term: 'policy', translation: 'rule', context: 'Example context.' });
+    const meta = { providerId: 'local' as const, providerLabel: 'Local Heuristic', model: 'rules-v1', usedFallback: false };
+    vi.spyOn(analyzeClient, 'analyzeTone').mockResolvedValue({ result, meta });
+    render(<App />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: /Auto: ON/ }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'AI response to audit' }), {
+      target: { value: 'A response that is long enough for an audit.' },
+    });
+    await user.click(screen.getByRole('button', { name: 'Run Audit' }));
+
+    const navigation = await screen.findByRole('navigation', { name: 'Single-audit result sections' });
+    for (const { label, id } of [
+      { label: 'Summary', id: 'audit-summary' },
+      { label: 'Findings', id: 'audit-findings' },
+      { label: 'Recommendations', id: 'audit-recommendations' },
+      { label: 'Personalization', id: 'audit-personalization' },
+      { label: 'Diagnostics', id: 'audit-diagnostics' },
+      { label: 'Heatmap', id: 'audit-heatmap' },
+      { label: 'Glossary', id: 'audit-glossary' },
+      { label: 'Trigger analysis', id: 'audit-triggers' },
+    ]) {
+      expect(within(navigation).getByRole('link', { name: label })).toHaveAttribute('href', `#${id}`);
+      expect(document.getElementById(id)).toBeInTheDocument();
+    }
+
+    const summaryLink = within(navigation).getByRole('link', { name: 'Summary' });
+    summaryLink.focus();
+    await user.keyboard('{Enter}');
+    expect(window.location.hash).toBe('#audit-summary');
+  });
+
+  test('omits the glossary jump link when the glossary is not rendered', async () => {
+    const meta = { providerId: 'local' as const, providerLabel: 'Local Heuristic', model: 'rules-v1', usedFallback: false };
+    vi.spyOn(analyzeClient, 'analyzeTone').mockResolvedValue({ result: emptyAnalysisResult(), meta });
+    render(<App />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: /Auto: ON/ }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'AI response to audit' }), {
+      target: { value: 'A response that is long enough for an audit.' },
+    });
+    await user.click(screen.getByRole('button', { name: 'Run Audit' }));
+
+    const navigation = await screen.findByRole('navigation', { name: 'Single-audit result sections' });
+    expect(within(navigation).queryByRole('link', { name: 'Glossary' })).not.toBeInTheDocument();
+    expect(document.getElementById('audit-glossary')).not.toBeInTheDocument();
+  });
+
   test('auto-audits each response and settings combination only once', async () => {
     vi.useFakeTimers();
     const meta = { providerId: 'local' as const, providerLabel: 'Local Heuristic', model: 'rules-v1', usedFallback: false };

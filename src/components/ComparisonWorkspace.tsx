@@ -16,6 +16,7 @@ import { downloadJson } from '../lib/download';
 import { createComparisonExport } from '../services/exportReport';
 import { normalizeAnalysisProvenance } from '../services/auditProvenance';
 import { AnalysisModeIndicator } from './AnalysisModeIndicator';
+import { ResultSectionNavigation } from './ResultSectionNavigation';
 
 interface ComparisonWorkspaceProps {
   active: boolean;
@@ -138,8 +139,22 @@ export function ComparisonWorkspace({ active, onBusyChange, onCompleted }: Compa
       {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
       {comparison && (
         <div className="space-y-6">
+          <ResultSectionNavigation
+            label="Comparison result sections"
+            items={[
+              { id: 'comparison-differences', label: 'Observed differences' },
+              ...(hasCompleted ? DIAGNOSTIC_GROUPS.map((group) => ({
+                id: `comparison-group-${group.id}`,
+                label: group.label,
+              })) : []),
+              ...comparison.items.map((item, index) => ({
+                id: `comparison-response-${index + 1}`,
+                label: `${SOURCE_MODEL_LABELS[item.sourceModel]} #${index + 1}${item.status === 'failed' ? ' (failed)' : ''}`,
+              })),
+            ]}
+          />
           <div className="flex flex-wrap justify-between items-center gap-3">
-            <h3 className="text-lg font-semibold">Observed differences</h3>
+            <h3 id="comparison-differences" tabIndex={-1} className="text-lg font-semibold">Observed differences</h3>
             <button onClick={() => downloadJson(createComparisonExport(comparison), `tone-comparison-${Date.now()}.json`)}
               className="text-xs px-3 py-2 border border-zinc-700 rounded">Export comparison JSON</button>
           </div>
@@ -171,7 +186,7 @@ export function ComparisonWorkspace({ active, onBusyChange, onCompleted }: Compa
               </thead>
               {DIAGNOSTIC_GROUPS.map((group) => (
                 <tbody key={group.id}>
-                  <tr><th scope="colgroup" colSpan={comparison.items.length + 2} className="p-3 text-left bg-zinc-900">{group.label}</th></tr>
+                  <tr><th id={`comparison-group-${group.id}`} tabIndex={-1} scope="colgroup" colSpan={comparison.items.length + 2} className="p-3 text-left bg-zinc-900">{group.label}</th></tr>
                   {differences.filter(({ category }) => category.group === group.id).map(({ category, spread, note }) => (
                     <tr key={category.id} className="border-b border-zinc-800 align-top">
                       <th scope="row" className="p-3 text-left font-normal">{category.label}{category.kind === 'quality' && <span className="block text-zinc-500">Quality index (higher is better)</span>}</th>
@@ -197,9 +212,9 @@ export function ComparisonWorkspace({ active, onBusyChange, onCompleted }: Compa
             </table>
           </div>}
           {comparison.items.map((item, index) => item.status === 'failed' ? (
-            <p role="alert" key={item.id} className="text-sm text-red-400">{SOURCE_MODEL_LABELS[item.sourceModel]} #{index + 1}: {item.error}</p>
+            <p id={`comparison-response-${index + 1}`} tabIndex={-1} role="alert" key={item.id} className="text-sm text-red-400">{SOURCE_MODEL_LABELS[item.sourceModel]} #{index + 1}: {item.error}</p>
           ) : (
-            <details key={item.id} className="border border-zinc-800 rounded-lg p-4">
+            <details id={`comparison-response-${index + 1}`} key={item.id} className="border border-zinc-800 rounded-lg p-4">
               <summary className="cursor-pointer text-sm">Inspect {SOURCE_MODEL_LABELS[item.sourceModel]} response #{index + 1}</summary>
               <div className="mt-4 space-y-4">
                 <p className="text-xs text-zinc-400">

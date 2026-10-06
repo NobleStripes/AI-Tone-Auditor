@@ -28,6 +28,7 @@ The core intent of this tool is to:
 
 - **Optional Semantic Deep Scan**: External providers can interpret subtler tone shifts and bureaucratic patterns beyond the local phrase catalog.
 - **Trigger Word Analysis**: Detects specific phrases from the tone-pattern dictionary.
+- **Result navigation**: Jump directly to single-audit sections or comparison diagnostic groups and response details.
 - **Contextual Heatmap**: Displays visible-information hints; local mode measures response length, not whether the original context was adequate.
 - **Style Suggestions**: Offers optional instruction snippets. Local suggestions are general templates, not verified remedies or changes to model training.
 - **Multi-provider runtime**: Defaults to local rules; fallback is disabled unless explicitly configured.
@@ -37,7 +38,7 @@ The core intent of this tool is to:
 ## Getting Started
 
 1. Paste an AI response (at least 10 characters) into the auditor. Auto-audit runs after typing stops once the configured threshold is reached; you can also run an audit manually.
-2. Review Response Diagnostics and the evidence behind each finding. If you edit the response or audit settings afterward, the app marks the displayed results as belonging to the earlier version.
+2. Use **Jump to** to move between result sections, then review Response Diagnostics and the evidence behind each finding. If you edit the response or audit settings afterward, the app marks the displayed results as belonging to the earlier version.
 3. Review the tone recommendations and custom instructions.
 4. Copy the suggested instructions to tune your AI's system prompt.
 
