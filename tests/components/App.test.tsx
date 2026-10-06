@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { render, screen, within, cleanup } from '@testing-library/react';
+import { render, screen, within, cleanup, act, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import App from '../../src/App';
@@ -21,9 +21,82 @@ afterEach(() => {
   cleanup();
   localStorage.clear();
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 describe('saved audit presentation', () => {
+  test('auto-audits each response and settings combination only once', async () => {
+    vi.useFakeTimers();
+    const meta = { providerId: 'local' as const, providerLabel: 'Local Heuristic', model: 'rules-v1', usedFallback: false };
+    const analyze = vi.spyOn(analyzeClient, 'analyzeTone').mockResolvedValue({
+      result: emptyAnalysisResult(),
+      meta,
+    });
+    render(<App />);
+    fireEvent.change(screen.getByRole('textbox', { name: 'AI response to audit' }), {
+      target: { value: 'A long enough response to trigger automatic auditing.' },
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(800);
+    });
+    await act(async () => { await Promise.resolve(); });
+    expect(analyze).toHaveBeenCalledTimes(1);
+    act(() => {
+      vi.advanceTimersByTime(1600);
+    });
+    await act(async () => { await Promise.resolve(); });
+    expect(analyze).toHaveBeenCalledTimes(1);
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Source model' }), {
+      target: { value: 'chatgpt' },
+    });
+    act(() => {
+      vi.advanceTimersByTime(800);
+    });
+    await act(async () => { await Promise.resolve(); });
+    expect(analyze).toHaveBeenCalledTimes(2);
+    act(() => {
+      vi.advanceTimersByTime(1600);
+    });
+    await act(async () => { await Promise.resolve(); });
+    expect(analyze).toHaveBeenCalledTimes(2);
+  });
+
+  test('explains the minimum length and disables manual audit for shorter input', async () => {
+    render(<App />);
+    const user = userEvent.setup();
+    const response = screen.getByRole('textbox', { name: 'AI response to audit' });
+    expect(screen.getByRole('button', { name: 'Run Audit' })).toBeDisabled();
+    await user.type(response, '123456789');
+    expect(screen.getByRole('button', { name: 'Run Audit' })).toBeDisabled();
+    expect(screen.getByText('Enter at least 10 characters to run an audit.')).toBeInTheDocument();
+    expect(screen.getByText(/Audits require at least 10; auto-audit starts at 20 characters/)).toBeInTheDocument();
+  });
+
+  test('marks results stale when the response changes and keeps result text aligned with its audit', async () => {
+    const meta = { providerId: 'local' as const, providerLabel: 'Local Heuristic', model: 'rules-v1', usedFallback: false };
+    vi.spyOn(analyzeClient, 'analyzeTone').mockResolvedValue({
+      result: emptyAnalysisResult(),
+      meta,
+    });
+    render(<App />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: /Auto: ON/ }));
+    const response = screen.getByRole('textbox', { name: 'AI response to audit' });
+    const originalText = 'Please calm down; this original response is ready for an audit.';
+    await user.type(response, originalText);
+    await user.click(screen.getByRole('button', { name: 'Run Audit' }));
+    expect(await screen.findByText('Results match the current response and audit settings.')).toBeInTheDocument();
+
+    await user.type(response, ' Edited.');
+    expect(screen.getByText(/Results shown below are from the audited response and settings, not the current editor/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Run new audit' })).toBeEnabled();
+    expect(screen.getByText('calm down', { exact: true })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Run new audit' }));
+    expect(await screen.findByText('Results match the current response and audit settings.')).toBeInTheDocument();
+  });
+
   test('exports the captured audit source, not edited inputs, and resets context when loading a fresh history entry', async () => {
     const meta = { providerId: 'local' as const, providerLabel: 'Local Heuristic', model: 'rules-v1', usedFallback: false };
     const provenance = createAnalysisProvenance(meta, 'chatgpt');

@@ -36,8 +36,8 @@ The core intent of this tool is to:
 
 ## Getting Started
 
-1. Paste your AI's response into the auditor.
-2. Run the audit to see Response Diagnostics.
+1. Paste an AI response (at least 10 characters) into the auditor. Auto-audit runs after typing stops once the configured threshold is reached; you can also run an audit manually.
+2. Review Response Diagnostics and the evidence behind each finding. If you edit the response or audit settings afterward, the app marks the displayed results as belonging to the earlier version.
 3. Review the tone recommendations and custom instructions.
 4. Copy the suggested instructions to tune your AI's system prompt.
 

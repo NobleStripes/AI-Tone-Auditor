@@ -42,6 +42,12 @@ import type { AnalysisProvenance } from './types/provenance';
 import { normalizeAnalysisProvenance } from './services/auditProvenance';
 import { validateAnalysisResult } from './services/validation/analysisValidator';
 
+const MIN_RESPONSE_LENGTH = 10;
+
+function createAuditKey(responseText: string, sourceModel: AnalysisSource, auditContext: string) {
+  return JSON.stringify([responseText, sourceModel, auditContext]);
+}
+
 export default function App() {
   const [auditMode, setAuditMode] = useState<'single' | 'comparison'>('single');
   const [isComparing, setIsComparing] = useState(false);
@@ -51,6 +57,11 @@ export default function App() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [resultProvenance, setResultProvenance] = useState<AnalysisProvenance | undefined>(undefined);
+  const [auditedInput, setAuditedInput] = useState<{
+    responseText: string;
+    sourceModel: AnalysisSource;
+    auditContext: string;
+  } | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>(() => {
     try {
       const stored = localStorage.getItem('audit-history');
@@ -69,24 +80,36 @@ export default function App() {
   const [telemetry, setTelemetry] = useState(getProviderTelemetrySnapshot());
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const lastAutoAuditKey = useRef<string | null>(null);
 
   const handleAnalyze = async (textToAnalyze: string = inputText) => {
-    if (!textToAnalyze.trim() || textToAnalyze.length < 10) return;
+    if (!textToAnalyze.trim() || textToAnalyze.trim().length < MIN_RESPONSE_LENGTH) return;
 
-    abortControllerRef.current = new AbortController();
+    const sourceModelForAudit = sourceModel;
+    const contextForAudit = auditContext;
+    const auditKey = createAuditKey(textToAnalyze, sourceModelForAudit, contextForAudit);
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    lastAutoAuditKey.current = auditKey;
     setAnalysisError(null);
     setIsAnalyzing(true);
     const startTime = performance.now();
     try {
       const { result: data, meta, provenance } = await analyzeTone(
         textToAnalyze,
-        abortControllerRef.current.signal,
-        sourceModel,
-        auditContext,
+        controller.signal,
+        sourceModelForAudit,
+        contextForAudit,
       );
+      if (controller.signal.aborted) return;
       setLatencyMs(Math.round(performance.now() - startTime));
       setResult(data);
-      setResultProvenance(normalizeAnalysisProvenance(provenance, meta, sourceModel));
+      setResultProvenance(normalizeAnalysisProvenance(provenance, meta, sourceModelForAudit));
+      setAuditedInput({
+        responseText: textToAnalyze,
+        sourceModel: sourceModelForAudit,
+        auditContext: contextForAudit,
+      });
       setRuntimeMeta(meta);
       setRuntimeReported(true);
       setTelemetry(getProviderTelemetrySnapshot());
@@ -95,7 +118,7 @@ export default function App() {
         id: Math.random().toString(36).substr(2, 9),
         title: textToAnalyze.slice(0, 30) + '...',
         timestamp: Date.now(),
-        sourceModel,
+        sourceModel: sourceModelForAudit,
         responseText: textToAnalyze,
         data,
         meta,
@@ -112,7 +135,10 @@ export default function App() {
       console.error(error);
       setAnalysisError(error instanceof Error ? error.message : 'Analysis failed. Please try again.');
     } finally {
-      setIsAnalyzing(false);
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null;
+        setIsAnalyzing(false);
+      }
     }
   };
 
@@ -122,7 +148,14 @@ export default function App() {
 
   // Auto Audit Logic
   useEffect(() => {
-    if (auditMode === 'single' && isAutoAudit && !isAnalyzing && inputText.trim().length >= minAuditLength) {
+    const auditKey = createAuditKey(inputText, sourceModel, auditContext);
+    if (
+      auditMode === 'single' &&
+      isAutoAudit &&
+      !isAnalyzing &&
+      inputText.trim().length >= minAuditLength &&
+      lastAutoAuditKey.current !== auditKey
+    ) {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
       
       debounceTimer.current = setTimeout(() => {
@@ -154,11 +187,18 @@ export default function App() {
           onClose={() => setIsSidebarOpen(false)}
           history={history} 
           onSelect={(id) => {
+            abortControllerRef.current?.abort();
             const item = history.find(h => h.id === id);
             if (item) {
+              lastAutoAuditKey.current = createAuditKey(item.responseText, item.sourceModel, '');
               setAuditMode('single');
               setResult(validateAnalysisResult(item.data));
               setResultProvenance(normalizeAnalysisProvenance(item.provenance, item.meta, item.sourceModel, 'restored_without_prompt'));
+              setAuditedInput({
+                responseText: item.responseText,
+                sourceModel: item.sourceModel,
+                auditContext: '',
+              });
               setInputText(item.responseText);
               setSourceModel(item.sourceModel);
               setAuditContext('');
@@ -206,10 +246,14 @@ export default function App() {
                 </h2>
                 <div className="flex flex-wrap gap-2 sm:gap-4 items-center">
                   <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-full px-3 py-1">
-                    <span className="text-[9px] font-mono uppercase tracking-widest text-zinc-600">Min Chars:</span>
+                    <label htmlFor="auto-audit-threshold" className="text-[9px] font-mono uppercase tracking-widest text-zinc-600">Auto-run after:</label>
                     <select 
+                      id="auto-audit-threshold"
                       value={minAuditLength}
-                      onChange={(e) => setMinAuditLength(Number(e.target.value))}
+                      onChange={(e) => {
+                        setAnalysisError(null);
+                        setMinAuditLength(Number(e.target.value));
+                      }}
                       className="bg-transparent text-[10px] font-mono text-zinc-400 focus:outline-none cursor-pointer"
                     >
                       <option value={10}>10</option>
@@ -220,7 +264,10 @@ export default function App() {
                     </select>
                   </div>
                   <button 
-                    onClick={() => setIsAutoAudit(!isAutoAudit)}
+                    onClick={() => {
+                      setAnalysisError(null);
+                      setIsAutoAudit(!isAutoAudit);
+                    }}
                     className={cn(
                       "flex items-center gap-2 px-3 py-1 rounded-full border transition-all text-[10px] font-mono uppercase tracking-widest",
                       isAutoAudit 
@@ -242,7 +289,10 @@ export default function App() {
                 <select
                   id="source-model"
                   value={sourceModel}
-                  onChange={(event) => setSourceModel(event.target.value as AnalysisSource)}
+                  onChange={(event) => {
+                    setAnalysisError(null);
+                    setSourceModel(event.target.value as AnalysisSource);
+                  }}
                   className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1.5 text-xs text-zinc-300 focus:outline-none focus:border-red-500/50"
                 >
                   {ANALYSIS_SOURCES.map((source) => (
@@ -258,7 +308,10 @@ export default function App() {
                 <textarea
                   id="audit-context"
                   value={auditContext}
-                  onChange={(event) => setAuditContext(event.target.value)}
+                  onChange={(event) => {
+                    setAnalysisError(null);
+                    setAuditContext(event.target.value);
+                  }}
                   maxLength={5000}
                   placeholder="Paste the exact prompt and any source or verification requirements."
                   className="w-full h-20 bg-zinc-900 border border-zinc-800 rounded-lg p-3 font-mono text-xs focus:outline-none focus:border-red-500/50 transition-colors resize-y placeholder:text-zinc-700"
@@ -266,10 +319,16 @@ export default function App() {
               </div>
               
               <div className="relative group">
+                <label htmlFor="audit-response" className="sr-only">AI response to audit</label>
                 <textarea
+                  id="audit-response"
                   value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
+                  onChange={(e) => {
+                    setAnalysisError(null);
+                    setInputText(e.target.value);
+                  }}
                   placeholder="Paste the AI response here for tone auditing..."
+                  aria-describedby="audit-response-help audit-run-status"
                   className="w-full h-40 bg-zinc-900 border border-zinc-800 rounded-lg p-4 font-mono text-sm focus:outline-none focus:border-red-500/50 transition-colors resize-none placeholder:text-zinc-700 pr-12"
                 />
                 {inputText && (
@@ -283,7 +342,8 @@ export default function App() {
                 )}
                 <button
                   onClick={isAnalyzing ? handleCancel : () => handleAnalyze()}
-                  disabled={!isAnalyzing && !inputText.trim()}
+                  disabled={!isAnalyzing && inputText.trim().length < MIN_RESPONSE_LENGTH}
+                  aria-label={isAnalyzing ? 'Cancel audit' : 'Run Audit'}
                   className={cn(
                     "absolute bottom-4 right-4 px-4 md:px-6 py-2 rounded font-mono text-[10px] md:text-xs uppercase tracking-widest flex items-center gap-2 transition-all",
                     isAnalyzing 
@@ -302,6 +362,30 @@ export default function App() {
                   )}
                 </button>
               </div>
+              <p id="audit-response-help" className="text-[11px] text-zinc-500">
+                {inputText.trim().length} characters. Audits require at least {MIN_RESPONSE_LENGTH};
+                {' '}auto-audit starts at {minAuditLength} characters.
+              </p>
+              <p id="audit-run-status" role="status" aria-live="polite" className="text-xs text-zinc-400">
+                {isAnalyzing
+                  ? 'Audit in progress...'
+                  : analysisError
+                    ? 'Audit did not complete. You can correct the input or run it again.'
+                    : inputText.trim().length < MIN_RESPONSE_LENGTH
+                      ? `Enter at least ${MIN_RESPONSE_LENGTH} characters to run an audit.`
+                      : result && auditedInput &&
+                          auditedInput.responseText === inputText &&
+                          auditedInput.sourceModel === sourceModel &&
+                          auditedInput.auditContext === auditContext
+                        ? 'Results match the current response and audit settings.'
+                        : isAutoAudit && inputText.trim().length >= minAuditLength
+                          ? lastAutoAuditKey.current === createAuditKey(inputText, sourceModel, auditContext)
+                            ? 'This response was already attempted. Run Audit to retry.'
+                            : 'Auto-audit will start after you stop typing.'
+                          : isAutoAudit
+                            ? `Auto-audit starts at ${minAuditLength} characters. Run Audit manually to audit this shorter response.`
+                            : 'Auto-audit is off. Run Audit when you are ready.'}
+              </p>
               {analysisError && (
                 <div className="flex items-start gap-3 bg-red-500/5 border border-red-500/20 rounded-lg p-3">
                   <XCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
@@ -323,6 +407,26 @@ export default function App() {
                   exit={{ opacity: 0, y: -20 }}
                   className="lg:col-span-12 grid grid-cols-1 lg:grid-cols-12 gap-8"
                 >
+                  {result && auditedInput && (
+                    auditedInput.responseText !== inputText ||
+                    auditedInput.sourceModel !== sourceModel ||
+                    auditedInput.auditContext !== auditContext
+                  ) && (
+                    <div role="status" className="lg:col-span-12 flex flex-wrap items-center justify-between gap-3 border border-amber-500/30 bg-amber-500/5 rounded-lg px-4 py-3">
+                      <p className="text-xs text-amber-300">
+                        Results shown below are from the audited response and settings, not the current editor.
+                        Review them as-is, or run a new audit to update them.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleAnalyze()}
+                        disabled={isAnalyzing || inputText.trim().length < MIN_RESPONSE_LENGTH}
+                        className="px-3 py-2 border border-amber-500/40 rounded text-xs text-amber-200 disabled:opacity-40"
+                      >
+                        Run new audit
+                      </button>
+                    </div>
+                  )}
                   <div className="lg:col-span-12 flex justify-end">
                     <ExportButton result={result} provenance={resultProvenance} />
                   </div>
@@ -438,7 +542,7 @@ export default function App() {
                           {TRIGGER_WORDS.filter(w => inputText.toLowerCase().includes(w.word.toLowerCase())).length} DETECTED
                         </span>
                       </h3>
-                      <TriggerHighlighter text={inputText} />
+                      <TriggerHighlighter text={auditedInput?.responseText ?? inputText} />
                       <div className="mt-4 p-3 bg-zinc-950 rounded border border-zinc-800">
                         <p className="text-[10px] text-zinc-600 font-mono leading-tight">
                           <Info className="w-3 h-3 inline mr-1 mb-0.5" />
