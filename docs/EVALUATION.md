@@ -46,6 +46,44 @@ Preserve [v1](../tests/fixtures/corpus/v1.ts) and the older clean-text, hedging,
 
 The [real-world dataset](../tests/fixtures/evaluation/real-world.v1.json) starts **empty**: no actual ChatGPT, Claude, Gemini or Grok transcripts were supplied, and synthetic fixtures are never relabeled as real. Collect genuine responses that seem annoying, surprising or ambiguous, with source/model information when known. Do not claim a model revision or collection date you cannot establish; use null for unknown `model` / `collectedAt`. Human labels are expectations for discussion, not objective truth.
 
+### Explicit feedback-to-case workflow
+
+In either audit view, use **Supported**, **False positive**, **Ambiguous**, or **Wrong category** on a finding. Wrong category requires a different intended category and a reason. Use **Report a missed signal** to select an exact passage in the read-only audited response (mouse or Shift + arrow keys), choose its category and explain the miss. A missed report is human feedback, not an inserted automated finding.
+
+Feedback is stored locally under stable audit/finding/occurrence references, separately from the immutable original response/result/provenance. Re-audits get new IDs even for identical text. Excluded or unverified evidence stays excluded/unverified when you disagree. Saved legacy history remains readable; its contextless display projection does not overwrite the retained original automated payload. History deletion/replacement/pruning removes associated feedback. **Clear feedback** explicitly removes reports, snapshots and export receipts, including comparison-only records. Storage failures are visible and do not claim success. Private prompts are not automatically persisted.
+
+Open **Export evaluation case**, select genuine or synthetic origin explicitly, review/edit the full response and available prompt, and confirm each category expectation across the whole response. Resolve conflicting reports rather than treating a single false-positive passage as a response-wide absent signal. You can add/remove category expectations without manufacturing automated findings. Expectation notes retain the review rationale; arbitrary metadata fields are rejected. Complete privacy review only after all redactions and labels are finalized. Download validates with the [shared browser-safe validator](../src/services/evaluationValidation.ts), also used by the CLI. Non-null baselines still require Node-side fingerprint verification; the browser cannot bypass that check.
+
+Exports contain a single case with `baseline: null`. A semantic disagreement becomes a local FP/FN observation only if the local check actually produces the corresponding assessed result; semantic-only disagreement or unavailable context is not an invented local failure. Ambiguous labels remain ambiguous and do not generate FP/FN records.
+
+### Synthetic exported cases
+
+Authored cases use the same case shape below, but the dataset envelope includes **`datasetKind: "synthetic"`**. Do not delete that field and load an authored case as real-world. Dedicated `--synthetic` intake preserves origin in observations, baseline snapshots, grouped reports and failure IDs. Existing fixture corpora and retained ledgers are unchanged. Synthetic imported dataset versions must not collide with retained fixture versions.
+
+```powershell
+npm run corpus:compare -- --synthetic .\reviewed-synthetic.json --report-json
+npm run corpus:compare -- --synthetic .\reviewed-synthetic.json --record-synthetic .\synthetic.baseline.v1.json
+npm run corpus:compare -- --synthetic .\synthetic.baseline.v1.json --record-failures .\synthetic.failures.v1.json
+npm run corpus:compare -- --synthetic .\synthetic.baseline.v1.json --failures .\synthetic.failures.v1.json --report-json
+```
+
+All output paths must be new. Repeat `--synthetic` and/or `--real-world` to load retained versions needed by a ledger. Fingerprints bind full inputs and labels/notes; edited inputs need a new version, never a rewritten baseline.
+
+### First genuine collection: awaiting supplied examples
+
+No first genuine collection has been manually reviewed yet. The checked-in dataset stays empty until actual sanitized examples are supplied. Start with a small explicitly selected collection containing a false positive, a missed signal and an ambiguous case:
+
+1. Establish genuine origin and available source/context. Keep unknown model versions/dates null.
+2. Review the selected passage and all other evidence in the full response. Confirm category applicability and quality direction.
+3. Sanitize prompt, response, IDs, model/date and every note using consistent neutral placeholders; check that redaction preserves the behavior.
+4. Confirm one whole-response label per category with rationale; leave genuinely uncertain interpretation ambiguous.
+5. Complete manual privacy review and explicitly export. Review the downloaded file; the checkbox is an attestation, not automatic anonymization.
+6. Load it with `--real-world`, record a fresh local baseline and new failure ledger, then replay. Preserve prior versions and inspect coverage gaps rather than treating them as clean negatives.
+
+Authored regression tests exercise these mechanics but are **not** substitutes for manual review of genuine material. Collection remains explicit; no automatic history harvesting, training or accuracy claims.
+
+### Dataset schema and real-world replay
+
 Before saving, remove private material from **all fields**, including the prompt, response, notes, model label and IDs: names, email addresses, account/project identifiers, secrets, private URLs and sensitive facts. Replace them with consistent neutral placeholders without changing the behavior being evaluated. Review redactions manually; `privacyReview.confirmed` is a required attestation, **not automatic anonymization**. Record how material was removed in `privacyReview.note`. No third-party services are used by the corpus CLI.
 
 Each case has this shape (placeholders are a format guide, **not collected responses**):

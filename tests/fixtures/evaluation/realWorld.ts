@@ -4,9 +4,10 @@ import { ANALYSIS_PROMPT_VERSION } from '../../../src/services/promptBuilder';
 import { localHeuristicProvider } from '../../../src/services/providers/localHeuristicProvider';
 import { evaluateLocalResponse } from '../corpus/evaluate';
 import { classifyOutcome, hashInput, signalThreshold } from './metrics';
-import type { EvaluationObservation, RealWorldDataset } from './types';
+import type { EvaluationObservation, EvaluationDataset } from './types';
 
-export async function evaluateRealWorld(dataset: RealWorldDataset): Promise<EvaluationObservation[]> {
+export async function evaluateRealWorld(dataset: EvaluationDataset): Promise<EvaluationObservation[]> {
+  const datasetKind = 'datasetKind' in dataset ? dataset.datasetKind : 'real_world';
   const observations: EvaluationObservation[] = [];
   for (const fixture of dataset.cases) {
     const result = await evaluateLocalResponse(fixture.response, fixture.originalPrompt, fixture.sourceModel);
@@ -17,13 +18,13 @@ export async function evaluateRealWorld(dataset: RealWorldDataset): Promise<Eval
       const baseline = recorded ? { status: recorded.status, score: recorded.score } : null;
       const threshold = signalThreshold(expectation.categoryId);
       observations.push({
-        datasetKind: 'real_world',
+        datasetKind,
         corpusVersion: dataset.version,
         id: fixture.id,
         categoryId: expectation.categoryId,
         sourceModel: fixture.sourceModel,
         sourceModelVersion: fixture.model,
-        kind: 'real_world',
+        kind: datasetKind === 'synthetic' ? 'synthetic_import' : 'real_world',
         inputHash: hashInput(fixture.sourceModel, fixture.model, fixture.originalPrompt, fixture.response, expectation),
         intendedSignal: expectation.intendedSignal,
         signalThreshold: threshold,
@@ -46,11 +47,12 @@ export async function evaluateRealWorld(dataset: RealWorldDataset): Promise<Eval
   return observations;
 }
 
-export function recordRealWorldBaseline(dataset: RealWorldDataset, observations: readonly EvaluationObservation[]): RealWorldDataset {
+export function recordRealWorldBaseline<T extends EvaluationDataset>(dataset: T, observations: readonly EvaluationObservation[]): T {
+  const datasetKind = 'datasetKind' in dataset ? dataset.datasetKind : 'real_world';
   return {
     ...dataset,
     cases: dataset.cases.map(fixture => {
-      const matches = observations.filter(item => item.datasetKind === 'real_world' && item.corpusVersion === dataset.version && item.id === fixture.id);
+      const matches = observations.filter(item => item.datasetKind === datasetKind && item.corpusVersion === dataset.version && item.id === fixture.id);
       const first = matches[0];
       if (!first || matches.length !== fixture.expectations.length
         || fixture.expectations.some(expectation => !matches.some(item => item.categoryId === expectation.categoryId

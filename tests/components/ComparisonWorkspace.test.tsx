@@ -6,6 +6,7 @@ import { compareToneResponses } from '../../src/services/analyzeClient';
 import { compareResponses } from '../../src/services/compareResponses';
 import { localHeuristicProvider } from '../../src/services/providers/localHeuristicProvider';
 import type { ComparisonRequest } from '../../src/types/comparison';
+import { FEEDBACK_STORAGE_KEY, parseFeedbackStore } from '../../src/services/feedbackStore';
 
 vi.mock('../../src/services/analyzeClient', () => ({ compareToneResponses: vi.fn() }));
 vi.mock('recharts', () => ({
@@ -17,8 +18,46 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  localStorage.clear();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+});
+
+test('identical comparison passages keep feedback attached to their original session/response only', async () => {
+  const request: ComparisonRequest = {
+    originalPrompt: 'Explain the result.',
+    responses: [
+      { id: 'response-1', sourceModel: 'chatgpt', text: 'Calm down. Authored comparison example.' },
+      { id: 'response-2', sourceModel: 'claude', text: 'Calm down. Authored comparison example.' },
+    ],
+  };
+  const comparison = await compareResponses(request, undefined, async text => ({
+    result: await localHeuristicProvider.analyzeTone({ text, context: { promptVersion: 'test' } }),
+    meta: { providerId: 'local', providerLabel: 'Local Heuristic', model: 'rules-v1', usedFallback: false },
+  }));
+  const original = JSON.stringify(comparison);
+  vi.mocked(compareToneResponses).mockResolvedValue(comparison);
+  render(<ComparisonWorkspace active onBusyChange={vi.fn()} onCompleted={vi.fn()} />);
+  const user = userEvent.setup();
+  await user.type(screen.getByRole('textbox', { name: 'Original prompt (shared)' }), request.originalPrompt);
+  for (const [index, response] of request.responses.entries()) {
+    await user.type(screen.getByRole('textbox', { name: `Response ${index + 1} text` }), response.text);
+  }
+  await user.click(screen.getByRole('button', { name: 'Compare responses' }));
+  await user.click(screen.getByText('Inspect Claude response #2'));
+  const second = document.getElementById('comparison-response-2');
+  await user.click(within(second).getAllByRole('button', { name: 'Ambiguous' })[0]);
+  await user.type(within(second).getByRole('textbox', { name: 'Reason / review notes' }), 'Authored ambiguous interpretation.');
+  await user.click(within(second).getByRole('button', { name: 'Save feedback locally' }));
+  const saved = parseFeedbackStore(localStorage.getItem(FEEDBACK_STORAGE_KEY));
+  expect(saved.reports[0].auditId).toBe(`comparison:${JSON.stringify([comparison.sessionId, 'response-2'])}`);
+  expect(saved.audits).toHaveLength(1);
+  expect(JSON.stringify(saved)).not.toContain(request.originalPrompt);
+  expect(JSON.stringify(comparison)).toBe(original);
+  await user.click(screen.getByText('Inspect ChatGPT response #1'));
+  expect(within(document.getElementById('comparison-response-1')).queryByText(/Saved human feedback/)).not.toBeInTheDocument();
+  await user.click(within(second).getByRole('button', { name: 'Export evaluation case' }));
+  expect(within(second).getByRole('textbox', { name: /Sanitized original prompt/ })).toHaveValue(request.originalPrompt);
 });
 
 const input: ComparisonRequest = {

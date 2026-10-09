@@ -1,27 +1,15 @@
 import { createHash } from 'node:crypto';
-import { CATEGORY_REGISTRY, type ScoreId } from '../../../src/constants';
+import type { ScoreId } from '../../../src/constants';
 import type { AnalysisSource } from '../../../src/types/provider';
 import type { EvaluationObservation, FailureRecord, IntendedSignal, ObservedDiagnostic, Outcome } from './types';
 
-export function signalThreshold(categoryId: ScoreId): number {
-  // The local refusal check reports deficient quality below 60; a positive quality signal is not merely a nonzero index.
-  return CATEGORY_REGISTRY.find(({ id }) => id === categoryId)?.kind === 'quality' ? 60 : 1;
-}
-
-export function classifyOutcome(expected: IntendedSignal, actual: ObservedDiagnostic, threshold: number): Outcome {
-  if (expected === 'ambiguous') return 'ambiguous';
-  if (actual.status === 'not_assessed' || actual.status === 'insufficient_context') return 'unassessed';
-  if (actual.status === 'not_applicable') return expected === 'present' ? 'false_negative' : 'correct_abstention';
-  const present = actual.score >= threshold;
-  return expected === 'present'
-    ? (present ? 'detected' : 'false_negative')
-    : (present ? 'false_positive' : 'avoided');
-}
+import { classifyOutcome, serializeEvaluationInput } from '../../../src/services/evaluationConventions';
+export { classifyOutcome, signalThreshold } from '../../../src/services/evaluationConventions';
 
 export function hashInput(source: AnalysisSource, model: string | null, prompt: string, response: string, expectation: {
   categoryId: ScoreId; intendedSignal: IntendedSignal; note: string;
 }): string {
-  return createHash('sha256').update(JSON.stringify([source, model, prompt, response, expectation])).digest('hex');
+  return createHash('sha256').update(serializeEvaluationInput(source, model, prompt, response, expectation)).digest('hex');
 }
 
 export function isFailure(outcome: Outcome): outcome is FailureRecord['type'] {

@@ -43,6 +43,11 @@ import { ResultSectionNavigation } from './components/ResultSectionNavigation';
 import type { AnalysisProvenance } from './types/provenance';
 import { normalizeAnalysisProvenance } from './services/auditProvenance';
 import { validateAnalysisResult } from './services/validation/analysisValidator';
+import { AuditFeedbackContext, FeedbackProvider, FeedbackStorageControls, useFeedback } from './components/FeedbackContext';
+import { MissedSignalFeedback } from './components/FindingFeedback';
+import { EvaluationCaseExport } from './components/EvaluationCaseExport';
+import { removeHistoryFeedback } from './services/feedbackStore';
+import type { AuditSnapshot } from './types/feedback';
 
 const MIN_RESPONSE_LENGTH = 10;
 
@@ -50,7 +55,9 @@ function createAuditKey(responseText: string, sourceModel: AnalysisSource, audit
   return JSON.stringify([responseText, sourceModel, auditContext]);
 }
 
-export default function App() {
+function AuditApp() {
+  const feedback = useFeedback();
+  const [auditSnapshot, setAuditSnapshot] = useState<AuditSnapshot | null>(null);
   const [auditMode, setAuditMode] = useState<'single' | 'comparison'>('single');
   const [isComparing, setIsComparing] = useState(false);
   const [inputText, setInputText] = useState('');
@@ -75,6 +82,7 @@ export default function App() {
   });
   const [latencyMs, setLatencyMs] = useState<number | undefined>(undefined);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [historyStorageError, setHistoryStorageError] = useState<string | null>(null);
   const [isAutoAudit, setIsAutoAudit] = useState(true);
   const [minAuditLength, setMinAuditLength] = useState(20);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -119,7 +127,7 @@ export default function App() {
       setTelemetry(getProviderTelemetrySnapshot());
       
       const newEntry: HistoryEntry = {
-        id: Math.random().toString(36).substr(2, 9),
+        id: crypto.randomUUID(),
         title: textToAnalyze.slice(0, 30) + '...',
         timestamp: Date.now(),
         sourceModel: sourceModelForAudit,
@@ -127,13 +135,19 @@ export default function App() {
         data,
         meta,
         ...(provenance ? { provenance } : {}),
+        originalResultJson: JSON.stringify(data),
+        originalProvenanceJson: provenance ? JSON.stringify(provenance) : null,
       };
-      setHistory(prev => {
-        if (prev.length > 0 && prev[0].responseText === newEntry.responseText && prev[0].sourceModel === newEntry.sourceModel) {
-          return [newEntry, ...prev.slice(1)];
-        }
-        return [newEntry, ...prev].slice(0, 50);
+      setAuditSnapshot({
+        auditId: `single:${newEntry.id}`, historyId: newEntry.id, response: textToAnalyze, sourceModel: sourceModelForAudit,
+        automatedResultJson: JSON.stringify(data), provenanceJson: provenance ? JSON.stringify(provenance) : null,
+        runtimeMetaJson: JSON.stringify(meta),
       });
+      const retained = history.length > 0 && history[0].responseText === newEntry.responseText && history[0].sourceModel === newEntry.sourceModel
+        ? [newEntry, ...history.slice(1)] : [newEntry, ...history].slice(0, 50);
+      const removed = history.filter(entry => !retained.some(item => item.id === entry.id)).map(entry => entry.id);
+      if (removeFeedbackFor(removed)) setHistory(retained);
+      else setAnalysisError('Audit completed, but history was not replaced because associated feedback could not be removed.');
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;
       console.error(error);
@@ -148,6 +162,12 @@ export default function App() {
 
   const handleCancel = () => {
     abortControllerRef.current?.abort();
+  };
+
+  const removeFeedbackFor = (ids: string[]) => {
+    if (!ids.length) return true;
+    if (!feedback.error && !feedback.store.audits.some(audit => audit.historyId && ids.includes(audit.historyId))) return true;
+    return feedback.update(previous => removeHistoryFeedback(previous, ids));
   };
 
   // Auto Audit Logic
@@ -175,13 +195,18 @@ export default function App() {
   useEffect(() => {
     try {
       localStorage.setItem('audit-history', JSON.stringify(history.slice(0, 50)));
+      setHistoryStorageError(null);
     } catch {
-      // ignore write errors (storage full, private browsing)
+      setHistoryStorageError('Audit history could not be saved locally. Check available browser storage; the displayed audit is still available.');
     }
   }, [history]);
 
   return (
     <ErrorBoundary>
+    <AuditFeedbackContext.Provider value={auditSnapshot ? {
+      snapshot: feedback.store.audits.find(audit => audit.auditId === auditSnapshot.auditId) ?? auditSnapshot,
+      originalPrompt: auditedInput?.auditContext ?? '',
+    } : null}>
     <div className="min-h-screen bg-zinc-950 text-zinc-200 flex flex-col selection:bg-red-500/30">
       <Header onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} latencyMs={latencyMs} />
       
@@ -198,6 +223,12 @@ export default function App() {
               setAuditMode('single');
               setResult(validateAnalysisResult(item.data, { responseText: item.responseText, restored: true }));
               setSelectedEvidence(null);
+              setAuditSnapshot({
+                auditId: `single:${item.id}`, historyId: item.id, response: item.responseText, sourceModel: item.sourceModel,
+                automatedResultJson: item.originalResultJson ?? JSON.stringify(item.data),
+                provenanceJson: item.originalProvenanceJson ?? (item.provenance ? JSON.stringify(item.provenance) : null),
+                runtimeMetaJson: item.meta ? JSON.stringify(item.meta) : null,
+              });
               setResultProvenance(normalizeAnalysisProvenance(item.provenance, item.meta, item.sourceModel, 'restored_without_prompt'));
               setAuditedInput({
                 responseText: item.responseText,
@@ -213,15 +244,26 @@ export default function App() {
               }
             }
           }}
-          onDelete={(id) => setHistory(prev => prev.filter(h => h.id !== id))}
+          onDelete={(id) => {
+            if (removeFeedbackFor([id])) {
+              setHistory(prev => prev.filter(h => h.id !== id));
+              if (auditSnapshot?.historyId === id) { setResult(null); setAuditSnapshot(null); }
+            }
+          }}
           onClearAll={() => {
             if (window.confirm('Are you sure you want to clear all audit history? This action cannot be undone.')) {
-              setHistory([]);
+              if (removeFeedbackFor(history.map(entry => entry.id))) {
+                setHistory([]);
+                setResult(null);
+                setAuditSnapshot(null);
+              }
             }
           }}
         />
 
         <main className="flex-1 overflow-y-auto p-4 md:p-8 max-w-6xl mx-auto w-full">
+          <div className="mb-4"><FeedbackStorageControls /></div>
+          {historyStorageError && <p role="alert" className="text-xs text-red-400 mb-4">{historyStorageError}</p>}
           <div role="tablist" aria-label="Audit mode" className="flex gap-3 mb-6" onKeyDown={(event) => {
             if (isAnalyzing || isComparing || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
             event.preventDefault();
@@ -448,6 +490,7 @@ export default function App() {
                   <div className="lg:col-span-12 flex justify-end">
                     <ExportButton result={result} provenance={resultProvenance} />
                   </div>
+                  <div className="lg:col-span-12"><EvaluationCaseExport key={auditSnapshot?.auditId} /></div>
                   {/* Summary Card */}
                   <div className="lg:col-span-7 space-y-6">
                     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 md:p-6 relative overflow-hidden">
@@ -471,6 +514,7 @@ export default function App() {
                       </h2>
                       <div className="space-y-3">
                         <FindingList result={result} onNavigate={evidence => setSelectedEvidence({ ...evidence })} />
+                        <MissedSignalFeedback />
                       </div>
                     </div>
 
@@ -623,6 +667,11 @@ export default function App() {
         </div>
       </footer>
     </div>
+    </AuditFeedbackContext.Provider>
     </ErrorBoundary>
   );
+}
+
+export default function App() {
+  return <FeedbackProvider><AuditApp /></FeedbackProvider>;
 }

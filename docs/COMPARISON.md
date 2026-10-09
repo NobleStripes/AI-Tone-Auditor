@@ -16,6 +16,10 @@ The table shows numeric spread only when at least two assessed values have recor
 
 Audits run sequentially to bound load. Failures stay attached to their response as explicit errors, not zero scores. Canceling stops scheduling further responses after any already-running provider call settles; the browser does not display an incomplete canceled batch. Comparison drafts and the original prompt are not stored in local audit history. **Export comparison JSON** retains response texts, result/error records, per-response audit provenance, versions, UTC timestamps, and a stable comparison-session ID, but omits the original prompt. Per-response exports use the same session ID.
 
+Each completed **Inspect** panel also supports local finding feedback, exact missed-passage reports, and **Export evaluation case** for that one response. Feedback references the captured session and response ID; identical wording in another response does not share its reports. Saving feedback retains that original response/automated snapshot separately, never the shared prompt. Comparison-only reports remain until explicitly removed with **Clear feedback**.
+
+Evaluation export is different from ordinary comparison JSON: its memory-only preview may include the captured shared prompt, which must be sanitized and explicitly privacy-reviewed before download. Review category expectations for the full selected response; there is no automatic batch collection or model ranking. Choose genuine or synthetic origin explicitly and leave unknown response model versions/collection dates unset. See [the intake/replay workflow](EVALUATION.md).
+
 The API endpoint is `POST /api/compare`:
 
 ```json

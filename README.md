@@ -29,6 +29,8 @@ The core intent of this tool is to:
 - **Optional Semantic Deep Scan**: External providers can interpret subtler tone shifts and bureaucratic patterns beyond the local phrase catalog.
 - **Trigger Word Analysis**: Retains individual occurrences with exact positions, separates code/examples from ordinary speech, and scores eligible repetitions.
 - **Exact evidence navigation**: Jump from a finding to its passage and surrounding sentence; inspect excluded matches and unverified semantic quotations without treating them as confirmed evidence. Older history remains readable.
+- **Local human feedback**: Record Supported, False positive, Ambiguous, Wrong category, or an exact selected missed-signal passage without changing automated results.
+- **Explicit evaluation export**: Review/edit a single case, confirm full-response expectations and privacy review, then download a genuine or explicitly synthetic dataset accepted by the corpus CLI. Draft prompts stay in memory; no automatic history collection.
 - **Result navigation**: Jump directly to single-audit sections or comparison diagnostic groups and response details.
 - **Contextual Heatmap**: Displays visible-information hints; local mode measures response length, not whether the original context was adequate.
 - **Style Suggestions**: Offers optional instruction snippets. Local suggestions are general templates, not verified remedies or changes to model training.

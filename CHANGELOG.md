@@ -8,6 +8,8 @@ Meaningful releases use semantic package versions and annotated `vX.Y.Z` Git tag
 
 - Exact source evidence and occurrence-level local detection, including repeated phrases and inspectable code/example exclusions.
 - Finding-to-passage navigation with surrounding sentences in single and comparison audits; explicit unverified semantic quotations and backward-compatible history.
+- Separate local finding feedback and exact missed-passage reports with stable audit references and immutable original automated snapshots.
+- Memory-only evaluation-case previews in both audit views, mandatory manual privacy review, response-level expectation confirmation, and origin-preserving synthetic CLI intake/baseline replay.
 
 - Explicit assessment states: assessed zero, not assessed, insufficient context and not applicable.
 - Qualitative evidence/match confidence separate from severity and heuristic indices.

@@ -44,6 +44,16 @@ Semantic quotations are checked against the original response. Invented, altered
 
 Use **Show passage and surrounding sentence** to focus the exact passage in either audit view. Editing an input after analysis does not change the source behind displayed evidence. Unverified or missing-source quotations have no passage action.
 
+## Human feedback is separate from automated diagnostics
+
+Findings expose **Supported**, **False positive**, **Ambiguous**, and **Wrong category**. Add a reason; Wrong category also needs the intended category. You can edit the current judgment or delete it. Repeated phrases have separate original finding references, including after display filtering or history restoration. Human support does not turn an unverified quotation into verified evidence or remove an automated code/example exclusion.
+
+**Report a missed signal** provides a read-only selection surface for the exact audited response. Select with the mouse or keyboard, choose a category and explain the missing signal. The report stores a source range and exact text, not a fabricated automated finding.
+
+Feedback retains a separate immutable snapshot locally and never changes scores, assessments, provenance or the ordinary audit export. No reports are transmitted for training or analytics. Private original prompts are not automatically persisted. Deleting/replacing/pruning history removes associated reports; **Clear feedback** also removes comparison-only snapshots and export receipts. Storage errors are explicit rather than falsely reporting Saved.
+
+Use [explicit evaluation export](EVALUATION.md) only after reviewing the entire response and completing privacy review. A passage-level false positive is not automatically a category-level absence, and a deficient-refusal finding is not a positive Refusal Quality expectation.
+
 Legacy history remains readable without evidence positions. Missing evidence metadata is labeled unrecorded, not retroactively verified, and historical communication scores are not recomputed. New stored positions are checked against the stored response; missing response text or stale positions cannot produce a confirmed passage link. Context-dependent claims still reset on restoration without the private original prompt.
 
 ## Assessment state and confidence

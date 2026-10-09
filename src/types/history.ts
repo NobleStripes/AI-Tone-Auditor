@@ -13,6 +13,8 @@ export interface HistoryEntry {
   data: AnalysisResult;
   meta: ProviderRuntimeMeta | null;
   provenance?: AnalysisProvenance;
+  originalResultJson?: string;
+  originalProvenanceJson?: string | null;
 }
 
 export function parseAuditHistory(stored: string | null): HistoryEntry[] {
@@ -36,6 +38,8 @@ export function parseAuditHistory(stored: string | null): HistoryEntry[] {
         responseText,
         data,
         meta,
+        originalResultJson: typeof raw.originalResultJson === 'string' ? raw.originalResultJson : JSON.stringify(raw.data),
+        originalProvenanceJson: typeof raw.originalProvenanceJson === 'string' ? raw.originalProvenanceJson : raw.provenance ? JSON.stringify(raw.provenance) : null,
         ...(raw.provenance ? { provenance: normalizeAnalysisProvenance(raw.provenance, meta, sourceModel, 'restored_without_prompt') } : {}),
       }];
     }).slice(0, 50);

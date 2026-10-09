@@ -11,13 +11,16 @@ describe('audit history', () => {
   };
 
   test('round-trips response, source, result and metadata without prompt context', () => {
-    expect(parseAuditHistory(JSON.stringify([entry]))).toEqual([entry]);
+    expect(parseAuditHistory(JSON.stringify([entry]))).toEqual([{
+      ...entry, originalResultJson: JSON.stringify(entry.data), originalProvenanceJson: null,
+    }]);
     expect(JSON.stringify(entry)).not.toContain('auditContext');
   });
 
   test('retains old results without pretending the title is the response', () => {
     expect(parseAuditHistory(JSON.stringify([{ id: entry.id, title: entry.title, timestamp: entry.timestamp, data: entry.data }]))[0])
-      .toEqual({ ...entry, responseText: '', sourceModel: 'unknown', meta: null });
+      .toEqual({ ...entry, responseText: '', sourceModel: 'unknown', meta: null,
+        originalResultJson: JSON.stringify(entry.data), originalProvenanceJson: null });
   });
 
   test('restores old category names using Bureaucratic Stonewalling', () => {

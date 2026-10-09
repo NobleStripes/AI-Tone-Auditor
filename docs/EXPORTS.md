@@ -25,6 +25,20 @@ Re-exporting does not change the original analysis timestamp, versions or sessio
 
 These fields support traceability, not guaranteed deterministic replay: supply the original response and private prompt separately when re-auditing. Model aliases can evolve, semantic output is stochastic, and the local checks cannot inspect hidden retrieval.
 
+## Evaluation-case exports are a separate explicit action
+
+**Export evaluation case** is available for a completed single audit or each completed comparison response. Unlike ordinary audit JSON/Markdown, it intentionally includes the **sanitized original prompt and response** for reproducible evaluation. History never becomes a dataset automatically.
+
+The preview lets you edit the case ID/dataset version, genuine versus synthetic origin, response source, nullable model/date, full prompt/response, category labels/notes and privacy-review explanation. Unknown model versions and collection dates stay `null`; auditor metadata is not substituted. Baselines are always `null` until the CLI records a fresh local run. Do not reduce the case to a flagged phrase without reviewing the surrounding context.
+
+Every expectation needs explicit full-response confirmation. Passage feedback is only a suggestion: a disputed phrase does not prove the entire response lacks that category. Wrong category proposes editable labels for both categories; conflicting suggestions start ambiguous. Refusal Quality uses positive quality, not deficiency. Unimplemented or contextless checks may replay as unassessed.
+
+Completed privacy review and a nonempty review explanation are required. Review **all fields**, including identifiers and notes. Any edit after privacy confirmation invalidates it; text/source edits also reset category confirmations. The shared evaluation validator checks the exact final payload immediately before download. Use localhost or HTTPS for browser fingerprinting.
+
+Drafts are memory-only, canceled on close/audit change, and are not automatically saved to browser storage or the repository. Local receipts contain only audit/report references, case/version/origin, export time and a content fingerprint, not the private prompt. They prevent reuse of an exported version with different content while retained; after clearing receipts or moving browsers, you must maintain version discipline yourself. Redactions produce a reviewed derivative: original evidence offsets are not applied to edited case text. Edited exports need new retained versions.
+
+Genuine exports preserve evaluation schema **1.0.0** exactly. Authored/synthetic exports add required top-level `datasetKind: "synthetic"` and use `--synthetic`, not `--real-world`. Both use the same reviewed case fields. See [evaluation intake and replay](EVALUATION.md).
+
 ---
 
 Related: [Understanding diagnostics](DIAGNOSTICS.md) | [Multi-model comparison](COMPARISON.md)

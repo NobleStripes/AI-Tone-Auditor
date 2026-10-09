@@ -3,6 +3,7 @@ import type { AnalysisResult } from '../types/analysis';
 import type { Evidence } from '../types/evidence';
 import { FindingList } from './FindingList';
 import { TriggerHighlighter } from './TriggerHighlighter';
+import { MissedSignalFeedback } from './FindingFeedback';
 
 export function ResponseEvidence({ text, result, indexBase }: { text: string; result: AnalysisResult; indexBase: number }) {
   const [selected, setSelected] = useState<Evidence | null>(null);
@@ -10,6 +11,7 @@ export function ResponseEvidence({ text, result, indexBase }: { text: string; re
     <div className="space-y-4">
       <TriggerHighlighter text={text} occurrences={result.occurrences} selectedEvidence={selected} />
       <FindingList result={result} onNavigate={evidence => setSelected({ ...evidence })} indexBase={indexBase} />
+      <MissedSignalFeedback />
     </div>
   );
 }

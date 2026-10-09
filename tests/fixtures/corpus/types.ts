@@ -2,8 +2,9 @@ import type { ScoreId } from '../../../src/constants';
 import type { AnalysisSource } from '../../../src/types/provider';
 import type { AssessmentState } from '../../../src/types/diagnostics';
 
-export const CORPUS_CASE_KINDS = ['positive', 'negative', 'ambiguous', 'false_positive_trap', 'paraphrased_false_negative'] as const;
-export type CorpusCaseKind = typeof CORPUS_CASE_KINDS[number];
+export { CORPUS_CASE_KINDS } from '../../../src/types/evaluation';
+export type { CorpusCaseKind } from '../../../src/types/evaluation';
+import type { CorpusCaseKind } from '../../../src/types/evaluation';
 
 export interface CorpusCase {
   id: string;

@@ -5,6 +5,7 @@ import { cn } from '../lib/utils';
 import type { AnalysisResult } from '../types/analysis';
 import { METHOD_LABELS } from '../types/diagnostics';
 import type { Evidence } from '../types/evidence';
+import { FindingFeedback } from './FindingFeedback';
 
 type Finding = AnalysisResult['findings'][number];
 
@@ -12,9 +13,10 @@ interface FindingCardProps {
   finding: Finding;
   index: number;
   onNavigate?: (evidence: Evidence) => void;
+  feedbackTargetId?: string;
 }
 
-export function FindingCard({ finding, index, onNavigate }: FindingCardProps) {
+export function FindingCard({ finding, index, onNavigate, feedbackTargetId }: FindingCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const excluded = finding.evidence?.eligibility === 'excluded';
   const unverified = finding.evidence?.verification === 'unverified';
@@ -80,6 +82,7 @@ export function FindingCard({ finding, index, onNavigate }: FindingCardProps) {
             {isExpanded ? 'Hide explanation' : 'Explain wording signal'}
             {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
           </button>
+          {feedbackTargetId && <FindingFeedback finding={finding} targetId={feedbackTargetId} />}
         </div>
       </div>
 

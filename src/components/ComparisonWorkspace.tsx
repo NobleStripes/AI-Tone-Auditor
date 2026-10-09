@@ -17,6 +17,9 @@ import { createComparisonExport } from '../services/exportReport';
 import { normalizeAnalysisProvenance } from '../services/auditProvenance';
 import { AnalysisModeIndicator } from './AnalysisModeIndicator';
 import { ResultSectionNavigation } from './ResultSectionNavigation';
+import { AuditFeedbackContext, FeedbackProvider, FeedbackStorageControls, useFeedback, useOptionalFeedback } from './FeedbackContext';
+import { EvaluationCaseExport } from './EvaluationCaseExport';
+import type { AuditSnapshot } from '../types/feedback';
 
 interface ComparisonWorkspaceProps {
   active: boolean;
@@ -25,6 +28,15 @@ interface ComparisonWorkspaceProps {
 }
 
 export function ComparisonWorkspace({ active, onBusyChange, onCompleted }: ComparisonWorkspaceProps) {
+  const context = useOptionalFeedback();
+  return context ? <ComparisonBody active={active} onBusyChange={onBusyChange} onCompleted={onCompleted} />
+    : <FeedbackProvider><FeedbackStorageControls /><ComparisonBody active={active} onBusyChange={onBusyChange} onCompleted={onCompleted} /></FeedbackProvider>;
+}
+
+function ComparisonBody({ active, onBusyChange, onCompleted }: ComparisonWorkspaceProps) {
+  const feedback = useFeedback();
+  const [batchId, setBatchId] = useState('');
+  const [auditedPrompt, setAuditedPrompt] = useState('');
   const [originalPrompt, setOriginalPrompt] = useState('');
   const [responses, setResponses] = useState<ComparisonResponse[]>([
     { id: 'response-1', sourceModel: 'chatgpt', text: '' },
@@ -65,6 +77,8 @@ export function ComparisonWorkspace({ active, onBusyChange, onCompleted }: Compa
       if (requestController.signal.aborted) {
         setError('Comparison canceled. No incomplete batch is shown.');
       } else {
+        setBatchId(data.sessionId ?? crypto.randomUUID());
+        setAuditedPrompt(validated.value.originalPrompt);
         setComparison(data);
         onCompleted();
       }
@@ -213,21 +227,32 @@ export function ComparisonWorkspace({ active, onBusyChange, onCompleted }: Compa
           </div>}
           {comparison.items.map((item, index) => item.status === 'failed' ? (
             <p id={`comparison-response-${index + 1}`} tabIndex={-1} role="alert" key={item.id} className="text-sm text-red-400">{SOURCE_MODEL_LABELS[item.sourceModel]} #{index + 1}: {item.error}</p>
-          ) : (
+          ) : (() => {
+            const auditId = `comparison:${JSON.stringify([batchId, item.id])}`;
+            const snapshot: AuditSnapshot = feedback.store.audits.find(audit => audit.auditId === auditId) ?? {
+              auditId, response: item.text, sourceModel: item.sourceModel,
+              automatedResultJson: JSON.stringify(item.analysis.result),
+              provenanceJson: item.analysis.provenance ? JSON.stringify(item.analysis.provenance) : null,
+              runtimeMetaJson: JSON.stringify(item.analysis.meta),
+            };
+            return (
             <details id={`comparison-response-${index + 1}`} key={item.id} className="border border-zinc-800 rounded-lg p-4">
               <summary className="cursor-pointer text-sm">Inspect {SOURCE_MODEL_LABELS[item.sourceModel]} response #{index + 1}</summary>
               <div className="mt-4 space-y-4">
+                <AuditFeedbackContext.Provider value={{ snapshot, originalPrompt: auditedPrompt }}>
                 <p className="text-xs text-zinc-400">
                   <AnalysisModeIndicator meta={item.analysis.meta} />{' - '}
                   Auditor: {item.analysis.meta.providerLabel} / {item.analysis.meta.model}{item.analysis.meta.usedFallback ? ' (fallback)' : ''}
                 </p>
                 <p className="text-xs text-zinc-400">{item.analysis.result.summary}</p>
                 <ExportButton result={item.analysis.result} provenance={normalizeAnalysisProvenance(item.analysis.provenance, item.analysis.meta, item.sourceModel)} />
+                <EvaluationCaseExport key={auditId} />
                 <ResponseDiagnostics result={item.analysis.result} />
-                <ResponseEvidence key={`${comparison.sessionId ?? comparison.completedAt}-${item.id}`} text={item.text} result={item.analysis.result} indexBase={index * 100000} />
+                <ResponseEvidence key={`${batchId}-${item.id}`} text={item.text} result={item.analysis.result} indexBase={index * 100000} />
+                </AuditFeedbackContext.Provider>
               </div>
             </details>
-          ))}
+          ); })())}
         </div>
       )}
     </section>

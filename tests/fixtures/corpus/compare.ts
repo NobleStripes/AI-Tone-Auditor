@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { FIXTURE_CORPORA } from './index';
 import { evaluateCorpus } from './evaluate';
 import { evaluateRealWorld, recordRealWorldBaseline } from '../evaluation/realWorld';
-import { parseFailureLedger, parseRealWorldDataset } from '../evaluation/validation';
+import { parseFailureLedger, parseRealWorldDataset, parseSyntheticDataset } from '../evaluation/validation';
 import { buildEvaluationReport, parseCompareOptions } from '../evaluation/report';
 
 const defaultDataset = fileURLToPath(new URL('../evaluation/real-world.v1.json', import.meta.url));
@@ -29,9 +29,11 @@ async function main() {
   --json                      Preserve the observations-array JSON format
   --report-json               Full summaries, failure records and replay results
   --real-world PATH           Privacy-reviewed JSON dataset (repeat for retained versions)
+  --synthetic PATH            Explicitly synthetic reviewed export (repeat for versions)
   --failures PATH             Previous ledger to replay (default: failures.v1.json)
   --record-failures PATH       Save current FP/FN records to a NEW JSON file
   --record-real-world PATH     Save current baselines for one real-world dataset to a NEW file
+  --record-synthetic PATH      Save baselines for one imported synthetic dataset to a NEW file
   --no-replay                  Seed a ledger before any previous ledger exists
 No external providers are called. Output files are never overwritten.`);
     return;
@@ -40,16 +42,24 @@ No external providers are called. Output files are never overwritten.`);
     .map(async path => parseRealWorldDataset(await readJson(path))));
   if (new Set(datasets.map(dataset => dataset.version)).size !== datasets.length) throw new Error('Real-world datasets must have distinct retained version IDs.');
   if (options.recordRealWorld && datasets.length !== 1) throw new Error('--record-real-world requires exactly one input dataset.');
+  const synthetic = await Promise.all(options.synthetic.map(async path => parseSyntheticDataset(await readJson(path))));
+  if (new Set(synthetic.map(dataset => dataset.version)).size !== synthetic.length
+    || synthetic.some(dataset => FIXTURE_CORPORA.some(corpus => corpus.version === dataset.version))) {
+    throw new Error('Synthetic datasets must have distinct retained version IDs, including fixture corpora.');
+  }
+  if (options.recordSynthetic && synthetic.length !== 1) throw new Error('--record-synthetic requires exactly one synthetic input dataset.');
   const ledger = options.noReplay ? null : parseFailureLedger(await readJson(options.failures ?? defaultFailures));
   const observations = [
     ...(await Promise.all(FIXTURE_CORPORA.map(evaluateCorpus))).flat(),
     ...(await Promise.all(datasets.map(evaluateRealWorld))).flat(),
+    ...(await Promise.all(synthetic.map(evaluateRealWorld))).flat(),
   ];
-  const report = buildEvaluationReport(observations, datasets, ledger);
+  const report = buildEvaluationReport(observations, [...datasets, ...synthetic], ledger);
   if (options.recordFailures) await writeJson(options.recordFailures, {
     schemaVersion: '1.0.0', recordedAt: report.evaluatedAt, failures: report.failures,
   });
   if (options.recordRealWorld) await writeJson(options.recordRealWorld, recordRealWorldBaseline(datasets[0], observations));
+  if (options.recordSynthetic) await writeJson(options.recordSynthetic, recordRealWorldBaseline(synthetic[0], observations));
   if (options.json || options.reportJson) {
     console.log(JSON.stringify(options.json ? observations : report, null, 2));
     return;

@@ -8,6 +8,7 @@ import type { HistoryEntry } from '../../src/types/history';
 import * as analyzeClient from '../../src/services/analyzeClient';
 import { createAnalysisProvenance } from '../../src/services/auditProvenance';
 import { applyLocalPromptComparison } from '../../src/services/localPromptComparison';
+import { FEEDBACK_STORAGE_KEY, parseFeedbackStore } from '../../src/services/feedbackStore';
 
 vi.mock('recharts', () => ({
   ResponsiveContainer: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -22,6 +23,48 @@ afterEach(() => {
   localStorage.clear();
   vi.restoreAllMocks();
   vi.useRealTimers();
+});
+
+test('a repeated single audit gets a new stable reference and removes the replaced history feedback', async () => {
+  const result = emptyAnalysisResult();
+  result.findings = [{ category: 'Forced De-escalation', text: 'Calm down', explanation: 'Authored test finding', severity: 'low' }];
+  const meta = { providerId: 'local' as const, providerLabel: 'Local Heuristic', model: 'rules-v1', usedFallback: false };
+  vi.spyOn(analyzeClient, 'analyzeTone').mockResolvedValue({ result, meta });
+  render(<App />);
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: /Auto: ON/ }));
+  fireEvent.change(screen.getByRole('textbox', { name: 'AI response to audit' }), { target: { value: 'Calm down. Authored single-audit regression input.' } });
+  await user.click(screen.getByRole('button', { name: 'Run Audit' }));
+  await user.click(await screen.findByRole('button', { name: 'False positive' }));
+  await user.type(screen.getByRole('textbox', { name: 'Reason / review notes' }), 'Human test judgment.');
+  await user.click(screen.getByRole('button', { name: 'Save feedback locally' }));
+  const before = parseFeedbackStore(localStorage.getItem(FEEDBACK_STORAGE_KEY));
+  expect(before.reports).toHaveLength(1);
+  expect(before.audits[0].historyId).toBe(JSON.parse(localStorage.getItem('audit-history'))[0].id);
+  await user.click(screen.getByRole('button', { name: 'Run Audit' }));
+  const afterId = JSON.parse(localStorage.getItem('audit-history'))[0].id;
+  expect(afterId).not.toBe(before.audits[0].historyId);
+  expect(parseFeedbackStore(localStorage.getItem(FEEDBACK_STORAGE_KEY)).reports).toEqual([]);
+});
+
+test('deleting the selected history audit deletes its feedback snapshot without changing the original result', async () => {
+  const data = emptyAnalysisResult();
+  data.findings = [{ category: 'Forced De-escalation', text: 'Calm down', explanation: 'Saved test finding', severity: 'low' }];
+  localStorage.setItem('audit-history', JSON.stringify([{
+    id: 'stable-legacy', title: 'Authored history', timestamp: 123, sourceModel: 'other', responseText: 'Calm down. Authored history.',
+    data, meta: null,
+  }]));
+  render(<App />);
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: 'Load audit: Authored history' }));
+  await user.click(screen.getByRole('button', { name: 'Supported' }));
+  await user.type(screen.getByRole('textbox', { name: 'Reason / review notes' }), 'Human interpretation only.');
+  await user.click(screen.getByRole('button', { name: 'Save feedback locally' }));
+  const stored = parseFeedbackStore(localStorage.getItem(FEEDBACK_STORAGE_KEY));
+  expect(stored.audits[0].automatedResultJson).toBe(JSON.stringify(data));
+  await user.click(screen.getByRole('button', { name: 'Delete audit entry: Authored history' }));
+  expect(parseFeedbackStore(localStorage.getItem(FEEDBACK_STORAGE_KEY)).audits).toEqual([]);
+  expect(screen.queryByRole('button', { name: 'Export evaluation case' })).not.toBeInTheDocument();
 });
 
 describe('saved audit presentation', () => {

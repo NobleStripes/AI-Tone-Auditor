@@ -40,7 +40,7 @@ function normalizeBaseStyle(value: unknown, fallback: string): string {
   return fallback;
 }
 
-function normalizeFindingCategory(value: unknown): string {
+export function normalizeFindingCategory(value: unknown): string {
   if (typeof value !== 'string') return 'General';
   return /^karen triggers?$/i.test(value.trim())
     ? TONE_CATEGORIES.BUREAUCRATIC_STONEWALLING.label
