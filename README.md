@@ -1,4 +1,4 @@
-# AI Tone Auditor Core
+# AI Tone Auditor
 
 AI Tone Auditor analyzes AI-generated responses for observable tone and communication patterns, including tone-policing, unsupported intent assumptions, sycophancy, over-apologizing, and repetitive filler. It works without API keys using local heuristic rules by default. Optional semantic auditors include OpenAI, Anthropic Claude, Google Gemini, and xAI Grok, with source-aware diagnostics and evidence-based suggestions for improving response style.
 
