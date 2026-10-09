@@ -1,23 +1,29 @@
 import { createEmptyScores } from '../constants';
 import { createEmptyAssessments, type CategoryAssessment, type ConfidenceLevel, type AssessmentMethod } from './diagnostics';
 import type { ScoreId } from '../constants';
+import type { Evidence, Occurrence } from './evidence';
 
 export type SeverityLevel = 'low' | 'medium' | 'high';
 export type CalibrationLevel = 'More' | 'Default' | 'Less';
 export type DensityLevel = 'low' | 'medium' | 'high';
 
+export interface Finding {
+  category: string;
+  text: string;
+  explanation: string;
+  severity: SeverityLevel;
+  confidence?: ConfidenceLevel;
+  method?: AssessmentMethod;
+  rlhfLogic?: string;
+  evidence?: Evidence;
+  occurrenceId?: string;
+}
+
 export interface AnalysisResult {
   scores: Record<string, number>;
   assessments: Record<ScoreId, CategoryAssessment>;
-  findings: {
-    category: string;
-    text: string;
-    explanation: string;
-    severity: SeverityLevel;
-    confidence?: ConfidenceLevel;
-    method?: AssessmentMethod;
-    rlhfLogic?: string;
-  }[];
+  findings: Finding[];
+  occurrences?: Occurrence[];
   summary: string;
   overallTone: string;
   recommendations: {

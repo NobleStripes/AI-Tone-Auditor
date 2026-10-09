@@ -62,8 +62,21 @@ function formatMarkdown(report: ReturnType<typeof createAuditExport>): string {
     '## Findings',
     '',
     ...result.findings.map(
-      (f) => `### ${f.category} (${f.severity} severity)\n> "${f.text}"\n\n${METHOD_LABELS[f.method ?? 'unrecorded']}; ${f.method === 'lexical_rule' ? 'match' : 'evidence'} confidence: ${f.confidence ?? 'unknown'}\n\n${f.explanation}`,
+      (f) => {
+        const confirmed = f.evidence?.verification === 'verified' && f.evidence.eligibility === 'included';
+        const status = f.evidence
+          ? `${f.evidence.verification}; ${f.evidence.eligibility}; ${f.evidence.reason ?? 'Exact source wording, not proof of intent.'}`
+          : 'Legacy/unrecorded evidence; no confirmed position.';
+        const range = f.evidence?.verification === 'verified'
+          ? ` UTF-16 range [${f.evidence.startOffset}, ${f.evidence.endOffset}).` : '';
+        return `### ${f.category} (${confirmed || !f.evidence ? `${f.severity} severity` : 'inspection only'})\n${confirmed ? '> ' : 'Reported quotation (not confirmed behavioral evidence): '}"${f.text}"\n\n${status}${range}\n\n${METHOD_LABELS[f.method ?? 'unrecorded']}; ${f.method === 'lexical_rule' ? 'match' : 'evidence'} confidence: ${f.confidence ?? 'unknown'}\n\n${f.explanation}`;
+      },
     ),
+    '',
+    '## Excluded lexical occurrences',
+    '',
+    ...(result.occurrences ?? []).filter(occurrence => occurrence.evidence.eligibility === 'excluded').map(occurrence =>
+      `- ${occurrence.category}: "${occurrence.evidence.matchedText}" at UTF-16 [${occurrence.evidence.startOffset}, ${occurrence.evidence.endOffset}); excluded: ${occurrence.evidence.reason}`),
     '',
     '## Personalization Profile',
     '',

@@ -87,7 +87,7 @@ export const anthropicProvider: AIProvider = {
     const text = readResponseContent(payload);
 
     try {
-      return validateAnalysisResult(extractJson(text), { assessmentMethod: 'semantic' });
+      return validateAnalysisResult(extractJson(text), { assessmentMethod: 'semantic', responseText: input.text });
     } catch (error) {
       console.error('Failed to parse Anthropic analysis result', error);
       throw new Error('Anthropic provider failed to return valid analysis data');

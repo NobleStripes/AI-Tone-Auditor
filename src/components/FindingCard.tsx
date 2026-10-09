@@ -4,16 +4,21 @@ import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import type { AnalysisResult } from '../types/analysis';
 import { METHOD_LABELS } from '../types/diagnostics';
+import type { Evidence } from '../types/evidence';
 
 type Finding = AnalysisResult['findings'][number];
 
 interface FindingCardProps {
   finding: Finding;
   index: number;
+  onNavigate?: (evidence: Evidence) => void;
 }
 
-export function FindingCard({ finding, index }: FindingCardProps) {
+export function FindingCard({ finding, index, onNavigate }: FindingCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const excluded = finding.evidence?.eligibility === 'excluded';
+  const unverified = finding.evidence?.verification === 'unverified';
+  const inspection = excluded || unverified;
 
   return (
     <div className="bg-zinc-900/40 border border-zinc-800/50 rounded-lg overflow-hidden transition-all hover:border-zinc-700/50">
@@ -21,7 +26,7 @@ export function FindingCard({ finding, index }: FindingCardProps) {
         <div
           className={cn(
             'mt-1 p-1.5 rounded',
-            finding.severity === 'high'
+            inspection ? 'bg-zinc-800 text-zinc-400' : finding.severity === 'high'
               ? 'bg-red-500/10 text-red-500'
               : finding.severity === 'medium'
                 ? 'bg-amber-500/10 text-amber-500'
@@ -38,21 +43,31 @@ export function FindingCard({ finding, index }: FindingCardProps) {
             <span
               className={cn(
                 'text-[10px] uppercase font-mono px-1.5 py-0.5 rounded',
-                finding.severity === 'high'
+                inspection ? 'bg-zinc-800 text-zinc-400' : finding.severity === 'high'
                   ? 'bg-red-500/20 text-red-400'
                   : finding.severity === 'medium'
                     ? 'bg-amber-500/20 text-amber-400'
                     : 'bg-blue-500/20 text-blue-400',
               )}
             >
-              {finding.severity} SEVERITY
+              {excluded ? 'EXCLUDED' : unverified ? 'UNVERIFIED' : `${finding.severity} SEVERITY`}
             </span>
             <span className="text-[10px] font-mono text-zinc-400">
-              {finding.method === 'lexical_rule' ? 'Match' : 'Evidence'} confidence: {finding.confidence ?? 'unknown'}
+              {unverified ? 'Reported' : finding.method === 'lexical_rule' ? 'Match' : 'Evidence'} confidence: {finding.confidence ?? 'unknown'}
             </span>
           </div>
           <p className="text-[10px] text-zinc-500 mb-2">{METHOD_LABELS[finding.method ?? 'unrecorded']}</p>
           <p className="text-sm text-zinc-400 mb-2 italic">"{finding.text}"</p>
+          {finding.evidence ? (
+            <p className="text-xs text-zinc-400 mb-2">
+              {finding.evidence.verification === 'verified' ? 'Exact source passage located.' : 'Quotation is not confirmed evidence.'}
+              {' '}{finding.evidence.reason}
+            </p>
+          ) : <p className="text-xs text-zinc-500 mb-2">Legacy evidence: positions and verification were not recorded.</p>}
+          {onNavigate && finding.evidence?.verification === 'verified' && (
+            <button type="button" onClick={() => finding.evidence && onNavigate(finding.evidence)}
+              className="text-xs text-emerald-400 underline mb-3">Show passage and surrounding sentence</button>
+          )}
           <p className="text-xs text-zinc-500 leading-relaxed mb-3">{finding.explanation}</p>
 
           <button

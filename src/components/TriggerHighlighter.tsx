@@ -1,87 +1,80 @@
-import { useState, useMemo } from 'react';
-import { AlertCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
-import { TRIGGER_WORDS } from '../constants';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { collectOccurrences, surroundingSentence } from '../services/evidence';
+import type { Evidence, Occurrence } from '../types/evidence';
 
 interface TriggerHighlighterProps {
   text: string;
+  occurrences?: Occurrence[];
+  selectedEvidence?: Evidence | null;
 }
 
-export function TriggerHighlighter({ text }: TriggerHighlighterProps) {
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
-
+export function TriggerHighlighter({ text, occurrences, selectedEvidence }: TriggerHighlighterProps) {
+  const [activeEvidence, setActiveEvidence] = useState<Evidence | null>(null);
+  const container = useRef<HTMLDivElement>(null);
+  const records = useMemo(() => occurrences ?? collectOccurrences(text), [occurrences, text]);
+  const active = activeEvidence ?? selectedEvidence;
   const parts = useMemo(() => {
-    if (!text) return [];
-
-    // Sort trigger words by length descending to match longest phrases first
-    const sortedTriggers = [...TRIGGER_WORDS].sort((a, b) => b.word.length - a.word.length);
-    const escaped = sortedTriggers.map((w) => w.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-    const regex = new RegExp(`(${escaped.join('|')})`, 'gi');
-
-    const result: Array<{ text: string; isTrigger: boolean; info?: (typeof TRIGGER_WORDS)[number] }> = [];
-    let lastIndex = 0;
-    let match: RegExpExecArray | null;
-
-    while ((match = regex.exec(text)) !== null) {
-      if (match.index > lastIndex) {
-        result.push({ text: text.substring(lastIndex, match.index), isTrigger: false });
+    const ranges = records.map(record => record.evidence).filter(evidence =>
+      evidence.verification === 'verified' && evidence.startOffset !== undefined && evidence.endOffset !== undefined);
+    if (selectedEvidence?.verification === 'verified') ranges.push(selectedEvidence);
+    const boundaries = new Set([0, text.length]);
+    ranges.forEach(range => {
+      if (range.startOffset !== undefined && range.endOffset !== undefined
+        && text.slice(range.startOffset, range.endOffset) === range.matchedText) {
+        boundaries.add(range.startOffset);
+        boundaries.add(range.endOffset);
       }
-      const triggerInfo = TRIGGER_WORDS.find((t) => t.word.toLowerCase() === match![0].toLowerCase());
-      result.push({ text: match[0], isTrigger: true, info: triggerInfo });
-      lastIndex = regex.lastIndex;
-    }
+    });
+    const offsets = [...boundaries].sort((a, b) => a - b);
+    return offsets.slice(0, -1).map((start, index) => {
+      const end = offsets[index + 1];
+      const matches = records.filter(record => record.evidence.verification === 'verified'
+        && (record.evidence.startOffset ?? -1) <= start && (record.evidence.endOffset ?? -1) >= end);
+      const selected = selectedEvidence?.verification === 'verified'
+        && (selectedEvidence.startOffset ?? -1) <= start && (selectedEvidence.endOffset ?? -1) >= end;
+      return { start, text: text.slice(start, end), matches, selected };
+    });
+  }, [text, records, selectedEvidence]);
 
-    if (lastIndex < text.length) {
-      result.push({ text: text.substring(lastIndex), isTrigger: false });
-    }
+  useEffect(() => {
+    setActiveEvidence(null);
+  }, [text, occurrences]);
 
-    return result;
-  }, [text]);
+  useEffect(() => {
+    if (!selectedEvidence || selectedEvidence.verification !== 'verified') return;
+    setActiveEvidence(null);
+    const target = container.current?.querySelector<HTMLElement>('[data-selected="true"]');
+    target?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+    target?.focus({ preventScroll: true });
+  }, [selectedEvidence]);
 
+  const inspected = records.filter(record => record.evidence.startOffset === active?.startOffset
+    && record.evidence.endOffset === active?.endOffset);
   return (
-    <div className="p-4 bg-zinc-900/50 border border-zinc-800 rounded-lg font-mono text-sm leading-relaxed text-zinc-400 whitespace-pre-wrap">
-      {parts.length === 0 ? (
-        'No text analyzed yet.'
-      ) : (
-        parts.map((part, i) =>
-          part.isTrigger ? (
-            <span
-              key={i}
-              className="relative inline-block"
-              onMouseEnter={() => setActiveIndex(i)}
-              onMouseLeave={() => setActiveIndex(null)}
-              onClick={() => setActiveIndex(activeIndex === i ? null : i)}
-            >
-              <span className="bg-red-500/20 text-red-400 border-b border-red-500/50 px-0.5 rounded-sm font-bold cursor-help">
-                {part.text}
-              </span>
-              <AnimatePresence>
-                {activeIndex === i && (
-                  <motion.div
-                    role="tooltip"
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 5, scale: 0.95 }}
-                    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-zinc-950 border border-zinc-800 rounded-lg shadow-xl z-50 pointer-events-none"
-                  >
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-red-500">
-                        {part.info?.category}
-                      </span>
-                      <AlertCircle className="w-3 h-3 text-red-500" aria-hidden="true" />
-                    </div>
-                    <p className="text-[11px] text-zinc-300 leading-normal font-sans normal-case">
-                      {part.info?.explanation}
-                    </p>
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-zinc-950" aria-hidden="true" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </span>
-          ) : (
-            <span key={i}>{part.text}</span>
-          ),
-        )
+    <div ref={container}>
+      <div className="p-4 bg-zinc-900/50 border border-zinc-800 rounded-lg font-mono text-sm leading-relaxed text-zinc-400 whitespace-pre-wrap break-words">
+        {!text ? 'No text analyzed yet.' : parts.map(part => part.matches.length || part.selected ? (
+          <span key={part.start} className="relative" onMouseEnter={() => setActiveEvidence(part.matches[0]?.evidence ?? null)}>
+            <button
+              type="button"
+              data-selected={part.selected ? 'true' : undefined}
+              aria-label={`Inspect passage: ${part.text}`}
+              onClick={() => setActiveEvidence(part.matches[0]?.evidence ?? selectedEvidence ?? null)}
+              className={`cursor-help rounded-sm border-b ${part.selected ? 'ring-2 ring-emerald-400 ' : ''}${part.matches.some(record => record.evidence.eligibility === 'included') ? 'bg-red-500/20 text-red-400 border-red-500/50' : 'bg-zinc-700/40 text-zinc-300 border-zinc-500'}`}
+            >{part.text}</button>
+          </span>
+        ) : <span key={part.start}>{part.text}</span>)}
+      </div>
+      {active?.verification === 'verified' && (
+        <div role="tooltip" className="mt-2 p-3 border border-zinc-700 rounded text-xs text-zinc-300">
+          {inspected.map(record => (
+            <div key={record.id}>
+              <strong>{record.category}</strong>
+              <p>{record.evidence.eligibility === 'excluded' ? `Excluded: ${record.evidence.reason}` : record.explanation}</p>
+            </div>
+          ))}
+          <p className="mt-2"><strong>Surrounding sentence:</strong> {surroundingSentence(text, active)}</p>
+        </div>
       )}
     </div>
   );

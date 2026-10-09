@@ -24,7 +24,8 @@ export function parseAuditHistory(stored: string | null): HistoryEntry[] {
       const raw = entry as Record<string, unknown>;
       if (typeof raw.id !== 'string' || typeof raw.title !== 'string' || typeof raw.timestamp !== 'number' || !Number.isFinite(raw.timestamp)) return [];
       if (!raw.data || typeof raw.data !== 'object' || Array.isArray(raw.data)) return [];
-      const data = validateAnalysisResult(raw.data);
+      const responseText = typeof raw.responseText === 'string' ? raw.responseText : '';
+      const data = validateAnalysisResult(raw.data, { responseText, restored: true });
       const meta = normalizeProviderMeta(raw.meta);
       const sourceModel = ANALYSIS_SOURCES.find((source) => source === raw.sourceModel) ?? 'unknown';
       return [{
@@ -32,7 +33,7 @@ export function parseAuditHistory(stored: string | null): HistoryEntry[] {
         title: raw.title,
         timestamp: raw.timestamp,
         sourceModel,
-        responseText: typeof raw.responseText === 'string' ? raw.responseText : '',
+        responseText,
         data,
         meta,
         ...(raw.provenance ? { provenance: normalizeAnalysisProvenance(raw.provenance, meta, sourceModel, 'restored_without_prompt') } : {}),

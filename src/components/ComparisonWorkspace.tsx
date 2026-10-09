@@ -10,7 +10,7 @@ import {
 import { SOURCE_MODEL_LABELS } from '../types/provider';
 import { DIAGNOSTIC_GROUPS, formatDiagnosticScore } from '../types/diagnostics';
 import { ResponseDiagnostics } from './ResponseDiagnostics';
-import { FindingCard } from './FindingCard';
+import { ResponseEvidence } from './ResponseEvidence';
 import { ExportButton } from './ExportButton';
 import { downloadJson } from '../lib/download';
 import { createComparisonExport } from '../services/exportReport';
@@ -221,11 +221,10 @@ export function ComparisonWorkspace({ active, onBusyChange, onCompleted }: Compa
                   <AnalysisModeIndicator meta={item.analysis.meta} />{' - '}
                   Auditor: {item.analysis.meta.providerLabel} / {item.analysis.meta.model}{item.analysis.meta.usedFallback ? ' (fallback)' : ''}
                 </p>
-                <p className="text-sm whitespace-pre-wrap break-words">{item.text}</p>
                 <p className="text-xs text-zinc-400">{item.analysis.result.summary}</p>
                 <ExportButton result={item.analysis.result} provenance={normalizeAnalysisProvenance(item.analysis.provenance, item.analysis.meta, item.sourceModel)} />
                 <ResponseDiagnostics result={item.analysis.result} />
-                {item.analysis.result.findings.map((finding, findingIndex) => <FindingCard key={findingIndex} finding={finding} index={index * 1000 + findingIndex} />)}
+                <ResponseEvidence key={`${comparison.sessionId ?? comparison.completedAt}-${item.id}`} text={item.text} result={item.analysis.result} indexBase={index * 100000} />
               </div>
             </details>
           ))}

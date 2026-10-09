@@ -93,7 +93,7 @@ test('shows neutral differences, state-aware scores, source-lens exclusions and 
   expect(within(moralizing).getByText('75/100')).toBeInTheDocument();
   expect(screen.queryByText(/winner|best model|overall ranking:/i)).not.toBeInTheDocument();
   await user.click(screen.getByText('Inspect Claude response #2'));
-  expect(screen.getByText(input.responses[1].text, { selector: 'p' })).toBeInTheDocument();
+  expect(document.getElementById('comparison-response-2')).toHaveTextContent(input.responses[1].text);
   expect(completed).toHaveBeenCalledOnce();
   await user.type(screen.getByRole('textbox', { name: 'Original prompt (shared)' }), ' Changed.');
   expect(screen.queryByRole('table')).not.toBeInTheDocument();

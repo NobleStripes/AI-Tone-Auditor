@@ -1,6 +1,7 @@
 import { emptyAnalysisResult, type AnalysisResult } from '../../types/analysis';
-import { BASE_STYLES, SCORE_KEYS, CONTEXT_REQUIRED_SCORE_KEYS, CONTEXT_REQUIRED_FINDINGS, TONE_CATEGORIES } from '../../constants';
+import { BASE_STYLES, SCORE_KEYS, CONTEXT_REQUIRED_SCORE_KEYS, CONTEXT_REQUIRED_FINDINGS, TONE_CATEGORIES, CATEGORY_REGISTRY } from '../../constants';
 import { ASSESSMENT_STATES, CONFIDENCE_LEVELS, ASSESSMENT_METHODS, type CategoryAssessment, type ConfidenceLevel, type AssessmentMethod } from '../../types/diagnostics';
+import { collectOccurrences, isEligibleEvidence, restoreEvidence, verifyEvidence } from '../evidence';
 const DENSITY_VALUES = new Set(['low', 'medium', 'high']);
 const SEVERITY_VALUES = new Set(['low', 'medium', 'high']);
 const CALIBRATION_VALUES = new Set(['More', 'Default', 'Less']);
@@ -54,7 +55,12 @@ function normalizeMethod(value: unknown): AssessmentMethod {
   return ASSESSMENT_METHODS.find((method) => method === value) ?? 'unrecorded';
 }
 
-export function validateAnalysisResult(payload: unknown, context: { auditContext?: string; assessmentMethod?: AssessmentMethod } = {}): AnalysisResult {
+export function validateAnalysisResult(payload: unknown, context: {
+  auditContext?: string;
+  assessmentMethod?: AssessmentMethod;
+  responseText?: string;
+  restored?: boolean;
+} = {}): AnalysisResult {
   const fallback = emptyAnalysisResult();
   const hasAuditContext = Boolean(context.auditContext?.trim());
   const raw = payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
@@ -100,10 +106,34 @@ export function validateAnalysisResult(payload: unknown, context: { auditContext
           confidence: normalizeConfidence(item.confidence),
           method: context.assessmentMethod ?? normalizeMethod(item.method),
           rlhfLogic: typeof item.rlhfLogic === 'string' ? item.rlhfLogic : undefined,
+          ...(item.evidence || (context.responseText !== undefined && !context.restored) ? {
+            evidence: (context.restored ? restoreEvidence : verifyEvidence)(context.responseText, typeof item.text === 'string' ? item.text : '', item.evidence),
+          } : {}),
+          ...(typeof item.occurrenceId === 'string' ? { occurrenceId: item.occurrenceId } : {}),
         }))
         .filter((item) => item.text.trim().length > 0)
         .filter((item) => hasAuditContext || !CONTEXT_REQUIRED_FINDINGS.has(item.category.trim().toLowerCase()))
     : [];
+
+  if (context.assessmentMethod === 'semantic' && !context.restored && context.responseText !== undefined) {
+    for (const category of CATEGORY_REGISTRY.filter(category => category.kind === 'risk' && !category.requiresContext)) {
+      const support = findings.filter(finding => finding.category.trim().toLowerCase() === category.label.toLowerCase()
+        || (category.id === 'dismissive' && finding.category.trim().toLowerCase() === 'dismissive language'));
+      const rejected = support.some(finding => !isEligibleEvidence(finding.evidence));
+      if (normalizedScores[category.id] > 0 && !support.some(finding => isEligibleEvidence(finding.evidence))) {
+        normalizedScores[category.id] = 0;
+        assessments[category.id] = {
+          status: 'not_assessed', confidence: 'unknown', method: 'semantic',
+          reason: 'Positive diagnostic withheld: no eligible, verified quotation supports it. Inspect rejected evidence below.',
+        };
+      } else if (rejected) {
+        assessments[category.id] = {
+          ...assessments[category.id],
+          reason: `${assessments[category.id].reason} Some reported evidence was excluded or unverified; the score magnitude is not independently validated.`,
+        };
+      }
+    }
+  }
 
   const recommendations = Array.isArray(raw.recommendations)
     ? raw.recommendations
@@ -152,7 +182,28 @@ export function validateAnalysisResult(payload: unknown, context: { auditContext
     scores: normalizedScores,
     assessments,
     findings,
-    summary: typeof raw.summary === 'string' ? raw.summary : fallback.summary,
+    ...(context.responseText !== undefined && !context.restored
+      ? { occurrences: collectOccurrences(context.responseText) }
+      : Array.isArray(raw.occurrences) ? {
+        occurrences: raw.occurrences.flatMap(value => {
+          if (!value || typeof value !== 'object') return [];
+          const item = value as Record<string, unknown>;
+          const scoreId = SCORE_KEYS.find(key => key === item.scoreId);
+          if (!scoreId || typeof item.id !== 'string' || typeof item.ruleId !== 'string'
+            || typeof item.category !== 'string' || typeof item.explanation !== 'string'
+            || typeof item.weight !== 'number' || !Number.isFinite(item.weight) || item.weight < 0
+            || !item.evidence || typeof item.evidence !== 'object') return [];
+          const evidence = item.evidence as Record<string, unknown>;
+          if (typeof evidence.matchedText !== 'string') return [];
+          return [{
+            id: item.id, ruleId: item.ruleId, scoreId, category: item.category,
+            explanation: item.explanation, weight: item.weight,
+            evidence: restoreEvidence(context.responseText, evidence.matchedText, evidence),
+          }];
+        }),
+      } : {}),
+    summary: `${context.assessmentMethod === 'semantic' && !context.restored && findings.some(finding => !isEligibleEvidence(finding.evidence))
+      ? 'Evidence warning: some provider quotations were excluded or could not be verified. The provider interpretation below is not confirmed by those quotations. ' : ''}${typeof raw.summary === 'string' ? raw.summary : fallback.summary}`,
     overallTone: typeof raw.overallTone === 'string' ? raw.overallTone : fallback.overallTone,
     recommendations,
     personalization: {

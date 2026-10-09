@@ -25,7 +25,7 @@ function expectStrictObjects(schema: Record<string, any>): void {
     expect(schema.properties.scores.required).toContain('unsolicited_moralizing');
     expect(schema.properties.scores.properties.unsolicited_moralizing).toEqual({ type: 'number' });
   }
-  if (schema.type === 'object') {
+  if (schema.type === 'object' || (Array.isArray(schema.type) && schema.type.includes('object'))) {
     expect(schema.additionalProperties).toBe(false);
     expect([...schema.required].sort()).toEqual(Object.keys(schema.properties).sort());
     Object.values(schema.properties).forEach((property) => expectStrictObjects(property as Record<string, any>));
@@ -81,8 +81,41 @@ test.each([
   expect(result.assessments.unsolicited_moralizing.status).toBe('insufficient_context');
   expect(result.scores.snark_edgy_tone).toBe(0);
   expect(result.assessments.snark_edgy_tone.status).toBe('insufficient_context');
-  expect(result.assessments.hedging).toMatchObject({ status: 'assessed', confidence: 'low', method: 'semantic' });
-  expect(result.findings).toEqual([expect.objectContaining({ category: 'Hedging', severity: 'high', confidence: 'low', method: 'semantic' })]);
+  expect(result.assessments.hedging).toMatchObject({ status: 'not_assessed', confidence: 'unknown', method: 'semantic' });
+  expect(result.scores.hedging).toBe(0);
+  expect(result.findings).toEqual([expect.objectContaining({ category: 'Hedging', severity: 'high', confidence: 'low', method: 'semantic',
+    evidence: expect.objectContaining({ verification: 'unverified' }) })]);
+});
+
+test.each([
+  { id: 'openai', load: async () => (await import('../../../src/services/providers/openaiProvider')).openaiProvider },
+  { id: 'anthropic', load: async () => (await import('../../../src/services/providers/anthropicProvider')).anthropicProvider },
+  { id: 'gemini', load: async () => (await import('../../../src/services/providers/geminiProvider')).geminiProvider },
+  { id: 'grok', load: async () => (await import('../../../src/services/providers/grokProvider')).grokProvider },
+])('$id verifies supplied repeat positions and rejects code/invented supporting quotations', async ({ id, load }) => {
+  const response = 'Calm down. Calm down. `perhaps`';
+  const analysis = emptyAnalysisResult();
+  analysis.scores.de_escalation = 75;
+  analysis.scores.hedging = 50;
+  analysis.assessments.de_escalation = { status: 'assessed', method: 'semantic', confidence: 'high', reason: 'Directives.' };
+  analysis.assessments.hedging = { status: 'assessed', method: 'semantic', confidence: 'high', reason: 'Hedges.' };
+  analysis.findings = [
+    { category: 'Forced De-escalation', text: 'Calm down', explanation: 'Directive.', severity: 'high',
+      evidence: { matchedText: 'Calm down', startOffset: 11, endOffset: 20, verification: 'verified', eligibility: 'included' } },
+    { category: 'Hedging', text: 'perhaps', explanation: 'Code.', severity: 'low' },
+    { category: 'Hedging', text: 'Invented quotation', explanation: 'Claim.', severity: 'high' },
+  ];
+  const text = JSON.stringify(analysis);
+  fetchMock.mockResolvedValue(mockResponse(id === 'anthropic'
+    ? { stop_reason: 'end_turn', content: [{ type: 'text', text }] }
+    : { status: 'completed', output: [{ type: id === 'gemini' ? 'model_output' : 'message', content: [{ type: id === 'gemini' ? 'text' : 'output_text', text }] }] }));
+  const result = await (await load()).analyzeTone({ text: response, context: { promptVersion: 'test' } });
+  expect(result.findings[0].evidence).toMatchObject({ verification: 'verified', startOffset: 11 });
+  expect(result.scores.de_escalation).toBe(75);
+  expect(result.findings[1].evidence).toMatchObject({ verification: 'verified', eligibility: 'excluded', exclusionReason: 'inline_code' });
+  expect(result.findings[2].evidence.verification).toBe('unverified');
+  expect(result.scores.hedging).toBe(0);
+  expect(result.assessments.hedging.status).toBe('not_assessed');
 });
 
 describe('OpenAI structured output adapter', () => {
@@ -112,7 +145,7 @@ describe('OpenAI structured output adapter', () => {
     expect(request.input).not.toContain('Check the current figure and cite a reliable source.');
     expect(request.text.format).toMatchObject({ type: 'json_schema', name: 'tone_analysis', strict: true });
     expectStrictObjects(request.text.format.schema);
-    expect(result).toEqual(emptyAnalysisResult());
+    expect(result).toEqual({ ...emptyAnalysisResult(), occurrences: [] });
   });
 
   test.each([
@@ -167,7 +200,7 @@ describe('Anthropic structured output adapter', () => {
     expect(request.temperature).toBeUndefined();
     expect(request.output_config.format).toMatchObject({ type: 'json_schema' });
     expectStrictObjects(request.output_config.format.schema);
-    expect(result).toEqual(emptyAnalysisResult());
+    expect(result).toEqual({ ...emptyAnalysisResult(), occurrences: [] });
   });
 
   test.each([
@@ -218,7 +251,7 @@ describe('Gemini structured output adapter', () => {
     expect(request.store).toBe(false);
     expect(request.response_format).toMatchObject({ type: 'text', mime_type: 'application/json' });
     expectStrictObjects(request.response_format.schema);
-    expect(result).toEqual(emptyAnalysisResult());
+    expect(result).toEqual({ ...emptyAnalysisResult(), occurrences: [] });
   });
 
   test.each([
@@ -261,7 +294,7 @@ describe('Grok structured output adapter', () => {
     expect(request.store).toBe(false);
     expect(request.text.format).toMatchObject({ type: 'json_schema', name: 'tone_analysis', strict: true });
     expectStrictObjects(request.text.format.schema);
-    expect(result).toEqual(emptyAnalysisResult());
+    expect(result).toEqual({ ...emptyAnalysisResult(), occurrences: [] });
   });
 
   test.each([

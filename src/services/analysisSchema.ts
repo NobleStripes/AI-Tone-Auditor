@@ -43,7 +43,7 @@ export const ANALYSIS_RESULT_JSON_SCHEMA = {
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['category', 'text', 'explanation', 'severity', 'confidence', 'method', 'rlhfLogic'],
+        required: ['category', 'text', 'explanation', 'severity', 'confidence', 'method', 'rlhfLogic', 'evidence'],
         properties: {
           category: { type: 'string' },
           text: { type: 'string' },
@@ -52,6 +52,16 @@ export const ANALYSIS_RESULT_JSON_SCHEMA = {
           confidence: { type: 'string', enum: CONFIDENCE_LEVELS },
           method: { type: 'string', enum: ASSESSMENT_METHODS },
           rlhfLogic: { type: ['string', 'null'] },
+          evidence: {
+            type: ['object', 'null'],
+            additionalProperties: false,
+            required: ['startOffset', 'endOffset', 'matchedText'],
+            properties: {
+              startOffset: { type: ['integer', 'null'] },
+              endOffset: { type: ['integer', 'null'] },
+              matchedText: { type: 'string' },
+            },
+          },
         },
       },
     },

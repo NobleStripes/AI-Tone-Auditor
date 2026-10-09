@@ -6,6 +6,9 @@ Meaningful releases use semantic package versions and annotated `vX.Y.Z` Git tag
 
 ### Added
 
+- Exact source evidence and occurrence-level local detection, including repeated phrases and inspectable code/example exclusions.
+- Finding-to-passage navigation with surrounding sentences in single and comparison audits; explicit unverified semantic quotations and backward-compatible history.
+
 - Explicit assessment states: assessed zero, not assessed, insufficient context and not applicable.
 - Qualitative evidence/match confidence separate from severity and heuristic indices.
 - Grouped Response Diagnostics, with positive Refusal Quality outside the risk chart.
@@ -29,8 +32,9 @@ Meaningful releases use semantic package versions and annotated `vX.Y.Z` Git tag
 ### Version notes and limitations
 
 - Prepared auditor/package version: **1.1.0**.
-- Semantic prompt: **2026-10-05.v14**, including cautious category wording and glossary instructions.
-- Local matching rules: **2026-10-05.v2**, unchanged by the explanation-only dictionary edits. Existing phrase tokens, categories, weights and fixture indices are retained.
+- Semantic prompt: **2026-10-09.v15**, requesting exact quotations and nullable source positions; unsupported positive communication risks are withheld locally.
+- Local matching rules: **2026-10-09.v3**, retaining phrase tokens/categories/weights while counting each eligible occurrence and excluding explicit code, blockquotes, and examples. The v3 corpus records intentional context changes without overwriting historical baselines.
+- Export schema **1.1.0** retains optional evidence positions, verification/eligibility states, and full occurrence records.
 - Historical fixtures, failure records and exports retain their original versions; unknown metadata is not backfilled.
 - Unsupported Certainty remains unassessed. No source retrieval, factual claim-support checking or hidden-tool verification was added.
 - The real-world dataset remains empty until genuine, manually sanitized responses are supplied. Demo samples are authored, not vendor transcripts.

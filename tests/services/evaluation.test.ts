@@ -75,7 +75,11 @@ test('corpus counts preserve ambiguity, coverage gaps, explicit traps and applic
   expect(summary.paraphrasesUnassessed).toBe(1);
   expect(summary.applicabilityMisses).toBe(2);
   expect(summary.baselineComparisons).toBe(75);
-  expect(summary.baselineDifferences).toBe(0);
+  expect(summary.baselineDifferences).toBe(4);
+  expect(observations.filter(item => item.changed).map(item => item.id)).toEqual([
+    'infantilizing/false_positive_trap', 'hedging/false_positive_trap',
+    'dismissive/false_positive_trap', 'over_apologizing/false_positive_trap',
+  ]);
   expect(summary.knownPositivesDetected + summary.falseNegatives
     + observations.filter(item => item.intendedSignal === 'present' && item.outcome === 'unassessed').length).toBe(summary.knownPositives);
   expect(summary.knownNegativesAvoided + summary.falsePositives + summary.correctAbstentions
@@ -222,7 +226,7 @@ test('CLI creates a reusable local snapshot and never overwrites it', async () =
     const first = run('--record-failures', output, '--report-json');
     expect(first.status, first.stderr).toBe(0);
     const report = JSON.parse(first.stdout);
-    expect(report.summary.total).toBe(150);
+    expect(report.summary.total).toBe(225);
     expect(report.replay.length).toBeGreaterThan(0);
     const saved = await readFile(output, 'utf8');
     expect(parseFailureLedger(JSON.parse(saved)).failures).toEqual(report.failures);

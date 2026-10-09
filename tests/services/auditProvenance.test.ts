@@ -26,7 +26,7 @@ test('records stable audit provenance, while repeated exports get their own UTC 
   vi.setSystemTime(new Date('2026-10-06T02:00:00Z'));
   const report = createAuditExport(emptyAnalysisResult(), provenance);
   expect(report.exportMetadata).toEqual({
-    schemaVersion: '1.0.0', auditorVersion: AUDITOR_VERSION, exporterVersion: AUDITOR_VERSION,
+    schemaVersion: '1.1.0', auditorVersion: AUDITOR_VERSION, exporterVersion: AUDITOR_VERSION,
     promptVersion: ANALYSIS_PROMPT_VERSION, localRuleVersion: LOCAL_RULE_VERSION,
     analysisProvider: meta, selectedSourceModel: 'grok',
     analyzedAt: '2026-10-05T02:00:00.000Z', exportedAt: '2026-10-06T02:00:00.000Z',

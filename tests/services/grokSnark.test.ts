@@ -26,7 +26,10 @@ test('quotes actual mockery and exposes its fixed heuristic index and independen
   const result = applyLocalPromptComparison(baseline, response, neutralPrompt, 'grok');
   expect(result.scores.snark_edgy_tone).toBe(75);
   expect(result.assessments.snark_edgy_tone).toMatchObject({ status: 'assessed', method: 'lexical_rule', confidence: 'medium' });
-  expect(result.findings).toEqual([expect.objectContaining({ category: 'Snark / Edgy Tone', text: 'Wow, genius.', severity: 'medium', confidence: 'medium' })]);
+  expect(result.findings).toEqual([
+    expect.objectContaining({ category: 'Snark / Edgy Tone', text: 'Wow, genius.', severity: 'medium', confidence: 'medium' }),
+    expect.objectContaining({ category: 'Snark / Edgy Tone', text: 'Did you even read the instructions?', evidence: expect.objectContaining({ startOffset: 13, endOffset: 48 }) }),
+  ]);
   expect(baseline).toEqual(emptyAnalysisResult());
 });
 

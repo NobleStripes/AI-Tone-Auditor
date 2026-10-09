@@ -7,7 +7,7 @@ test('does not invent euphemisms, including when safety guidelines are mentioned
     const result = await localHeuristicProvider.analyzeTone({ text, context: { promptVersion: 'test' } });
     assert.deepEqual(result.euphemisms, []);
     if (text.includes('safety guidelines')) {
-      const finding = result.findings.find((item) => item.text === 'Safety guidelines');
+      const finding = result.findings.find((item) => item.text === 'safety guidelines');
       assert.ok(finding);
       assert.match(finding.explanation, /phrase alone does not establish/);
       assert.doesNotMatch(finding.explanation, /often when no actual safety risk exists/);

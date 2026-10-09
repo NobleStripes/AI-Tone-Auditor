@@ -108,7 +108,7 @@ test('the JSON download preserves assessment states and finding confidence', asy
   const exported = JSON.parse(text);
   const { exportMetadata, ...exportedResult } = exported;
   expect(exportedResult).toEqual(result);
-  expect(exportMetadata).toMatchObject({ schemaVersion: '1.0.0', auditorVersion: null, selectedSourceModel: 'unknown', originalPromptIncluded: false });
+  expect(exportMetadata).toMatchObject({ schemaVersion: '1.1.0', auditorVersion: null, selectedSourceModel: 'unknown', originalPromptIncluded: false });
   expect(exported.assessments.needless_escalation).toMatchObject({ status: 'assessed', confidence: 'medium', method: 'lexical_rule' });
   expect(exported.assessments.unsupported_certainty.status).toBe('not_assessed');
   expect(exported.findings[0]).toMatchObject({ severity: 'medium', confidence: 'medium', method: 'lexical_rule' });

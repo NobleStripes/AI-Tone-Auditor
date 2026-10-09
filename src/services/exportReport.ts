@@ -7,7 +7,7 @@ export function createAuditExport(result: AnalysisResult, provenance?: AnalysisP
   return {
     ...result,
     exportMetadata: {
-      schemaVersion: '1.0.0',
+      schemaVersion: '1.1.0',
       ...normalizeAnalysisProvenance(provenance),
       exporterVersion: AUDITOR_VERSION,
       exportedAt: new Date().toISOString(),
@@ -20,7 +20,7 @@ export function createComparisonExport(comparison: ComparisonResult) {
   return {
     ...comparison,
     exportMetadata: {
-      schemaVersion: '1.0.0',
+      schemaVersion: '1.1.0',
       auditorVersion: comparison.auditorVersion ?? null,
       exporterVersion: AUDITOR_VERSION,
       promptVersion: comparison.rubricVersion,

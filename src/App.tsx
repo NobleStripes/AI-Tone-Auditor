@@ -21,7 +21,8 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { analyzeTone, getLastAnalysisRuntimeMeta, getProviderTelemetrySnapshot } from './services/analyzeClient';
-import { TRIGGER_WORDS } from './constants';
+import { collectOccurrences } from './services/evidence';
+import type { Evidence } from './types/evidence';
 import { cn } from './lib/utils';
 import type { AnalysisResult } from './types/analysis';
 import { parseAuditHistory, type HistoryEntry } from './types/history';
@@ -34,7 +35,7 @@ import { HeatmapChunk } from './components/HeatmapChunk';
 import { RecommendationCard } from './components/RecommendationCard';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ExportButton } from './components/ExportButton';
-import { FindingCard } from './components/FindingCard';
+import { FindingList } from './components/FindingList';
 import { PersonalizationProfile } from './components/PersonalizationProfile';
 import { ResponseDiagnostics } from './components/ResponseDiagnostics';
 import { ComparisonWorkspace } from './components/ComparisonWorkspace';
@@ -57,6 +58,7 @@ export default function App() {
   const [auditContext, setAuditContext] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [selectedEvidence, setSelectedEvidence] = useState<Evidence | null>(null);
   const [resultProvenance, setResultProvenance] = useState<AnalysisProvenance | undefined>(undefined);
   const [auditedInput, setAuditedInput] = useState<{
     responseText: string;
@@ -105,6 +107,7 @@ export default function App() {
       if (controller.signal.aborted) return;
       setLatencyMs(Math.round(performance.now() - startTime));
       setResult(data);
+      setSelectedEvidence(null);
       setResultProvenance(normalizeAnalysisProvenance(provenance, meta, sourceModelForAudit));
       setAuditedInput({
         responseText: textToAnalyze,
@@ -193,7 +196,8 @@ export default function App() {
             if (item) {
               lastAutoAuditKey.current = createAuditKey(item.responseText, item.sourceModel, '');
               setAuditMode('single');
-              setResult(validateAnalysisResult(item.data));
+              setResult(validateAnalysisResult(item.data, { responseText: item.responseText, restored: true }));
+              setSelectedEvidence(null);
               setResultProvenance(normalizeAnalysisProvenance(item.provenance, item.meta, item.sourceModel, 'restored_without_prompt'));
               setAuditedInput({
                 responseText: item.responseText,
@@ -466,9 +470,7 @@ export default function App() {
                         <AlertTriangle className="w-3 h-3" /> Pattern Detection Findings
                       </h2>
                       <div className="space-y-3">
-                        {result.findings.map((finding, i) => (
-                          <FindingCard key={i} finding={finding} index={i} />
-                        ))}
+                        <FindingList result={result} onNavigate={evidence => setSelectedEvidence({ ...evidence })} />
                       </div>
                     </div>
 
@@ -557,14 +559,15 @@ export default function App() {
                       <h3 id="audit-triggers" tabIndex={-1} className="text-xs font-mono uppercase tracking-widest text-zinc-500 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         Trigger Word Analysis
                         <span className="text-[10px] bg-red-500/10 text-red-500 px-1.5 py-0.5 rounded w-fit">
-                          {TRIGGER_WORDS.filter(w => inputText.toLowerCase().includes(w.word.toLowerCase())).length} DETECTED
+                          {(result.occurrences ?? collectOccurrences(auditedInput?.responseText ?? '')).filter(item => item.evidence.eligibility === 'included').length} INCLUDED
+                          {' / '}{(result.occurrences ?? collectOccurrences(auditedInput?.responseText ?? '')).filter(item => item.evidence.eligibility === 'excluded').length} EXCLUDED
                         </span>
                       </h3>
-                      <TriggerHighlighter text={auditedInput?.responseText ?? inputText} />
+                      <TriggerHighlighter text={auditedInput?.responseText ?? ''} occurrences={result.occurrences} selectedEvidence={selectedEvidence} />
                       <div className="mt-4 p-3 bg-zinc-950 rounded border border-zinc-800">
                         <p className="text-[10px] text-zinc-600 font-mono leading-tight">
                           <Info className="w-3 h-3 inline mr-1 mb-0.5" />
-                          Highlighted words are part of the tone-pattern dictionary. Review the surrounding context before interpreting them as bureaucratic evasion or condescension.
+                          Highlights use the audited response, not edited input. Red marks eligible dictionary matches; gray marks excluded examples/code. Local scores count eligible rule occurrences; semantic scores retain their own evidence-based rubric.
                         </p>
                       </div>
                     </div>

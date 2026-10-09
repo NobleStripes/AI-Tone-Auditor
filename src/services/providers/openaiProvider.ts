@@ -102,7 +102,7 @@ export const openaiProvider: AIProvider = {
 
     try {
       const parsed = extractJsonFromContent(content);
-      return validateAnalysisResult(parsed, { assessmentMethod: 'semantic' });
+      return validateAnalysisResult(parsed, { assessmentMethod: 'semantic', responseText: input.text });
     } catch (error) {
       console.error('Failed to parse OpenAI analysis result', error);
       throw new Error('OpenAI provider failed to return valid analysis data');

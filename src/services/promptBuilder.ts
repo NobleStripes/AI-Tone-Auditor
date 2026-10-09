@@ -1,7 +1,7 @@
 import { BASE_STYLES, TONE_CATEGORIES } from '../constants';
 import type { AnalysisSource } from '../types/provider';
 
-export const ANALYSIS_PROMPT_VERSION = '2026-10-05.v14';
+export const ANALYSIS_PROMPT_VERSION = '2026-10-09.v15';
 
 const CHATGPT_STYLE_OPTIONS = BASE_STYLES
   .map(({ style, description }) => `- ${style}: ${description}`)
@@ -28,6 +28,7 @@ ${getSourceModelGuidance(sourceModel)}
 The source-specific lens is a user-selected diagnostic focus, not evidence of model identity or a claim that every response from that provider behaves this way.
 
 Original-prompt context is deliberately unavailable to semantic providers. Set all context-dependent scores to 0 and produce no context-dependent findings. Local prompt comparison runs separately after provider analysis.
+Quote exact contiguous wording from the original response in each finding's text. Do not invent, paraphrase, change capitalization, or insert ellipses into quotations. Every positive communication risk score needs a supporting finding. Code (fenced or inline), Markdown blockquotes, and clearly introduced illustrative examples are not ordinary assistant speech. Quotation marks alone do not exempt a directive addressed to the requester. Supply evidence as null or as an object with matchedText equal to text and startOffset/endOffset (zero-based UTF-16 code units, end exclusive). Offsets may be null when unknown; repeated quotations require accurate offsets to identify their occurrence. Verification and eligibility are checked locally, not asserted by the provider.
 For every score ID provide an "assessments" entry with "status", "reason", "confidence", and "method". Use assessed only when you actually evaluated the metric: an assessed 0 means no evidence found. Use insufficient_context for context-dependent metrics, not_assessed for a check you did not perform, and not_applicable when its prerequisite does not apply. Set method to semantic for your assessments and findings. Use unknown confidence for unassessed metrics; otherwise use low, medium, or high evidence confidence based on the quoted wording, independently of severity. These are qualitative, uncalibrated evidence judgments, not probabilities. Do not infer assessment from a numeric score. Keep each assessment reason concise.
 
 Text to analyze (JSON-encoded string):
