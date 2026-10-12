@@ -78,13 +78,11 @@ export function inspectAnthropomorphism(text: string, fiction = false, aiPronoun
 
 // Generated prose is guarded independently of source-fiction context. Source quotation fields stay intact.
 export function applyAnthropomorphismGuard(result: AnalysisResult, responseText?: string, fictionContext = false,
-  recordedGuard: unknown = result.anthropomorphismGuard): AnalysisResult {
-  const prior = recordedGuard && typeof recordedGuard === 'object' ? recordedGuard as Record<string, unknown> : {};
-  const blockedFields = new Set<string>(prior.version === ANTHROPOMORPHISM_GUARD_VERSION && Array.isArray(prior.blockedFields)
-    ? prior.blockedFields.filter((path): path is string => typeof path === 'string'
-      && /^(?:summary|overallTone|(?:findings|occurrences|recommendations|euphemisms)\[\d+\]\.[a-zA-Z]+|assessments\.[a-z_]+\.reason|personalization\.(?:stonewallingRemediation|customInstructions\[\d+\])|contextAnalysis\.(?:feedback|heatmap\[\d+\]\.[a-zA-Z]+))$/.test(path)) : []);
+  _recordedGuard: unknown = result.anthropomorphismGuard): AnalysisResult {
+  const blockedFields = new Set<string>();
   const clean = (value: string | undefined, path: string) => {
-    if (value && inspectAnthropomorphism(value, false, true).some(item => item.disposition === 'flagged')) {
+    if (value === WITHHELD_ANTHROPOMORPHIC_OUTPUT
+      || (value && inspectAnthropomorphism(value, false, true).some(item => item.disposition === 'flagged'))) {
       blockedFields.add(path);
       return WITHHELD_ANTHROPOMORPHIC_OUTPUT;
     }
