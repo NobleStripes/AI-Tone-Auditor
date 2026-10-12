@@ -5,6 +5,7 @@ import { FindingList } from './FindingList';
 import { TriggerHighlighter } from './TriggerHighlighter';
 import { MissedSignalFeedback } from './FindingFeedback';
 import { AnthropomorphismNotice } from './AnthropomorphismNotice';
+import { PassageRewritePanel } from './PassageRewritePanel';
 
 export function ResponseEvidence({ text, result, indexBase }: { text: string; result: AnalysisResult; indexBase: number }) {
   const [selected, setSelected] = useState<Evidence | null>(null);
@@ -13,6 +14,7 @@ export function ResponseEvidence({ text, result, indexBase }: { text: string; re
       <AnthropomorphismNotice result={result} onNavigate={evidence => setSelected({ ...evidence })} />
       <TriggerHighlighter text={text} occurrences={result.occurrences} selectedEvidence={selected} />
       <FindingList result={result} onNavigate={evidence => setSelected({ ...evidence })} indexBase={indexBase} />
+      <PassageRewritePanel response={text} selectedEvidence={selected} />
       <MissedSignalFeedback />
     </div>
   );

@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "AI Tone Auditor — manual auditing",
+  "version": "1.0.0",
+  "minimum_chrome_version": "120",
+  "description": "User-triggered response auditing with exact source passages and local provisional findings.",
+  "permissions": ["activeTab", "scripting"],
+  "optional_host_permissions": ["http://127.0.0.1/*"],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "action": { "default_title": "Open manual AI Tone Auditor" },
+  "content_security_policy": { "extension_pages": "script-src 'self'; object-src 'self'" }
+}

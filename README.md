@@ -37,6 +37,9 @@ The core intent of this tool is to:
 - **Multi-provider runtime**: Defaults to local rules; fallback is disabled unless explicitly configured.
 - **Multi-model comparison**: Compare 2 to 5 pasted responses to one prompt with a source-blind universal rubric, eligible local source lenses, and a neutral differences table.
 - **Versioned evaluation corpus**: Retains synthetic baselines, supports privacy-reviewed real-world JSON cases, and tracks explicit false positives/negatives with replayable IDs and non-accuracy summary counts.
+- **Repository CLI and CI gates**: Audit UTF-8 files, stdin or JSON batches; configure evidence, severity, coverage and regression conditions against an explicit baseline.
+- **Selected-passage rewrites**: Review conservative local drafts with exact deletion/insertion diffs and copy a revised response without changing the original audit.
+- **Manual browser extension**: User-triggered Chrome/Edge capture, reviewed local auditing, exact passage navigation and optional local API integration. A selected complete response can be watched for provisional local findings.
 
 ## Getting Started
 
@@ -63,6 +66,8 @@ By default, audits stay within the running app/server, with no external provider
 | Guide | Details |
 | --- | --- |
 | [Setup and providers](docs/SETUP.md) | Local-only mode, optional semantic providers, errors, deployment and CI. |
+| [CLI and CI conditions](docs/CLI.md) | Files, stdin, batch input, exit codes, configurable gates and baseline comparison. |
+| [Manual browser auditing](docs/BROWSER.md) | Build/load the extension, extraction, rewrites, permissions and provisional findings. |
 | [Understanding diagnostics](docs/DIAGNOSTICS.md) | Assessment states, severity versus confidence, category limits and source lenses. |
 | [Multi-model comparison](docs/COMPARISON.md) | Shared-prompt workflow, comparability, failures, privacy and API contract. |
 | [Demo and worked comparison](docs/DEMO.md) | All three screenshots and one benign prompt with four authored response styles. |

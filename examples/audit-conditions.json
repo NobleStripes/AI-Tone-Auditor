@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "1.0.0",
+  "failOn": {
+    "minSeverity": "high",
+    "anthropomorphism": true,
+    "unverifiedFindings": true
+  }
+}
