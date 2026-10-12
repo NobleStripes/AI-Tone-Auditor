@@ -15,6 +15,8 @@ Batch input is an array of objects with unique stable `id`, `text`, and optional
 
 Exit codes are **0** for completed audits that pass configured conditions, **1** for condition violations, and **2** for invalid input, configuration errors, baseline incompatibility, output failure, or a failed audit. Batch audit failures remain explicit and other valid inputs still run. Without configured conditions, findings alone do not cause exit 1.
 
+External adapter calls share configurable process-local daily request/token-reservation budgets, finite timeouts and output caps, including retries and fallback; see [spending safeguards](SETUP.md#admission-and-spending-safeguards). Budget denial is an explicit failed audit (exit 2), never a silent local downgrade. Counters reset on UTC day changes/process restart, and separate CLI/server processes do not share accounting. Configure provider-side billing limits as well. `AI_PROVIDER_TIMEOUT_MS=0` is invalid and `AI_PROVIDER_RETRIES` must be 0-2.
+
 ## Conditions
 
 ```sh

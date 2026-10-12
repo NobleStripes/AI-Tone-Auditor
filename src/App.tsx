@@ -50,6 +50,7 @@ import { MissedSignalFeedback } from './components/FindingFeedback';
 import { EvaluationCaseExport } from './components/EvaluationCaseExport';
 import { removeHistoryFeedback } from './services/feedbackStore';
 import type { AuditSnapshot } from './types/feedback';
+import { ApiAccessPanel, ApiAccessProvider, useApiAccess } from './components/ApiAccess';
 
 const MIN_RESPONSE_LENGTH = 10;
 
@@ -58,6 +59,7 @@ function createAuditKey(responseText: string, sourceModel: AnalysisSource, audit
 }
 
 function AuditApp() {
+  const access = useApiAccess();
   const feedback = useFeedback();
   const [auditSnapshot, setAuditSnapshot] = useState<AuditSnapshot | null>(null);
   const [auditMode, setAuditMode] = useState<'single' | 'comparison'>('single');
@@ -104,6 +106,7 @@ function AuditApp() {
   };
 
   const handleAnalyze = async (textToAnalyze: string = inputText) => {
+    if (access.locked) { setAnalysisError('Unlock API access before auditing.'); return; }
     if (!textToAnalyze.trim() || textToAnalyze.trim().length < MIN_RESPONSE_LENGTH) return;
 
     const sourceModelForAudit = sourceModel;
@@ -187,6 +190,7 @@ function AuditApp() {
     const auditKey = createAuditKey(inputText, sourceModel, auditContext);
     if (
       auditMode === 'single' &&
+      !access.locked &&
       isAutoAudit &&
       !isAnalyzing &&
       inputText.trim().length >= minAuditLength &&
@@ -202,7 +206,13 @@ function AuditApp() {
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
-  }, [inputText, isAutoAudit, isAnalyzing, minAuditLength, sourceModel, auditContext, auditMode]);
+  }, [inputText, isAutoAudit, isAnalyzing, minAuditLength, sourceModel, auditContext, auditMode, access.locked]);
+
+  useEffect(() => {
+    if (access.locked) abortControllerRef.current?.abort();
+  }, [access.locked]);
+
+  useEffect(() => () => abortControllerRef.current?.abort(), []);
 
   useEffect(() => {
     try {
@@ -274,6 +284,7 @@ function AuditApp() {
         />
 
         <main className="flex-1 overflow-y-auto p-4 md:p-8 max-w-6xl mx-auto w-full">
+          <ApiAccessPanel />
           <div className="mb-4"><FeedbackStorageControls /></div>
           {historyStorageError && <p role="alert" className="text-xs text-red-400 mb-4">{historyStorageError}</p>}
           <div role="tablist" aria-label="Audit mode" className="flex gap-3 mb-6" onKeyDown={(event) => {
@@ -401,7 +412,7 @@ function AuditApp() {
                 )}
                 <button
                   onClick={isAnalyzing ? handleCancel : () => handleAnalyze()}
-                  disabled={!isAnalyzing && inputText.trim().length < MIN_RESPONSE_LENGTH}
+                  disabled={!isAnalyzing && (access.locked || inputText.trim().length < MIN_RESPONSE_LENGTH)}
                   aria-label={isAnalyzing ? 'Cancel audit' : 'Run Audit'}
                   className={cn(
                     "absolute bottom-4 right-4 px-4 md:px-6 py-2 rounded font-mono text-[10px] md:text-xs uppercase tracking-widest flex items-center gap-2 transition-all",
@@ -426,7 +437,9 @@ function AuditApp() {
                 {' '}auto-audit starts at {minAuditLength} characters.
               </p>
               <p id="audit-run-status" role="status" aria-live="polite" className="text-xs text-zinc-400">
-                {isAnalyzing
+                {access.locked
+                  ? 'API access is locked. Unlock it before auditing.'
+                  : isAnalyzing
                   ? 'Audit in progress...'
                   : analysisError
                     ? 'Audit did not complete. You can correct the input or run it again.'
@@ -690,5 +703,5 @@ function AuditApp() {
 }
 
 export default function App() {
-  return <FeedbackProvider><AuditApp /></FeedbackProvider>;
+  return <ApiAccessProvider><FeedbackProvider><AuditApp /></FeedbackProvider></ApiAccessProvider>;
 }

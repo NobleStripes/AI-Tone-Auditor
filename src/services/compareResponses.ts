@@ -6,6 +6,13 @@ import { LOCAL_RULE_VERSION } from './localRuleVersion';
 import type { ComparisonRequest, ComparisonResult } from '../types/comparison';
 import { randomUUID } from 'node:crypto';
 import { AUDITOR_VERSION, createAnalysisProvenance } from './auditProvenance';
+import { ApiPolicyError } from './apiPolicy';
+
+export class ComparisonBudgetError extends ApiPolicyError {
+  constructor(error: ApiPolicyError, readonly comparison: ComparisonResult) {
+    super(error.code, error.status, error.message, error.retryAfter);
+  }
+}
 
 export async function compareResponses(
   input: ComparisonRequest,
@@ -22,7 +29,7 @@ export async function compareResponses(
     localRuleVersion: LOCAL_RULE_VERSION,
     items: [],
   };
-  for (const response of validated.value.responses) {
+  for (const [index, response] of validated.value.responses.entries()) {
     signal?.throwIfAborted();
     try {
       // Hide source identity as well as the private prompt from the universal semantic pass.
@@ -45,8 +52,15 @@ export async function compareResponses(
     } catch (error) {
       signal?.throwIfAborted();
       if (error instanceof Error && error.name === 'AbortError') throw error;
-      console.error(`[compare] response ${response.id} failed:`, error);
-      comparison.items.push({ ...response, status: 'failed', error: error instanceof Error ? error.message : 'Response audit failed.' });
+      if (error instanceof ApiPolicyError) {
+        for (const unavailable of validated.value.responses.slice(index)) {
+          comparison.items.push({ ...unavailable, status: 'failed', error: 'External audit budget exhausted; no result available.' });
+        }
+        comparison.completedAt = new Date().toISOString();
+        throw new ComparisonBudgetError(error, comparison);
+      }
+      console.error('[compare] response audit failed', { code: 'AUDIT_FAILED', index });
+      comparison.items.push({ ...response, status: 'failed', error: 'Response audit failed. Check server configuration or try again later.' });
     }
   }
   comparison.completedAt = new Date().toISOString();

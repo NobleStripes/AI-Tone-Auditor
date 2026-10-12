@@ -3,6 +3,8 @@ import { buildToneAnalysisPrompt } from '../promptBuilder';
 import { validateProviderAnalysisResult } from '../validation/providerAnalysisValidator';
 import type { AIProvider, AnalyzeToneInput } from '../../types/provider';
 import { ProviderHttpError, requireApiKey } from './providerErrors';
+import { providerLimits } from '../apiPolicy';
+import { providerSignal, reserveProviderRequest } from './providerBudget';
 
 interface GeminiInteractionResponse {
   status?: string;
@@ -29,7 +31,7 @@ function getGeminiModel(): string {
 
 function readOutputText(payload: GeminiInteractionResponse): string {
   if (payload.status !== 'completed') {
-    throw new Error(`Gemini interaction ended with status ${payload.status || 'unknown'}`);
+    throw new Error('Gemini interaction did not complete.');
   }
 
   const text = payload.output_text || [...(payload.steps ?? []), ...(payload.output ?? [])]
@@ -54,13 +56,15 @@ export const geminiProvider: AIProvider = {
 
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', {
       method: 'POST',
-      signal: input.signal,
+      redirect: 'error',
+      signal: providerSignal(input.signal),
       headers: {
         'Content-Type': 'application/json',
         'x-goog-api-key': apiKey,
       },
-      body: JSON.stringify({
+      body: reserveProviderRequest(JSON.stringify({
         model: getGeminiModel(),
+        generation_config: { max_output_tokens: providerLimits().outputTokens },
         input: buildToneAnalysisPrompt(input.text, input.context.sourceModel),
         system_instruction: 'You are a tone analysis engine. Return only data matching the supplied JSON Schema.',
         response_format: {
@@ -69,19 +73,19 @@ export const geminiProvider: AIProvider = {
           schema: ANALYSIS_RESULT_JSON_SCHEMA,
         },
         store: false,
-      }),
+      }), input.signal),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new ProviderHttpError('Gemini', 'GEMINI_API_KEY', response.status, errorText, apiKey);
+      throw new ProviderHttpError('Gemini', 'GEMINI_API_KEY', response.status, errorText);
     }
 
     const payload = (await response.json()) as GeminiInteractionResponse;
     try {
       return validateProviderAnalysisResult(JSON.parse(readOutputText(payload)), input.text);
-    } catch (error) {
-      console.error('Failed to parse Gemini analysis result', error);
+    } catch {
+      console.error('[provider] invalid analysis data', { provider: 'gemini' });
       throw new Error('Gemini provider failed to return valid analysis data');
     }
   },

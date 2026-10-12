@@ -17,7 +17,7 @@ let server: Server | undefined;
 
 beforeEach(() => {
   vi.stubEnv('AI_PROVIDER', 'openai'); vi.stubEnv('AI_FALLBACK_PROVIDER', 'local');
-  vi.stubEnv('AI_PROVIDER_TIMEOUT_MS', '0'); vi.stubEnv('AI_PROVIDER_RETRIES', '1');
+  vi.stubEnv('AI_PROVIDER_TIMEOUT_MS', '15000'); vi.stubEnv('AI_PROVIDER_RETRIES', '1');
   for (const name of ['OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GEMINI_API_KEY', 'XAI_API_KEY']) vi.stubEnv(name, 'test-only-key');
   fetchMock.mockReset(); vi.stubGlobal('fetch', fetchMock);
   vi.spyOn(console, 'warn').mockImplementation(() => {});

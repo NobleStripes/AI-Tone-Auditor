@@ -6,6 +6,7 @@ Meaningful releases use semantic package versions and annotated `vX.Y.Z` Git tag
 
 ### Added
 
+- P0 API protections: strict JSON validation, shared request/concurrency limits, external-attempt/token-reservation budgets, finite retry/output limits, loopback defaults, protected public-mode key/origin/HTTPS enforcement, security headers, memory-only browser unlock and sanitized API errors.
 - A repository CLI for UTF-8 files, stdin and JSON batches, with explicit provider selection, machine-readable reports and separate condition/error exit codes.
 - Configurable CI gates and fingerprint-bound baseline comparison that retains unavailable states, coverage changes and risk/quality direction.
 - Local selected-passage rewrite drafts and deletion/insertion diffs in single and comparison audits; copying preserves the original response and audit.

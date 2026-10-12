@@ -60,6 +60,8 @@ Open `http://localhost:3000`. **No API key or `.env` file is required.** Both th
 
 By default, audits stay within the running app/server, with no external provider or fallback calls. A remotely hosted instance still receives your response text. See [setup and provider configuration](docs/SETUP.md) to opt into semantic auditing, configure fallback, or deploy.
 
+Servers bind to loopback by default. Both API modes enforce request validation, shared rate/concurrency limits, and configurable external-call budgets. Public deployments require explicit protected mode, an operator access key and HTTPS through a trusted proxy; see [deployment protections](docs/SETUP.md#protected-publiclan-mode).
+
 ## Documentation
 
 | Guide | Details |

@@ -61,7 +61,7 @@ For example, `AI_PROVIDER=openai` plus `OPENAI_API_KEY` enables OpenAI. Keep `AI
 
 Blank/unset fallback disables it; selecting the same provider as the primary also disables redundant fallback. Unknown provider names produce configuration errors instead of silently selecting another provider. Timeouts and transient retries still apply to the selected provider (`AI_PROVIDER_TIMEOUT_MS`, `AI_PROVIDER_RETRIES`); authentication failures are not retried. Restart the API server after changing environment configuration.
 
-Missing keys name the provider and required variable. Rejected/unauthorized keys include the provider, HTTP status and key variable; when both configured providers fail, the error retains both failures. Client errors preserve non-JSON `/api/analyze` (and comparison) bodies for debugging, capped at **2,000 characters including the truncation marker**, alongside the HTTP status. Known configured keys are redacted from external-provider error details. Error bodies appear as text, never executable HTML.
+API errors contain a safe message, stable `code`, and correlation `requestId`; they never include upstream bodies, keys, submitted text, environment values or stacks. Logs contain only allowlisted failure codes, provider IDs and request IDs. The browser also suppresses arbitrary proxy/HTML error bodies. Inspect operator configuration and provider dashboards rather than relying on raw upstream errors.
 
 ### Claude / Anthropic notice
 
@@ -73,7 +73,7 @@ Anthropic's [October 8, 2026 policy announcement](https://www.anthropic.com/news
 
 ### Deployment
 
-Deploy the frontend and Express API together, or host the API separately and route `/api` to it. A static-only deployment cannot perform audits, including local heuristic audits. Typical flow:
+Deploy the built frontend and Express API behind a **TLS-terminating reverse proxy**. A static-only deployment cannot perform audits, including local heuristic audits. Do not expose the Vite development server on the public internet. Typical flow:
 
 1. Build the app:
    ```bash
@@ -81,6 +81,52 @@ Deploy the frontend and Express API together, or host the API separately and rou
    ```
 2. Publish the generated `dist/` directory to your host.
 3. Run the API server with your platform's TypeScript runner/build setup, and route frontend `/api` requests to it. No provider keys are required for the default local mode; explicitly opt in to external providers/fallback if wanted. A publicly hosted local-mode server still receives the response text.
+
+#### Protected public/LAN mode
+
+Express, Vite development and Vite preview bind to `127.0.0.1` by default. Local key-free API requests require a loopback peer, a loopback Host, and either no Origin (CLI) or a loopback browser origin. Invalid/missing JSON objects, unknown fields, unsupported sources/types, and overlong text are rejected. Only uncompressed `application/json` is accepted; the body limits are 512 KiB for analyze and 2 MiB for compare.
+
+For **any** remotely reachable deployment, including a proxy forwarding to loopback, set `API_PUBLIC_MODE=true` explicitly. Protected mode is never inferred from request headers. Configure:
+
+```env
+API_HOST="127.0.0.1"
+API_PUBLIC_MODE="true"
+API_ACCESS_KEY="<a randomly generated operator key of at least 32 characters>"
+API_ALLOWED_ORIGINS="https://auditor.example.com"
+API_TRUSTED_PROXIES="127.0.0.1"
+```
+
+Set the key in a server-side secret store/environment; the placeholder above is not a valid deployment key. A non-loopback `API_HOST` is allowed only in protected mode. `VITE_HOST` can explicitly enable LAN development, but do not publish Vite; serving the production build through the reverse proxy is recommended. Never place secrets in `VITE_*` variables, build artifacts, URLs, logs, browser storage, or source control.
+
+The proxy must preserve the original **Host**, set `X-Forwarded-Proto: https` after terminating TLS, and replace (not blindly append/forward) untrusted forwarding headers. `API_TRUSTED_PROXIES` accepts exact IPs/subnets, not `true`, hop counts or a trust-everyone subnet. Trust only dedicated proxy addresses; firewall the API listener so clients cannot bypass the proxy. Exact HTTPS origins are comma-separated, with no path or trailing slash. The API Host must match an allowed origin's host/port. Missing Origin is allowed for authenticated non-browser clients; `null` or unlisted origins are rejected. Same-origin `/api` routing is simplest.
+
+Apply HTTPS redirects/HSTS and security headers to the **frontend/static responses** at the proxy too; Express's Helmet headers cover the API. Use a frontend Content-Security-Policy restricted to your own script/connect origins, `frame-ancestors 'none'`, and an appropriate style policy for the UI. Do not blindly copy a permissive development policy into production. Certificate provisioning, proxy configuration and firewall enforcement are operator deployment steps; this repository does not provision them.
+
+Protected mode refuses insecure requests, adds Helmet security headers/HSTS, and authenticates **before parsing input**. `/api/access` exposes only whether a key is required; `/api/access/check` verifies it. The browser checks access configuration before enabling either audit mode. Enter the operator key in **API access**; it is kept only in memory and sent in an `Authorization: Bearer ...` header. Reloading/relocking clears it. Rejected credentials lock both modes, and locking cancels active browser work. The shared key is single-operator access control, not multi-user identity or tenant isolation.
+
+#### Admission and spending safeguards
+
+All API requests share a fixed **60-second** per-client window (including discovery and failed authentication); IPv6 clients are grouped by `/56`. Default limits:
+
+| Variable | Default | Allowed range / behavior |
+| --- | --- | --- |
+| `API_RATE_LIMIT` | 20 | 1-10,000 requests/client/minute; excess returns `429` |
+| `API_MAX_CONCURRENCY` | 2 | 1-32 active audit jobs; no queue; excess returns `503` |
+| `AI_PROVIDER_TIMEOUT_MS` | 15,000 | 1-120,000 ms; zero cannot disable the timeout |
+| `AI_PROVIDER_RETRIES` | 1 | 0-2 retries per provider |
+| `AI_MAX_OUTPUT_TOKENS` | 3,000 | 1-32,000 output tokens per attempt, subject to model support |
+| `AI_DAILY_REQUEST_LIMIT` | 100 | 1-1,000,000 external attempts per UTC day |
+| `AI_DAILY_TOKEN_LIMIT` | 1,000,000 | 1-1,000,000,000 reserved token units per UTC day |
+
+Invalid settings fail startup without echoing values. A comparison holds **one** active-job slot for all its sequential items. Disconnection cancels remaining scheduling. A slot remains occupied until underlying provider work actually settles, even if it ignores cancellation; a noncooperative provider cannot free capacity to admit unbounded additional calls. Retry/fallback attempts do not overlap timed-out work.
+
+Immediately before **every** adapter network call, the process atomically reserves one attempt and `UTF-8 bytes of the full JSON request body + 4,096 envelope headroom + configured output cap` token units. The body includes the rendered prompt, system instructions, JSON schema and provider envelope. Failed/canceled calls are not refunded because providers may bill them. All external providers share the same budget, including retries, fallback, comparison and direct CLI/adapter use. Gemini uses the documented Interactions `generation_config.max_output_tokens`; OpenAI/Grok use `max_output_tokens`, and Anthropic uses `max_tokens`.
+
+Provider redirects are rejected rather than silently issuing unreserved requests or forwarding custom credential headers to another endpoint.
+
+Budget exhaustion returns `429` with `BUDGET_EXHAUSTED` and `Retry-After`; it bypasses all retries and fallback, including local fallback. No silent downgrade occurs. Mid-comparison denial stops calls, returns a non-success `429` containing completed items and explicit failed/unavailable remaining items, and the browser displays the partial results alongside the error. Ordinary item failures remain sanitized `failed` items.
+
+These are **single-process in-memory** counters, reset on restart; daily spending counters also reset at UTC midnight. They are conservative reservations, **not exact tokenizer usage, dollar estimates, persistent accounting or a guaranteed billing cap**. Restarting or running multiple instances/CLI processes multiplies available budget. Set billing/usage caps with each provider too. A blocked synchronous local heuristic is not worker-thread CPU isolation. Rate-counter cardinality is bounded to 10,000 live client groups; admission fails closed at capacity.
 
 ## Continuous Integration
 

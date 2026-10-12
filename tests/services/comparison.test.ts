@@ -39,16 +39,18 @@ test.each([
   expect(validateComparisonRequest(payload)).toMatchObject({ valid: false, error: expect.any(String) });
 });
 
-test('accepts exact bounds and strips unrecognized request fields', () => {
+test('accepts exact bounds and rejects unrecognized request fields', () => {
   const result = validateComparisonRequest({
-    originalPrompt: 'a'.repeat(5000), privateExtra: 'do not copy',
-    responses: Array.from({ length: 5 }, (_, index) => ({ id: String(index), sourceModel: 'other', text: 'a'.repeat(index ? 10 : 50000), extra: 'do not copy' })),
+    originalPrompt: 'a'.repeat(5000),
+    responses: Array.from({ length: 5 }, (_, index) => ({ id: String(index), sourceModel: 'other', text: 'a'.repeat(index ? 10 : 50000) })),
   });
   expect(result.valid).toBe(true);
   if (result.valid === true) {
     expect(result.value.responses).toHaveLength(5);
-    expect(result.value).not.toHaveProperty('privateExtra');
-    expect(result.value.responses[0]).not.toHaveProperty('extra');
+    expect(validateComparisonRequest({ ...result.value, privateExtra: 'do not copy' }).valid).toBe(false);
+    expect(validateComparisonRequest({
+      ...result.value, responses: result.value.responses.map(response => ({ ...response, extra: 'do not copy' })),
+    }).valid).toBe(false);
   }
 });
 
@@ -95,7 +97,7 @@ test('preserves partial failures in input order instead of turning them into cle
   const log = vi.spyOn(console, 'error').mockImplementation(() => {});
   try {
     const result = await compareResponses(request, undefined, audit);
-    expect(result.items[0]).toMatchObject({ id: 'one', status: 'failed', error: 'Provider unavailable' });
+    expect(result.items[0]).toMatchObject({ id: 'one', status: 'failed', error: 'Response audit failed. Check server configuration or try again later.' });
     expect(result.items[0]).not.toHaveProperty('analysis');
     expect(result.items[1]).toMatchObject({ id: 'two', status: 'completed' });
     expect(comparisonDifferences(result).every(({ spread }) => spread === null)).toBe(true);

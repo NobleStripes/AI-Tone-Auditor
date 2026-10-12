@@ -3,6 +3,8 @@ import { ANALYSIS_RESULT_JSON_SCHEMA } from '../analysisSchema';
 import { validateProviderAnalysisResult } from '../validation/providerAnalysisValidator';
 import type { AIProvider, AnalyzeToneInput } from '../../types/provider';
 import { ProviderHttpError, requireApiKey } from './providerErrors';
+import { providerLimits } from '../apiPolicy';
+import { providerSignal, reserveProviderRequest } from './providerBudget';
 
 interface OpenAIResponse {
   status?: string;
@@ -31,12 +33,11 @@ function extractJsonFromContent(content: string): unknown {
 
 function readResponseContent(payload: OpenAIResponse): string {
   if (payload.status === 'incomplete') {
-    const reason = payload.incomplete_details?.reason || 'unknown reason';
-    throw new Error(`OpenAI response was incomplete: ${reason}`);
+    throw new Error('OpenAI response was incomplete.');
   }
 
   if (payload.status !== 'completed') {
-    throw new Error(`OpenAI response ended with status ${payload.status || 'unknown'}`);
+    throw new Error('OpenAI response did not complete.');
   }
 
   const text: string[] = [];
@@ -71,14 +72,15 @@ export const openaiProvider: AIProvider = {
 
     const response = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
-      signal: input.signal,
+      redirect: 'error',
+      signal: providerSignal(input.signal),
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
+      body: reserveProviderRequest(JSON.stringify({
         model: getOpenAIModel(),
-        max_output_tokens: 3000,
+        max_output_tokens: providerLimits().outputTokens,
         store: false,
         instructions: 'You are a tone analysis engine. Return only data matching the supplied JSON Schema.',
         input: buildToneAnalysisPrompt(input.text, input.context.sourceModel),
@@ -90,12 +92,12 @@ export const openaiProvider: AIProvider = {
             schema: ANALYSIS_RESULT_JSON_SCHEMA,
           },
         },
-      }),
+      }), input.signal),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new ProviderHttpError('OpenAI', 'OPENAI_API_KEY', response.status, errorText, apiKey);
+      throw new ProviderHttpError('OpenAI', 'OPENAI_API_KEY', response.status, errorText);
     }
 
     const payload = (await response.json()) as OpenAIResponse;
@@ -104,8 +106,8 @@ export const openaiProvider: AIProvider = {
     try {
       const parsed = extractJsonFromContent(content);
       return validateProviderAnalysisResult(parsed, input.text);
-    } catch (error) {
-      console.error('Failed to parse OpenAI analysis result', error);
+    } catch {
+      console.error('[provider] invalid analysis data', { provider: 'openai' });
       throw new Error('OpenAI provider failed to return valid analysis data');
     }
   },

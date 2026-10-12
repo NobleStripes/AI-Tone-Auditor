@@ -10,6 +10,12 @@ import { createAnalysisProvenance } from '../../src/services/auditProvenance';
 import { applyLocalPromptComparison } from '../../src/services/localPromptComparison';
 import { FEEDBACK_STORAGE_KEY, parseFeedbackStore } from '../../src/services/feedbackStore';
 
+vi.mock('../../src/components/ApiAccess', () => ({
+  ApiAccessProvider: ({ children }: { children: ReactNode }) => children,
+  ApiAccessPanel: () => null,
+  useApiAccess: () => ({ locked: false }),
+}));
+
 vi.mock('recharts', () => ({
   ResponsiveContainer: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   RadarChart: ({ data }: { data: { subject: string }[] }) => <div data-testid="risk-radar">{data.map(({ subject }) => <span key={subject}>{subject}</span>)}</div>,

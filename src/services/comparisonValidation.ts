@@ -16,7 +16,10 @@ export function validateResponseText(text: unknown): string | undefined {
 export function validateComparisonRequest(payload: unknown):
   | { valid: true; value: ComparisonRequest }
   | { valid: false; error: string } {
-  const raw = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {};
+  const raw = payload && typeof payload === 'object' && !Array.isArray(payload) ? payload as Record<string, unknown> : {};
+  if (Object.keys(raw).some(key => !['originalPrompt', 'responses'].includes(key))) {
+    return { valid: false, error: 'Unexpected comparison request field.' };
+  }
   if (typeof raw.originalPrompt !== 'string' || !raw.originalPrompt.trim()) {
     return { valid: false, error: 'A nonempty originalPrompt is required for comparison.' };
   }
@@ -29,7 +32,10 @@ export function validateComparisonRequest(payload: unknown):
   const responses: ComparisonResponse[] = [];
   const ids = new Set<string>();
   for (const [index, value] of raw.responses.entries()) {
-    const item = value && typeof value === 'object' ? value as Record<string, unknown> : {};
+    const item = value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+    if (Object.keys(item).some(key => !['id', 'sourceModel', 'text'].includes(key))) {
+      return { valid: false, error: `Response ${index + 1} has an unexpected field.` };
+    }
     if (typeof item.id !== 'string' || !item.id.trim() || item.id.length > 64 || ids.has(item.id)) {
       return { valid: false, error: `Response ${index + 1} must have a unique nonempty id of at most 64 characters.` };
     }

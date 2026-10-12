@@ -213,7 +213,7 @@ describe('server analysis privacy boundary', () => {
     vi.stubEnv('OPENAI_API_KEY', 'test-key');
     vi.stubEnv('ANTHROPIC_API_KEY', 'test-key');
     vi.stubEnv('AI_PROVIDER_RETRIES', '0');
-    vi.stubEnv('AI_PROVIDER_TIMEOUT_MS', '0');
+    vi.stubEnv('AI_PROVIDER_TIMEOUT_MS', '15000');
 
     const payload = emptyAnalysisResult();
     payload.scores.unsolicited_moralizing = 99;
@@ -257,7 +257,7 @@ describe('server analysis privacy boundary', () => {
     vi.stubEnv('AI_PROVIDER', 'openai');
     vi.stubEnv('OPENAI_API_KEY', 'test-key');
     vi.stubEnv('AI_PROVIDER_RETRIES', '0');
-    vi.stubEnv('AI_PROVIDER_TIMEOUT_MS', '0');
+    vi.stubEnv('AI_PROVIDER_TIMEOUT_MS', '15000');
 
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -293,11 +293,11 @@ describe('analyzeClient', () => {
   test('throws on non-OK response with server error message', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: 'Provider unavailable' }), { status: 500 })),
+      vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: 'Provider unavailable', code: 'AUDIT_FAILED' }), { status: 500 })),
     );
 
     const { analyzeTone } = await import('../../src/services/analyzeClient');
-    await expect(analyzeTone('some text that is long enough')).rejects.toThrow('Provider unavailable');
+    await expect(analyzeTone('some text that is long enough')).rejects.toThrow('Check server configuration');
   });
 
   test('updates in-memory meta after successful call', async () => {

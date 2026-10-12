@@ -6,7 +6,9 @@ import { createApp } from '../../server/app';
 import { compareResponses } from '../../src/services/compareResponses';
 import type { ComparisonRequest } from '../../src/types/comparison';
 
-vi.mock('../../src/services/compareResponses', () => ({ compareResponses: vi.fn() }));
+vi.mock('../../src/services/compareResponses', async importOriginal => ({
+  ...await importOriginal<typeof import('../../src/services/compareResponses')>(), compareResponses: vi.fn(),
+}));
 let server: Server | undefined;
 
 afterEach(async () => {

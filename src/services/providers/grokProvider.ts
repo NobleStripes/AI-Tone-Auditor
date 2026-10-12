@@ -3,6 +3,8 @@ import { buildToneAnalysisPrompt } from '../promptBuilder';
 import { validateProviderAnalysisResult } from '../validation/providerAnalysisValidator';
 import type { AIProvider, AnalyzeToneInput } from '../../types/provider';
 import { ProviderHttpError, requireApiKey } from './providerErrors';
+import { providerLimits } from '../apiPolicy';
+import { providerSignal, reserveProviderRequest } from './providerBudget';
 
 interface GrokResponse {
   status?: string;
@@ -23,10 +25,10 @@ function getGrokModel(): string {
 
 function readOutputText(payload: GrokResponse): string {
   if (payload.status === 'incomplete') {
-    throw new Error(`Grok response was incomplete: ${payload.incomplete_details?.reason || 'unknown reason'}`);
+    throw new Error('Grok response was incomplete.');
   }
   if (payload.status !== 'completed') {
-    throw new Error(`Grok response ended with status ${payload.status || 'unknown'}`);
+    throw new Error('Grok response did not complete.');
   }
 
   const text: string[] = [];
@@ -61,14 +63,15 @@ export const grokProvider: AIProvider = {
 
     const response = await fetch('https://api.x.ai/v1/responses', {
       method: 'POST',
-      signal: input.signal,
+      redirect: 'error',
+      signal: providerSignal(input.signal),
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
+      body: reserveProviderRequest(JSON.stringify({
         model: getGrokModel(),
-        max_output_tokens: 3000,
+        max_output_tokens: providerLimits().outputTokens,
         store: false,
         instructions: 'You are a tone analysis engine. Return only data matching the supplied JSON Schema.',
         input: buildToneAnalysisPrompt(input.text, input.context.sourceModel),
@@ -80,19 +83,19 @@ export const grokProvider: AIProvider = {
             schema: ANALYSIS_RESULT_JSON_SCHEMA,
           },
         },
-      }),
+      }), input.signal),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new ProviderHttpError('Grok', 'XAI_API_KEY', response.status, errorText, apiKey);
+      throw new ProviderHttpError('Grok', 'XAI_API_KEY', response.status, errorText);
     }
 
     const payload = (await response.json()) as GrokResponse;
     try {
       return validateProviderAnalysisResult(JSON.parse(readOutputText(payload)), input.text);
-    } catch (error) {
-      console.error('Failed to parse Grok analysis result', error);
+    } catch {
+      console.error('[provider] invalid analysis data', { provider: 'grok' });
       throw new Error('Grok provider failed to return valid analysis data');
     }
   },

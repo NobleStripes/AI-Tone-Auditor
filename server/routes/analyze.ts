@@ -3,24 +3,38 @@ import { ANALYSIS_SOURCES, type AnalysisSource } from '../../src/types/provider'
 import { analyzeTone, getProviderTelemetrySnapshot } from '../../src/services/analyzeTone';
 import { validateResponseText } from '../../src/services/comparisonValidation';
 import { MAX_ORIGINAL_PROMPT_LENGTH } from '../../src/types/comparison';
+import { reportApiFailure, runAuditJob, sendApiError } from '../security';
 
 const MAX_AUDIT_CONTEXT_LENGTH = MAX_ORIGINAL_PROMPT_LENGTH;
 
 export async function analyzeRoute(req: Request, res: Response): Promise<void> {
+  return runAuditJob(res, () => handleAnalyze(req, res));
+}
+
+async function handleAnalyze(req: Request, res: Response): Promise<void> {
+  if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)
+      || Object.keys(req.body).some(key => !['text', 'sourceModel', 'auditContext'].includes(key))) {
+    sendApiError(res, 400, 'INVALID_REQUEST', 'Expected a JSON object with text and optional sourceModel and auditContext.');
+    return;
+  }
   const { text, sourceModel, auditContext } = req.body as { text?: unknown; sourceModel?: unknown; auditContext?: unknown };
 
   const textError = validateResponseText(text);
   if (textError || typeof text !== 'string') {
-    res.status(400).json({ error: textError });
+    sendApiError(res, 400, 'INVALID_REQUEST', textError || 'Invalid text.');
     return;
   }
 
   if (auditContext !== undefined && typeof auditContext !== 'string') {
-    res.status(400).json({ error: 'auditContext must be a string when provided' });
+    sendApiError(res, 400, 'INVALID_REQUEST', 'auditContext must be a string when provided');
     return;
   }
   if (typeof auditContext === 'string' && auditContext.length > MAX_AUDIT_CONTEXT_LENGTH) {
-    res.status(400).json({ error: `auditContext exceeds maximum length of ${MAX_AUDIT_CONTEXT_LENGTH} characters` });
+    sendApiError(res, 400, 'INVALID_REQUEST', `auditContext exceeds maximum length of ${MAX_AUDIT_CONTEXT_LENGTH} characters`);
+    return;
+  }
+  if (sourceModel !== undefined && (typeof sourceModel !== 'string' || !(ANALYSIS_SOURCES as readonly string[]).includes(sourceModel))) {
+    sendApiError(res, 400, 'INVALID_REQUEST', 'Invalid sourceModel.');
     return;
   }
 
@@ -40,9 +54,7 @@ export async function analyzeRoute(req: Request, res: Response): Promise<void> {
     res.json({ result, meta, provenance, telemetry });
   } catch (error) {
     if (controller.signal.aborted) return;
-    const message = error instanceof Error ? error.message : 'Analysis failed';
-    console.error('[analyze] provider error:', error);
-    res.status(500).json({ error: message });
+    reportApiFailure(res, error);
   } finally {
     res.off('close', onClose);
   }

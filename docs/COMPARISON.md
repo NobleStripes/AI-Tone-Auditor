@@ -34,6 +34,8 @@ The API endpoint is `POST /api/compare`:
 
 IDs must be unique and at most 64 characters. The shared prompt is required and limited to 5,000 characters; each response must contain at least 10 non-padding characters and at most 50,000 total characters. Invalid batches return `400`. A valid batch returns `comparison` with version metadata and input-ordered `completed`/`failed` items, plus provider telemetry. A completed item includes its source, response text, analysis result, and auditing-provider metadata.
 
+Requests must be uncompressed JSON objects with only the documented fields. Both audit modes share [access, rate, concurrency and spending limits](SETUP.md#protected-publiclan-mode). Rate/budget denial returns `429`, active-job capacity returns `503`, and each response carries a safe error code and request ID. A comparison holds one job slot for the entire batch. If an external budget is exhausted mid-batch, the `429` body includes `comparison` with retained completed items and failed/unavailable remaining items; the browser displays those partial observations as a failed request, not a successful batch. No retries/fallback calls are made after budget denial.
+
 ---
 
 Related: [Demo and worked comparison](DEMO.md) | [Exports and reproducibility](EXPORTS.md)

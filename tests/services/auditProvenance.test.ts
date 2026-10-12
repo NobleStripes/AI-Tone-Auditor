@@ -75,7 +75,7 @@ test.each([false, true])('records the actual successful provider/model and selec
   vi.stubEnv('AI_PROVIDER', 'openai');
   vi.stubEnv('AI_FALLBACK_PROVIDER', 'anthropic');
   vi.stubEnv('AI_PROVIDER_RETRIES', '0');
-  vi.stubEnv('AI_PROVIDER_TIMEOUT_MS', '0');
+  vi.stubEnv('AI_PROVIDER_TIMEOUT_MS', '15000');
   vi.stubEnv('OPENAI_API_KEY', 'test-key');
   vi.stubEnv('ANTHROPIC_API_KEY', 'test-key');
   vi.stubEnv('OPENAI_MODEL', 'primary-auditor-at-request');

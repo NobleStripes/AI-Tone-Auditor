@@ -3,6 +3,8 @@ import { ANALYSIS_RESULT_JSON_SCHEMA } from '../analysisSchema';
 import { validateProviderAnalysisResult } from '../validation/providerAnalysisValidator';
 import type { AIProvider, AnalyzeToneInput } from '../../types/provider';
 import { ProviderHttpError, requireApiKey } from './providerErrors';
+import { providerLimits } from '../apiPolicy';
+import { providerSignal, reserveProviderRequest } from './providerBudget';
 
 interface AnthropicResponse {
   stop_reason?: string | null;
@@ -32,7 +34,7 @@ function readResponseContent(payload: AnthropicResponse): string {
     throw new Error('Anthropic response reached its output token limit');
   }
   if (payload.stop_reason !== 'end_turn') {
-    throw new Error(`Anthropic response ended with stop reason ${payload.stop_reason || 'unknown'}`);
+    throw new Error('Anthropic response did not complete.');
   }
 
   const text = payload.content
@@ -54,15 +56,16 @@ export const anthropicProvider: AIProvider = {
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      signal: input.signal,
+      redirect: 'error',
+      signal: providerSignal(input.signal),
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,
         'anthropic-version': '2023-06-01',
       },
-      body: JSON.stringify({
+      body: reserveProviderRequest(JSON.stringify({
         model: getAnthropicModel(),
-        max_tokens: 3000,
+        max_tokens: providerLimits().outputTokens,
         system: 'You are a tone analysis engine. Return only data matching the supplied JSON Schema.',
         messages: [
           {
@@ -76,12 +79,12 @@ export const anthropicProvider: AIProvider = {
             schema: ANALYSIS_RESULT_JSON_SCHEMA,
           },
         },
-      }),
+      }), input.signal),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new ProviderHttpError('Anthropic', 'ANTHROPIC_API_KEY', response.status, errorText, apiKey);
+      throw new ProviderHttpError('Anthropic', 'ANTHROPIC_API_KEY', response.status, errorText);
     }
 
     const payload = (await response.json()) as AnthropicResponse;
@@ -89,8 +92,8 @@ export const anthropicProvider: AIProvider = {
 
     try {
       return validateProviderAnalysisResult(extractJson(text), input.text);
-    } catch (error) {
-      console.error('Failed to parse Anthropic analysis result', error);
+    } catch {
+      console.error('[provider] invalid analysis data', { provider: 'anthropic' });
       throw new Error('Anthropic provider failed to return valid analysis data');
     }
   },

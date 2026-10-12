@@ -29,7 +29,7 @@ let server: Server | undefined;
 beforeEach(() => {
   for (const name of ['AI_PROVIDER', 'AI_FALLBACK_PROVIDER', ...externalProviders.map(item => item.key)]) vi.stubEnv(name, undefined);
   vi.stubEnv('AI_PROVIDER_RETRIES', '0');
-  vi.stubEnv('AI_PROVIDER_TIMEOUT_MS', '0');
+  vi.stubEnv('AI_PROVIDER_TIMEOUT_MS', '15000');
   fetchMock.mockReset().mockRejectedValue(new Error('Unexpected external call'));
   vi.stubGlobal('fetch', fetchMock);
   vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -169,7 +169,7 @@ test('local primary can use an external fallback only when explicitly configured
   expect(fetchMock).toHaveBeenCalledOnce();
 });
 
-test('explicit local fallback succeeds without keys, while both-failed errors retain both providers', async () => {
+test('explicit local fallback succeeds without keys, while both-failed errors remain sanitized', async () => {
   vi.stubEnv('AI_PROVIDER', 'openai');
   vi.stubEnv('AI_FALLBACK_PROVIDER', 'local');
   const output = await analyzeTone('A concrete answer.');
@@ -177,21 +177,21 @@ test('explicit local fallback succeeds without keys, while both-failed errors re
   expect(fetchMock).not.toHaveBeenCalled();
   vi.stubEnv('AI_FALLBACK_PROVIDER', 'anthropic');
   const pending = analyzeTone('Another concrete answer.');
-  await expect(pending).rejects.toThrow('Missing OPENAI_API_KEY');
-  await expect(pending).rejects.toThrow('Missing ANTHROPIC_API_KEY');
+  await expect(pending).rejects.toThrow('Primary and configured fallback auditors failed');
+  await expect(pending).rejects.not.toThrow('OPENAI_API_KEY');
 });
 
-test('provider error details are bounded before they reach API logs and clients', async () => {
+test('provider error bodies are discarded before they reach logs and clients', async () => {
   vi.stubEnv('AI_PROVIDER', 'openai');
   vi.stubEnv('OPENAI_API_KEY', 'test-key');
   fetchMock.mockResolvedValue(new Response(`debug-start${'x'.repeat(10_000)}SECRET-TAIL`, { status: 400 }));
   const pending = analyzeTone('A concrete answer.');
-  await expect(pending).rejects.toThrow('[truncated]');
+  await expect(pending).rejects.not.toThrow('debug-start');
   await expect(pending).rejects.not.toThrow('SECRET-TAIL');
   await pending.catch(error => expect(error.message.length).toBeLessThan(MAX_ERROR_BODY_LENGTH + 100));
 });
 
-test('both failed providers remain visible within the client error-body budget', async () => {
+test('both failed providers produce safe diagnostics without upstream bodies', async () => {
   vi.stubEnv('AI_PROVIDER', 'openai');
   vi.stubEnv('AI_FALLBACK_PROVIDER', 'anthropic');
   vi.stubEnv('OPENAI_API_KEY', 'test-primary-key');
@@ -205,8 +205,8 @@ test('both failed providers remain visible within the client error-body budget',
   } catch (error) {
     expect(error).toBeInstanceOf(AggregateError);
     if (!(error instanceof Error)) throw error;
-    expect(error.message).toContain('check OPENAI_API_KEY');
-    expect(error.message).toContain('check ANTHROPIC_API_KEY');
+    expect(error.message).toContain('Primary and configured fallback auditors failed');
+    expect(error.message).not.toContain('API_KEY');
     expect(error.message.length).toBeLessThanOrEqual(MAX_ERROR_BODY_LENGTH);
   }
   expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -263,13 +263,13 @@ test('no-key /api/analyze and five-response /api/compare expose local provenance
   expect(fetchMock).not.toHaveBeenCalled();
 });
 
-test('explicit external API mode without a key returns the provider-specific error', async () => {
+test('explicit external API mode without a key returns a sanitized error', async () => {
   vi.stubEnv('AI_PROVIDER', 'openai');
   const base = await startApi();
   const response = await nativeFetch(`${base}/api/analyze`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: 'A concrete answer.' }),
   });
   expect(response.status).toBe(500);
-  expect((await response.json()).error).toContain('Missing OPENAI_API_KEY for OpenAI provider');
+  expect(await response.json()).toMatchObject({ code: 'AUDIT_FAILED', error: expect.stringContaining('Check server configuration') });
   expect(fetchMock).not.toHaveBeenCalled();
 });

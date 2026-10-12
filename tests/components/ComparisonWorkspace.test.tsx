@@ -8,7 +8,9 @@ import { localHeuristicProvider } from '../../src/services/providers/localHeuris
 import type { ComparisonRequest } from '../../src/types/comparison';
 import { FEEDBACK_STORAGE_KEY, parseFeedbackStore } from '../../src/services/feedbackStore';
 
-vi.mock('../../src/services/analyzeClient', () => ({ compareToneResponses: vi.fn() }));
+vi.mock('../../src/services/analyzeClient', async importOriginal => ({
+  ...await importOriginal<typeof import('../../src/services/analyzeClient')>(), compareToneResponses: vi.fn(),
+}));
 vi.mock('recharts', () => ({
   ResponsiveContainer: () => null, RadarChart: () => null,
   PolarGrid: () => null, PolarAngleAxis: () => null, Radar: () => null,

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { compareToneResponses } from '../services/analyzeClient';
+import { ApiRequestError, compareToneResponses } from '../services/analyzeClient';
+import { useApiAccess } from './ApiAccess';
 import { validateComparisonRequest } from '../services/comparisonValidation';
 import { comparisonDifferences } from '../services/comparisonDifferences';
 import {
@@ -34,6 +35,7 @@ export function ComparisonWorkspace({ active, onBusyChange, onCompleted }: Compa
 }
 
 function ComparisonBody({ active, onBusyChange, onCompleted }: ComparisonWorkspaceProps) {
+  const access = useApiAccess();
   const feedback = useFeedback();
   const [batchId, setBatchId] = useState('');
   const [auditedPrompt, setAuditedPrompt] = useState('');
@@ -50,8 +52,8 @@ function ComparisonBody({ active, onBusyChange, onCompleted }: ComparisonWorkspa
 
   useEffect(() => onBusyChange(busy), [busy, onBusyChange]);
   useEffect(() => {
-    if (!active) controller.current?.abort();
-  }, [active]);
+    if (!active || access.locked) controller.current?.abort();
+  }, [active, access.locked]);
   useEffect(() => () => controller.current?.abort(), []);
 
   const invalidate = () => {
@@ -63,6 +65,7 @@ function ComparisonBody({ active, onBusyChange, onCompleted }: ComparisonWorkspa
     setResponses((items) => items.map((item) => item.id === id ? { ...item, ...change } : item));
   };
   const runComparison = async () => {
+    if (access.locked) { setError('Unlock API access before comparing.'); return; }
     const validated = validateComparisonRequest({ originalPrompt, responses });
     if (validated.valid === false) {
       setError(validated.error);
@@ -86,7 +89,11 @@ function ComparisonBody({ active, onBusyChange, onCompleted }: ComparisonWorkspa
       if (requestController.signal.aborted || (failure instanceof Error && failure.name === 'AbortError')) {
         setError('Comparison canceled. No incomplete batch is shown.');
       } else {
-        console.error('[comparison] request failed:', failure);
+        if (failure instanceof ApiRequestError && failure.partialComparison) {
+          setBatchId(failure.partialComparison.sessionId ?? crypto.randomUUID());
+          setAuditedPrompt(validated.value.originalPrompt);
+          setComparison(failure.partialComparison);
+        }
         setError(failure instanceof Error ? failure.message : 'Comparison failed.');
       }
     } finally {
@@ -146,7 +153,7 @@ function ComparisonBody({ active, onBusyChange, onCompleted }: ComparisonWorkspa
             setResponses((items) => [...items, { id: `response-${nextId.current++}`, sourceModel: COMPARISON_SOURCES[items.length], text: '' }]);
           }}
           className="px-4 py-2 border border-zinc-700 rounded text-xs disabled:opacity-40">Add response</button>
-        <button disabled={busy} onClick={runComparison} className="px-4 py-2 bg-red-600 rounded text-sm disabled:opacity-40">Compare responses</button>
+        <button disabled={busy || access.locked} onClick={runComparison} className="px-4 py-2 bg-red-600 rounded text-sm disabled:opacity-40">Compare responses</button>
         {busy && <button onClick={() => controller.current?.abort()} className="text-sm text-zinc-400">Cancel comparison</button>}
         {busy && <p role="status" className="text-xs text-zinc-400">Auditing responses sequentially with the shared rubric...</p>}
       </div>
