@@ -37,6 +37,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { ExportButton } from './components/ExportButton';
 import { FindingList } from './components/FindingList';
 import { AnthropomorphismNotice } from './components/AnthropomorphismNotice';
+import { PassageRewritePanel } from './components/PassageRewritePanel';
 import { PersonalizationProfile } from './components/PersonalizationProfile';
 import { ResponseDiagnostics } from './components/ResponseDiagnostics';
 import { ComparisonWorkspace } from './components/ComparisonWorkspace';
@@ -620,6 +621,7 @@ function AuditApp() {
                         </span>
                       </h3>
                       <TriggerHighlighter text={auditedInput?.responseText ?? ''} occurrences={result.occurrences} selectedEvidence={selectedEvidence} />
+                      <div className="mt-4"><PassageRewritePanel response={auditedInput?.responseText ?? ''} selectedEvidence={selectedEvidence} /></div>
                       <div className="mt-4 p-3 bg-zinc-950 rounded border border-zinc-800">
                         <p className="text-[10px] text-zinc-600 font-mono leading-tight">
                           <Info className="w-3 h-3 inline mr-1 mb-0.5" />

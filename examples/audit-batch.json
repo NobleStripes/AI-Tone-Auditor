@@ -1,0 +1,4 @@
+[
+  { "id": "technical-example", "sourceModel": "other", "text": "The parser expects a comma between array entries. Add the missing comma, then rerun the build.", "originalPrompt": "Explain a missing comma error." },
+  { "id": "context-example", "sourceModel": "unknown", "text": "The log does not identify the cause. Check the failing request and its status before changing the configuration." }
+]
