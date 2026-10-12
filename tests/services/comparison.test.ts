@@ -60,7 +60,7 @@ test('uses an identical universal source-blind rubric and one private prompt for
     responses: request.responses.map((response) => ({ ...response, text })),
   };
   const result = await compareResponses(input, undefined, audit);
-  expect(audit.mock.calls).toEqual([[text, 'unknown', ''], [text, 'unknown', '']]);
+  expect(audit.mock.calls).toEqual([[text, 'unknown', '', undefined], [text, 'unknown', '', undefined]]);
   expect(result).toMatchObject({ rubricVersion: ANALYSIS_PROMPT_VERSION, localRuleVersion: LOCAL_RULE_VERSION });
   expect(JSON.stringify(result)).not.toContain(input.originalPrompt);
   expect(result).not.toHaveProperty('winner');

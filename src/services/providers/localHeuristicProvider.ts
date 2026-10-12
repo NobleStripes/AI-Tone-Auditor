@@ -11,6 +11,7 @@ export const localHeuristicProvider: AIProvider = {
   label: 'Local Heuristic',
   model: 'rules-v1',
   async analyzeTone(input: AnalyzeToneInput): Promise<AnalysisResult> {
+    input.signal?.throwIfAborted();
     const text = input.text;
     const baseline = emptyAnalysisResult();
     const occurrences = collectOccurrences(text);

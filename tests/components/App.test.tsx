@@ -25,6 +25,51 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+test.each(['delete', 'clear'])('pending audit preserves a history %s action', async (action) => {
+  localStorage.setItem('audit-history', JSON.stringify([{
+    id: 'deleted-entry', title: 'Entry to delete', timestamp: 1, sourceModel: 'other',
+    responseText: 'Old private response.', data: emptyAnalysisResult(), meta: null,
+  }]));
+  let complete: (value: Awaited<ReturnType<typeof analyzeClient.analyzeTone>>) => void;
+  vi.spyOn(analyzeClient, 'analyzeTone').mockImplementation(() => new Promise(resolve => { complete = resolve; }));
+  vi.spyOn(window, 'confirm').mockReturnValue(true);
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: /Auto: ON/ }));
+  fireEvent.change(screen.getByRole('textbox', { name: 'AI response to audit' }), { target: { value: 'New response for this audit.' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Run Audit' }));
+  fireEvent.click(screen.getByRole('button', { name: action === 'delete' ? 'Delete audit entry: Entry to delete' : 'Clear all history' }));
+  expect(JSON.parse(localStorage.getItem('audit-history'))).toEqual([]);
+  await act(async () => complete({ result: emptyAnalysisResult(), meta: {
+    providerId: 'local', providerLabel: 'Local Heuristic', model: 'rules-v1', usedFallback: false,
+  } }));
+  const retained: HistoryEntry[] = JSON.parse(localStorage.getItem('audit-history'));
+  expect(retained).toHaveLength(1);
+  expect(retained[0].responseText).toBe('New response for this audit.');
+  expect(retained.map(entry => entry.id)).not.toContain('deleted-entry');
+});
+
+test('repeated audit removes feedback saved while its replacement was pending', async () => {
+  const result = emptyAnalysisResult();
+  result.findings = [{ category: 'Forced De-escalation', text: 'Calm down', explanation: 'Authored finding', severity: 'low' }];
+  const output = { result, meta: { providerId: 'local' as const, providerLabel: 'Local Heuristic', model: 'rules-v1', usedFallback: false } };
+  let complete: (value: typeof output) => void;
+  vi.spyOn(analyzeClient, 'analyzeTone').mockResolvedValueOnce(output)
+    .mockImplementationOnce(() => new Promise(resolve => { complete = resolve; }));
+  render(<App />);
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: /Auto: ON/ }));
+  fireEvent.change(screen.getByRole('textbox', { name: 'AI response to audit' }), { target: { value: 'Calm down. A long enough response.' } });
+  await user.click(screen.getByRole('button', { name: 'Run Audit' }));
+  await user.click(await screen.findByRole('button', { name: 'Run Audit' }));
+  await user.click(screen.getByRole('button', { name: 'False positive' }));
+  await user.type(screen.getByRole('textbox', { name: 'Reason / review notes' }), 'Saved during the pending request.');
+  await user.click(screen.getByRole('button', { name: 'Save feedback locally' }));
+  expect(parseFeedbackStore(localStorage.getItem(FEEDBACK_STORAGE_KEY)).reports).toHaveLength(1);
+  await act(async () => complete(output));
+  expect(parseFeedbackStore(localStorage.getItem(FEEDBACK_STORAGE_KEY)).audits).toEqual([]);
+  expect(parseFeedbackStore(localStorage.getItem(FEEDBACK_STORAGE_KEY)).reports).toEqual([]);
+});
+
 test('a repeated single audit gets a new stable reference and removes the replaced history feedback', async () => {
   const result = emptyAnalysisResult();
   result.findings = [{ category: 'Forced De-escalation', text: 'Calm down', explanation: 'Authored test finding', severity: 'low' }];

@@ -92,6 +92,14 @@ function AuditApp() {
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const lastAutoAuditKey = useRef<string | null>(null);
+  const historyRef = useRef(history);
+  const feedbackRef = useRef(feedback);
+  feedbackRef.current = feedback;
+  const changeHistory = (change: (previous: HistoryEntry[]) => HistoryEntry[]) => {
+    const next = change(historyRef.current);
+    historyRef.current = next;
+    setHistory(next);
+  };
 
   const handleAnalyze = async (textToAnalyze: string = inputText) => {
     if (!textToAnalyze.trim() || textToAnalyze.trim().length < MIN_RESPONSE_LENGTH) return;
@@ -143,13 +151,14 @@ function AuditApp() {
         automatedResultJson: JSON.stringify(data), provenanceJson: provenance ? JSON.stringify(provenance) : null,
         runtimeMetaJson: JSON.stringify(meta),
       });
-      const retained = history.length > 0 && history[0].responseText === newEntry.responseText && history[0].sourceModel === newEntry.sourceModel
-        ? [newEntry, ...history.slice(1)] : [newEntry, ...history].slice(0, 50);
-      const removed = history.filter(entry => !retained.some(item => item.id === entry.id)).map(entry => entry.id);
-      if (removeFeedbackFor(removed)) setHistory(retained);
+      const latestHistory = historyRef.current;
+      const retained = latestHistory.length > 0 && latestHistory[0].responseText === newEntry.responseText && latestHistory[0].sourceModel === newEntry.sourceModel
+        ? [newEntry, ...latestHistory.slice(1)] : [newEntry, ...latestHistory].slice(0, 50);
+      const removed = latestHistory.filter(entry => !retained.some(item => item.id === entry.id)).map(entry => entry.id);
+      if (removeFeedbackFor(removed)) changeHistory(() => retained);
       else setAnalysisError('Audit completed, but history was not replaced because associated feedback could not be removed.');
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') return;
+      if (controller.signal.aborted || (error instanceof Error && error.name === 'AbortError')) return;
       console.error(error);
       setAnalysisError(error instanceof Error ? error.message : 'Analysis failed. Please try again.');
     } finally {
@@ -166,8 +175,9 @@ function AuditApp() {
 
   const removeFeedbackFor = (ids: string[]) => {
     if (!ids.length) return true;
-    if (!feedback.error && !feedback.store.audits.some(audit => audit.historyId && ids.includes(audit.historyId))) return true;
-    return feedback.update(previous => removeHistoryFeedback(previous, ids));
+    const currentFeedback = feedbackRef.current;
+    if (!currentFeedback.error && !currentFeedback.store.audits.some(audit => audit.historyId && ids.includes(audit.historyId))) return true;
+    return currentFeedback.update(previous => removeHistoryFeedback(previous, ids));
   };
 
   // Auto Audit Logic
@@ -246,14 +256,14 @@ function AuditApp() {
           }}
           onDelete={(id) => {
             if (removeFeedbackFor([id])) {
-              setHistory(prev => prev.filter(h => h.id !== id));
+              changeHistory(prev => prev.filter(h => h.id !== id));
               if (auditSnapshot?.historyId === id) { setResult(null); setAuditSnapshot(null); }
             }
           }}
           onClearAll={() => {
             if (window.confirm('Are you sure you want to clear all audit history? This action cannot be undone.')) {
               if (removeFeedbackFor(history.map(entry => entry.id))) {
-                setHistory([]);
+                changeHistory(() => []);
                 setResult(null);
                 setAuditSnapshot(null);
               }

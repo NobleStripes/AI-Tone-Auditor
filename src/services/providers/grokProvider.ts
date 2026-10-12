@@ -1,6 +1,6 @@
 import { ANALYSIS_RESULT_JSON_SCHEMA } from '../analysisSchema';
 import { buildToneAnalysisPrompt } from '../promptBuilder';
-import { validateAnalysisResult } from '../validation/analysisValidator';
+import { validateProviderAnalysisResult } from '../validation/providerAnalysisValidator';
 import type { AIProvider, AnalyzeToneInput } from '../../types/provider';
 import { ProviderHttpError, requireApiKey } from './providerErrors';
 
@@ -61,6 +61,7 @@ export const grokProvider: AIProvider = {
 
     const response = await fetch('https://api.x.ai/v1/responses', {
       method: 'POST',
+      signal: input.signal,
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
@@ -89,7 +90,7 @@ export const grokProvider: AIProvider = {
 
     const payload = (await response.json()) as GrokResponse;
     try {
-      return validateAnalysisResult(JSON.parse(readOutputText(payload)), { assessmentMethod: 'semantic', responseText: input.text });
+      return validateProviderAnalysisResult(JSON.parse(readOutputText(payload)), input.text);
     } catch (error) {
       console.error('Failed to parse Grok analysis result', error);
       throw new Error('Grok provider failed to return valid analysis data');

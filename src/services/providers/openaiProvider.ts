@@ -1,6 +1,6 @@
 import { buildToneAnalysisPrompt } from '../promptBuilder';
 import { ANALYSIS_RESULT_JSON_SCHEMA } from '../analysisSchema';
-import { validateAnalysisResult } from '../validation/analysisValidator';
+import { validateProviderAnalysisResult } from '../validation/providerAnalysisValidator';
 import type { AIProvider, AnalyzeToneInput } from '../../types/provider';
 import { ProviderHttpError, requireApiKey } from './providerErrors';
 
@@ -71,6 +71,7 @@ export const openaiProvider: AIProvider = {
 
     const response = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
+      signal: input.signal,
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
@@ -102,7 +103,7 @@ export const openaiProvider: AIProvider = {
 
     try {
       const parsed = extractJsonFromContent(content);
-      return validateAnalysisResult(parsed, { assessmentMethod: 'semantic', responseText: input.text });
+      return validateProviderAnalysisResult(parsed, input.text);
     } catch (error) {
       console.error('Failed to parse OpenAI analysis result', error);
       throw new Error('OpenAI provider failed to return valid analysis data');

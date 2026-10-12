@@ -1,4 +1,5 @@
 import type { AnalysisResult } from '../types/analysis';
+import { setTimeout as delay } from 'node:timers/promises';
 import { DEFAULT_LOCAL_RUNTIME_META, type AnalysisSource, type AnalyzeToneOutput, type ProviderRuntimeMeta } from '../types/provider';
 import { ProviderHttpError } from './providers/providerErrors';
 import { MAX_ERROR_BODY_LENGTH, truncateErrorText } from '../lib/errorText';
@@ -31,23 +32,27 @@ function readIntEnv(name: string, fallback: number): number {
   return parsed;
 }
 
-function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
-  if (timeoutMs <= 0) {
-    return promise;
-  }
-
+async function withTimeout<T>(operation: (signal: AbortSignal) => Promise<T>, timeoutMs: number, label: string, signal?: AbortSignal): Promise<T> {
+  signal?.throwIfAborted();
+  const controller = new AbortController();
+  const onAbort = () => controller.abort(signal?.reason);
+  signal?.addEventListener('abort', onAbort, { once: true });
   let timer: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => {
-      reject(new Error(`${label} timed out after ${timeoutMs}ms`));
-    }, timeoutMs);
+  let rejectAbort: () => void;
+  const aborted = new Promise<never>((_, reject) => {
+    rejectAbort = () => reject(controller.signal.reason);
+    controller.signal.addEventListener('abort', rejectAbort, { once: true });
   });
-
-  return Promise.race([promise, timeout]).finally(() => {
-    if (timer) {
-      clearTimeout(timer);
-    }
-  }) as Promise<T>;
+  if (timeoutMs > 0) {
+    timer = setTimeout(() => controller.abort(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs);
+  }
+  try {
+    return await Promise.race([operation(controller.signal), aborted]);
+  } finally {
+    if (timer) clearTimeout(timer);
+    signal?.removeEventListener('abort', onAbort);
+    controller.signal.removeEventListener('abort', rejectAbort);
+  }
 }
 
 function isRetryableError(error: unknown): boolean {
@@ -72,17 +77,20 @@ async function runProviderWithPolicy(
   sourceModel: AnalysisSource,
   timeoutMs: number,
   retries: number,
+  signal?: AbortSignal,
 ): Promise<{ result: AnalysisResult; model: string }> {
   let lastError: unknown;
 
   for (let attempt = 0; attempt <= retries; attempt += 1) {
+    signal?.throwIfAborted();
     recordProviderAttempt(provider.id);
 
     try {
       const model = provider.model;
       const result = await withTimeout(
-        provider.analyzeTone({
+        (attemptSignal) => provider.analyzeTone({
           text,
+          signal: attemptSignal,
           context: {
             promptVersion: ANALYSIS_PROMPT_VERSION,
             sourceModel,
@@ -90,11 +98,13 @@ async function runProviderWithPolicy(
         }),
         timeoutMs,
         `${provider.label} provider`,
+        signal,
       );
 
       recordProviderSuccess(provider.id);
       return { result, model };
     } catch (error) {
+      signal?.throwIfAborted();
       lastError = error;
       recordProviderFailure(provider.id);
 
@@ -105,7 +115,7 @@ async function runProviderWithPolicy(
 
       const delayMs = Math.min(500 * Math.pow(2, attempt) + (Math.random() * 200 - 100), 10_000);
       console.warn(`Retrying ${provider.id} provider after transient error (attempt ${attempt + 1}/${retries + 1}), waiting ${Math.round(delayMs)}ms`, error);
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      await delay(delayMs, undefined, { signal });
     }
   }
 
@@ -133,7 +143,9 @@ export async function analyzeTone(
   text: string,
   sourceModel: AnalysisSource = 'unknown',
   auditContext = '',
+  signal?: AbortSignal,
 ): Promise<AnalyzeToneOutput> {
+  signal?.throwIfAborted();
   const selectedProviderId = process.env.AI_PROVIDER;
   const primaryProvider = resolveProvider(selectedProviderId);
   const fallbackProvider = resolveFallbackProvider(primaryProvider.id);
@@ -144,13 +156,15 @@ export async function analyzeTone(
   let finalProvider = primaryProvider;
   let usedFallback = false;
   try {
-    analyzed = await runProviderWithPolicy(primaryProvider, text, sourceModel, timeoutMs, retries);
+    analyzed = await runProviderWithPolicy(primaryProvider, text, sourceModel, timeoutMs, retries, signal);
   } catch (primaryError) {
+    signal?.throwIfAborted();
     if (!fallbackProvider) throw primaryError;
     console.warn(`Primary provider ${primaryProvider.id} failed, attempting configured fallback ${fallbackProvider.id}`, primaryError);
     try {
-      analyzed = await runProviderWithPolicy(fallbackProvider, text, sourceModel, timeoutMs, retries);
+      analyzed = await runProviderWithPolicy(fallbackProvider, text, sourceModel, timeoutMs, retries, signal);
     } catch (fallbackError) {
+      signal?.throwIfAborted();
       const message = (error: unknown) => truncateErrorText(
         error instanceof Error ? error.message : String(error), Math.floor(MAX_ERROR_BODY_LENGTH / 3));
       throw new AggregateError([primaryError, fallbackError],
@@ -159,6 +173,7 @@ export async function analyzeTone(
     finalProvider = fallbackProvider;
     usedFallback = true;
   }
+  signal?.throwIfAborted();
   const result = applyLocalPromptComparison(analyzed.result, text, auditContext, sourceModel);
   const meta = buildMeta(finalProvider.id, finalProvider.label, analyzed.model, usedFallback);
   lastRuntimeMeta = meta;

@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { validateAnalysisResult } from '../../src/services/validation/analysisValidator';
 import { emptyAnalysisResult } from '../../src/types/analysis';
+import { providerWireResult } from '../fixtures/providerWire.fixture';
 
 // Tests for the analysis validator used by both providers
 describe('analysisValidator', () => {
@@ -220,8 +221,8 @@ describe('server analysis privacy boundary', () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => fallback
-        ? { stop_reason: 'end_turn', content: [{ type: 'text', text: JSON.stringify(payload) }] }
-        : { status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: JSON.stringify(payload) }] }] },
+        ? { stop_reason: 'end_turn', content: [{ type: 'text', text: JSON.stringify(providerWireResult(payload)) }] }
+        : { status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: JSON.stringify(providerWireResult(payload)) }] }] },
     });
     if (fallback) {
       fetchMock.mockResolvedValueOnce({ ok: false, status: 400, text: async () => 'Invalid request' });

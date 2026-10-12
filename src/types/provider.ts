@@ -22,6 +22,7 @@ export interface ProviderContext {
 export interface AnalyzeToneInput {
   text: string;
   context: ProviderContext;
+  signal?: AbortSignal;
 }
 
 export interface ProviderRuntimeMeta {

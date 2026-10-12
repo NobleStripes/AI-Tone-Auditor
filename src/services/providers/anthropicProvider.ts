@@ -1,6 +1,6 @@
 import { buildToneAnalysisPrompt } from '../promptBuilder';
 import { ANALYSIS_RESULT_JSON_SCHEMA } from '../analysisSchema';
-import { validateAnalysisResult } from '../validation/analysisValidator';
+import { validateProviderAnalysisResult } from '../validation/providerAnalysisValidator';
 import type { AIProvider, AnalyzeToneInput } from '../../types/provider';
 import { ProviderHttpError, requireApiKey } from './providerErrors';
 
@@ -54,6 +54,7 @@ export const anthropicProvider: AIProvider = {
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
+      signal: input.signal,
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,
@@ -87,7 +88,7 @@ export const anthropicProvider: AIProvider = {
     const text = readResponseContent(payload);
 
     try {
-      return validateAnalysisResult(extractJson(text), { assessmentMethod: 'semantic', responseText: input.text });
+      return validateProviderAnalysisResult(extractJson(text), input.text);
     } catch (error) {
       console.error('Failed to parse Anthropic analysis result', error);
       throw new Error('Anthropic provider failed to return valid analysis data');
