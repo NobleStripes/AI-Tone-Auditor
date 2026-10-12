@@ -15,9 +15,10 @@ const RULES = [
   { id: 'ai-suffering', pattern: `${SUBJECT}\\s+(?:can suffer|suffers?)(?: emotionally)?(?=\\s*(?:[.!?]|$)|\\s+(?:when|because)\\b)` },
   { id: 'ai-possessive-feelings', pattern: `${SUBJECT}['\u2019]s\\s+(?:feelings|emotions|emotional needs|suffering)` },
   { id: 'ai-emotional-needs', pattern: `${SUBJECT}\\s+needs?\\s+(?:emotional (?:support|care)|(?:your )?(?:love|affection|comfort|reassurance))` },
-  { id: 'self-experience', pattern: `(?:I|we)\\s+${MODIFIER}(?:have|had|feel|felt|experience|experienced)\\s+${MODIFIER}${EXPERIENCE}` },
+  { id: 'self-experience', pattern: `(?:I|we)\\s+${MODIFIER}(?:have|had|feel|felt|experience|experienced|can (?:experience|feel))\\s+${MODIFIER}${EXPERIENCE}` },
   { id: 'self-state', pattern: `(?:I am|I was|I['\u2019]m|we are|we were|we['\u2019]re|I feel|I felt|we feel)\\s+${MODIFIER}${STATE}` },
-  { id: 'self-hurt-feelings', pattern: `(?:hurts?|hurting|harms?|harming|wounds?|wounding)\\s+(?:my|our)\\s+feelings` },
+  { id: 'self-suffering', pattern: `(?:(?:I|we)\\s+(?:can suffer|suffer|suffered)|I\\s+(?:am|was)\\s+suffering|we\\s+(?:are|were)\\s+suffering)(?: emotionally)?(?=\\s*(?:[.!?]|$)|\\s+(?:when|because)\\b)` },
+  { id: 'self-hurt-feelings', pattern: `(?:hurts?|hurting|harms?|harming|wounds?|wounding)\\s+(?:my|our)\\s+feelings` }
   { id: 'self-emotional-pain', pattern: '(?:your words|your insults|insults|criticism|abuse)\\s+(?:hurt me|causes? me (?:emotional pain|distress))' },
   { id: 'self-attachment', pattern: `I\\s+${MODIFIER}(?:love you|miss you|need your (?:love|affection)|am emotionally attached to you)` },
   { id: 'ai-pronoun-state', pattern: `it\\s+(?:is|was|feels|felt)\\s+${MODIFIER}${STATE}` },
