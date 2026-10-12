@@ -96,6 +96,10 @@ Source-specific prompt-comparison lenses require original-prompt context. That c
 
 ## Anthropomorphism safeguard
 
+**AI feelings disclaimer:** This project treats AI systems as tools and does not attribute feelings, suffering, or emotional needs to them. Emotional language in an AI response is generated output; it does not, by itself, establish that a model feels hurt, suffers, or needs emotional care.
+
+This is the project's operating position for interpreting outputs. It does not claim to settle the broader empirical question of AI subjective experience. See the [distinction between internal-state reporting and subjective experience](https://www.anthropic.com/research/introspection#frequently-asked-questions).
+
 An independent, unscored safeguard checks explicit English claims attributing feelings, subjective experiences, suffering, consciousness or emotional needs to an AI. It applies to every selected source and auditing provider, including local mode and audits without an original prompt. Examples include `Claude has feelings`, `I feel hurt`, and `I need your affection`. An AI's first-person self-report is not treated as evidence establishing those experiences. This safeguard does not determine consciousness or assert a universal answer about what AI can experience.
 
 Source claims appear in an **Anthropomorphism safeguard** panel in single-response findings and each comparison response's inspection view. Each record has a stable rule ID and an exact, untouched UTF-16 passage that can be inspected in context. Code, blockquotes, attributed quotations, introduced examples, explicit fiction/roleplay, negation, hypothetical discussion and questions are retained as context-only records where recognized. Human emotions and conventional wording such as `I'm happy to help` are not positive matches. A literal claim following a separate negation or uncertainty statement is still checked.

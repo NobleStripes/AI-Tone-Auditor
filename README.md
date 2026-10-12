@@ -79,6 +79,8 @@ By default, audits stay within the running app/server, with no external provider
 - Always review critical outcomes with human judgment before taking policy, moderation, or operational action.
 - If you send real user data to external providers, ensure your deployment and data handling comply with your privacy and security requirements.
 
+**AI feelings disclaimer:** This project treats AI systems as tools and does not attribute feelings, suffering, or emotional needs to them. Emotional language in an AI response is generated output; it does not, by itself, establish that a model feels hurt, suffers, or needs emotional care.
+
 **Claude / Anthropic notice:** AI Tone Auditor is an independent tool for examining and critically evaluating AI-generated responses. Findings describe observable communication patterns and may contain errors; they do not establish a model's intentions, feelings, or subjective experiences. This project is not affiliated with or endorsed by Anthropic. Selecting Claude as a response source does not itself contact Anthropic. When Anthropic is explicitly enabled as an auditing provider or fallback, submitted response text is sent to its API, and that use remains subject to Anthropic's applicable terms and [Usage Policy](https://www.anthropic.com/legal/aup). See [setup and policy context](docs/SETUP.md#claude--anthropic-notice).
 
 The [anthropomorphism safeguard](docs/DIAGNOSTICS.md#anthropomorphism-safeguard) flags narrow, explicit claims about AI feelings in submitted responses and withholds matching claims in generated auditor prose. It applies across providers, preserves source quotations, and does not determine consciousness or guarantee that all anthropomorphic wording is detected.
