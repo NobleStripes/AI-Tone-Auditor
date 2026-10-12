@@ -20,6 +20,10 @@ Weights control a marker's contribution to a local heuristic index, not evidence
 
 Current rules contribute once per eligible **occurrence**, not once per distinct dictionary phrase. Sum existing weights, multiply by 13, round once, and cap at 100. All occurrences remain inspectable even after saturation or beyond eight findings. Fenced/inline code, blockquotes, and clearly introduced examples contribute zero. Ordinary quoted directives are not automatically exempt. Intentional cross-category empathy contributions have separate rule identities; overlaps remain inspectable rather than being discarded by a longest-match highlighter.
 
+Dictionary rules match whole tokens using Unicode letters, numbers, combining marks and underscores as word characters. A marker such as `just` does not match `adjustment`, `unjustly` or an adjacent identifier character. Punctuation can delimit a marker. Phrase whitespace accepts horizontal spaces/tabs and one line wrap between words, but never crosses a blank paragraph or intervening text. Straight and typographic apostrophes match without rewriting the response; positions and quotations always refer to the exact original text.
+
+Each dictionary entry has an explicit `ruleId`. Keep that ID when adjusting wording or weights for the same rule; assign a new unique ID for a distinct rule. IDs do not depend on dictionary order. Auxiliary empathy rules also have explicit IDs. Older stored `dictionary-N` and `empathy-N` references are retained, not remapped to the current catalog.
+
 Recommended tuning workflow:
 
 1. Start by lowering noisy one-word triggers before raising high-impact phrases.
