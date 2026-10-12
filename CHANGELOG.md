@@ -4,6 +4,12 @@ Meaningful releases use semantic package versions and annotated `vX.Y.Z` Git tag
 
 ## Unreleased
 
+### Added
+
+- Optional evaluation schema `1.1.0` annotations for exact evidence passages, retained exclusions and expected assessment states; legacy `1.0.0` files and fingerprints remain valid.
+- Separate evidence-location, exclusion, invalid-record and coverage reporting, evidence baseline replay, and development/held-out summaries with equivalent-input leakage checks.
+- Twenty-four authored cases in twelve positive/counterexample pairs spanning ordinary advice, uncertainty, apologies, summaries, attributed quotations and examples/code. These cases expose known detector gaps without relabeling them as successes or genuine transcripts.
+
 ### Fixed
 
 - Dictionary markers respect Unicode word boundaries, preventing matches such as `just` inside `adjustment` or `unjustly`.

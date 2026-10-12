@@ -22,6 +22,7 @@ export async function evaluateCorpus(corpus: FixtureCorpus): Promise<EvaluationO
     const threshold = signalThreshold(fixture.categoryId);
     return {
       datasetKind: 'synthetic',
+      split: 'regression',
       corpusVersion: corpus.version,
       auditorVersion: AUDITOR_VERSION,
       promptVersion: ANALYSIS_PROMPT_VERSION,

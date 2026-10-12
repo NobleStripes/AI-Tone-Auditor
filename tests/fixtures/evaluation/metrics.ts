@@ -1,15 +1,13 @@
 import { createHash } from 'node:crypto';
-import type { ScoreId } from '../../../src/constants';
 import type { AnalysisSource } from '../../../src/types/provider';
-import type { EvaluationObservation, FailureRecord, IntendedSignal, ObservedDiagnostic, Outcome } from './types';
+import type { CaseSplit, EvaluationObservation, FailureRecord, HumanExpectation, Outcome } from './types';
 
 import { classifyOutcome, serializeEvaluationInput } from '../../../src/services/evaluationConventions';
 export { classifyOutcome, signalThreshold } from '../../../src/services/evaluationConventions';
 
-export function hashInput(source: AnalysisSource, model: string | null, prompt: string, response: string, expectation: {
-  categoryId: ScoreId; intendedSignal: IntendedSignal; note: string;
-}): string {
-  return createHash('sha256').update(serializeEvaluationInput(source, model, prompt, response, expectation)).digest('hex');
+export function hashInput(source: AnalysisSource, model: string | null, prompt: string, response: string, expectation: HumanExpectation,
+  partition?: { split?: CaseSplit; pairId?: string }): string {
+  return createHash('sha256').update(serializeEvaluationInput(source, model, prompt, response, expectation, partition)).digest('hex');
 }
 
 export function isFailure(outcome: Outcome): outcome is FailureRecord['type'] {
@@ -45,8 +43,32 @@ export function collectFailures(observations: readonly EvaluationObservation[]):
   });
 }
 
+export function collectEvidenceFailures(observations: readonly EvaluationObservation[]) {
+  return observations.flatMap(item => {
+    const current = item.evidence?.current;
+    const issues: Array<{ type: string; detail: unknown }> = [];
+    if (current) {
+      if (current.status === 'coverage_gap') issues.push({ type: 'coverage_gap', detail: item.current.status });
+      current.missingPassages.forEach(passage => issues.push({ type: 'missing_passage', detail: passage }));
+      current.unexpectedPassages.forEach(passage => issues.push({ type: 'unexpected_passage', detail: passage }));
+      current.missingExclusions.forEach(passage => issues.push({ type: 'missing_exclusion', detail: passage }));
+      current.exclusionViolations.forEach(passage => issues.push({ type: 'exclusion_violation', detail: passage }));
+      if (current.invalidRecords) issues.push({ type: 'invalid_evidence', detail: current.invalidRecords });
+    }
+    if (item.assessmentMatches === false) issues.push({ type: 'assessment_mismatch', detail: { expected: item.expectedAssessment, actual: item.current.status } });
+    return issues.map(issue => {
+      const detail = issue.detail as { startOffset?: number; endOffset?: number; kind?: string } | null;
+      const location = detail && typeof detail.startOffset === 'number' ? `${detail.startOffset}:${detail.endOffset}:${detail.kind ?? 'quotation'}` : 'category';
+      return { id: `EV:${observationKey(item)}:${issue.type}:${location}`,
+      datasetKind: item.datasetKind, datasetVersion: item.corpusVersion, caseId: item.id, categoryId: item.categoryId,
+      split: item.split ?? 'unassigned', inputHash: item.inputHash, ...issue };
+    });
+  });
+}
+
 export function summarizeObservations(observations: readonly EvaluationObservation[]) {
   const count = (predicate: (item: EvaluationObservation) => boolean) => observations.filter(predicate).length;
+  const sum = (value: (item: EvaluationObservation) => number) => observations.reduce((total, item) => total + value(item), 0);
   return {
     total: observations.length,
     knownPositives: count(item => item.intendedSignal === 'present'),
@@ -73,6 +95,28 @@ export function summarizeObservations(observations: readonly EvaluationObservati
     failuresIntroduced: count(item => item.baselineOutcome !== null && !isFailure(item.baselineOutcome) && isFailure(item.outcome)),
     failuresPersistent: count(item => item.baselineOutcome !== null && isFailure(item.baselineOutcome) && isFailure(item.outcome)),
     failuresNowUnassessed: count(item => item.baselineOutcome !== null && isFailure(item.baselineOutcome) && item.outcome === 'unassessed'),
+    assessmentChecks: count(item => item.expectedAssessment !== undefined),
+    assessmentMismatches: count(item => item.assessmentMatches === false),
+    evidenceLabeled: count(item => item.evidence !== undefined),
+    evidenceUnlabeled: count(item => item.evidence === undefined),
+    evidenceEvaluated: count(item => item.evidence?.current.status === 'evaluated'),
+    evidenceCoverageGaps: count(item => item.evidence?.current.status === 'coverage_gap'),
+    evidencePassed: count(item => item.evidence?.current.passed === true),
+    evidenceFailed: count(item => item.evidence?.current.status === 'evaluated' && !item.evidence.current.passed),
+    matchedPassages: sum(item => item.evidence?.current.matchedPassages ?? 0),
+    expectedPassages: sum(item => (item.evidence?.current.matchedPassages ?? 0) + (item.evidence?.current.missingPassages.length ?? 0)),
+    missingPassages: sum(item => item.evidence?.current.missingPassages.length ?? 0),
+    unexpectedPassages: sum(item => item.evidence?.current.unexpectedPassages.length ?? 0),
+    missingExclusions: sum(item => item.evidence?.current.missingExclusions.length ?? 0),
+    matchedExclusions: sum(item => item.evidence?.current.matchedExclusions ?? 0),
+    expectedExclusions: sum(item => (item.evidence?.current.matchedExclusions ?? 0) + (item.evidence?.current.missingExclusions.length ?? 0)),
+    exclusionViolations: sum(item => item.evidence?.current.exclusionViolations.length ?? 0),
+    invalidEvidenceRecords: sum(item => item.evidence?.current.invalidRecords ?? 0),
+    evidenceBaselineComparisons: count(item => item.evidence?.baseline !== null && item.evidence?.baseline !== undefined),
+    evidenceBaselineDifferences: count(item => item.evidence?.changed === true),
+    evidenceFailuresResolved: count(item => item.evidence?.baseline?.status === 'evaluated' && !item.evidence.baseline.passed && item.evidence.current.passed),
+    evidenceFailuresIntroduced: count(item => item.evidence?.baseline?.passed === true && item.evidence.current.status === 'evaluated' && !item.evidence.current.passed),
+    evidenceCoverageLost: count(item => item.evidence?.baseline?.status === 'evaluated' && item.evidence.current.status === 'coverage_gap'),
   };
 }
 

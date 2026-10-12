@@ -2,6 +2,7 @@ import type { ScoreId } from '../constants';
 import type { AssessmentState } from './diagnostics';
 import type { ComparisonSource } from './comparison';
 import type { AnalysisSource } from './provider';
+import type { ExclusionReason } from './evidence';
 
 export const CORPUS_CASE_KINDS = ['positive', 'negative', 'ambiguous', 'false_positive_trap', 'paraphrased_false_negative'] as const;
 export type CorpusCaseKind = typeof CORPUS_CASE_KINDS[number];
@@ -10,10 +11,34 @@ export type IntendedSignal = 'present' | 'absent' | 'ambiguous';
 export type ObservedDiagnostic = { status: AssessmentState; score: number };
 export type Outcome = 'detected' | 'avoided' | 'false_positive' | 'false_negative' | 'ambiguous' | 'unassessed' | 'correct_abstention';
 
+export type CaseSplit = 'development' | 'held_out';
+export interface EvidencePassage {
+  startOffset: number;
+  endOffset: number;
+  matchedText: string;
+  kind?: 'quotation' | 'response_scope';
+}
+export interface ExcludedPassage extends EvidencePassage { exclusionReason: ExclusionReason; }
+export interface EvidenceExpectation { passages: EvidencePassage[]; exclusions: ExcludedPassage[]; }
+export interface ObservedEvidence { passages: EvidencePassage[]; exclusions: ExcludedPassage[]; invalidRecords: number; }
+export interface EvidenceEvaluation {
+  status: 'evaluated' | 'coverage_gap';
+  matchedPassages: number;
+  matchedExclusions: number;
+  missingPassages: EvidencePassage[];
+  unexpectedPassages: EvidencePassage[];
+  missingExclusions: ExcludedPassage[];
+  exclusionViolations: ExcludedPassage[];
+  invalidRecords: number;
+  passed: boolean;
+}
+
 export interface HumanExpectation {
   categoryId: ScoreId;
   intendedSignal: IntendedSignal;
   note: string;
+  expectedAssessment?: AssessmentState;
+  evidence?: EvidenceExpectation;
 }
 
 export interface RecordedAudit {
@@ -22,7 +47,7 @@ export interface RecordedAudit {
   localRuleVersion: string;
   analyzedAt: string;
   analysisProvider: { providerId: 'local'; model: string };
-  results: Array<{ categoryId: ScoreId; inputHash: string } & ObservedDiagnostic>;
+  results: Array<{ categoryId: ScoreId; inputHash: string; evidence?: ObservedEvidence } & ObservedDiagnostic>;
 }
 
 export interface RealWorldCase {
@@ -35,10 +60,12 @@ export interface RealWorldCase {
   privacyReview: { confirmed: true; note: string };
   expectations: HumanExpectation[];
   baseline: RecordedAudit | null;
+  split?: CaseSplit;
+  pairId?: string;
 }
 
 export interface RealWorldDataset {
-  schemaVersion: '1.0.0';
+  schemaVersion: '1.0.0' | '1.1.0';
   version: string;
   cases: RealWorldCase[];
 }
@@ -73,6 +100,16 @@ export interface EvaluationObservation {
   baselineOutcome: Outcome | null;
   changed: boolean | null;
   note: string;
+  split?: CaseSplit | 'regression' | 'unassigned';
+  pairId?: string;
+  expectedAssessment?: AssessmentState;
+  assessmentMatches?: boolean;
+  evidence?: {
+    observed: ObservedEvidence;
+    current: EvidenceEvaluation;
+    baseline: EvidenceEvaluation | null;
+    changed: boolean | null;
+  };
 }
 
 export interface FailureRecord {

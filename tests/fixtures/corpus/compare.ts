@@ -5,9 +5,11 @@ import { evaluateCorpus } from './evaluate';
 import { evaluateRealWorld, recordRealWorldBaseline } from '../evaluation/realWorld';
 import { parseFailureLedger, parseRealWorldDataset, parseSyntheticDataset } from '../evaluation/validation';
 import { buildEvaluationReport, parseCompareOptions } from '../evaluation/report';
+import { validateSplitSeparation } from '../../../src/services/evaluationValidation';
 
 const defaultDataset = fileURLToPath(new URL('../evaluation/real-world.v1.json', import.meta.url));
 const defaultFailures = fileURLToPath(new URL('../evaluation/failures.v1.json', import.meta.url));
+const defaultEvidenceSuite = fileURLToPath(new URL('../evaluation/evidence-pairs.v1.json', import.meta.url));
 
 async function readJson(path: string): Promise<unknown> {
   const content = await readFile(path, 'utf8');
@@ -35,6 +37,8 @@ async function main() {
   --record-real-world PATH     Save current baselines for one real-world dataset to a NEW file
   --record-synthetic PATH      Save baselines for one imported synthetic dataset to a NEW file
   --no-replay                  Seed a ledger before any previous ledger exists
+Retained corpora and the authored development/held-out evidence suite are evaluated by default.
+Use schema 1.1.0 for optional passage/exclusion annotations and expected assessment states.
 No external providers are called. Output files are never overwritten.`);
     return;
   }
@@ -42,12 +46,20 @@ No external providers are called. Output files are never overwritten.`);
     .map(async path => parseRealWorldDataset(await readJson(path))));
   if (new Set(datasets.map(dataset => dataset.version)).size !== datasets.length) throw new Error('Real-world datasets must have distinct retained version IDs.');
   if (options.recordRealWorld && datasets.length !== 1) throw new Error('--record-real-world requires exactly one input dataset.');
-  const synthetic = await Promise.all(options.synthetic.map(async path => parseSyntheticDataset(await readJson(path))));
+  const importedSynthetic = await Promise.all(options.synthetic.map(async path => parseSyntheticDataset(await readJson(path))));
+  const evidenceSuite = parseSyntheticDataset(await readJson(defaultEvidenceSuite));
+  const retainedSuite = importedSynthetic.find(dataset => dataset.version === evidenceSuite.version);
+  if (retainedSuite && JSON.stringify(retainedSuite.cases.map(({ baseline, ...inputs }) => inputs))
+    !== JSON.stringify(evidenceSuite.cases.map(({ baseline, ...inputs }) => inputs))) {
+    throw new Error('Retained evidence-suite inputs or labels changed; preserve the original and use a new dataset version.');
+  }
+  const synthetic = retainedSuite ? importedSynthetic : [evidenceSuite, ...importedSynthetic];
   if (new Set(synthetic.map(dataset => dataset.version)).size !== synthetic.length
     || synthetic.some(dataset => FIXTURE_CORPORA.some(corpus => corpus.version === dataset.version))) {
     throw new Error('Synthetic datasets must have distinct retained version IDs, including fixture corpora.');
   }
-  if (options.recordSynthetic && synthetic.length !== 1) throw new Error('--record-synthetic requires exactly one synthetic input dataset.');
+  if (options.recordSynthetic && importedSynthetic.length !== 1) throw new Error('--record-synthetic requires exactly one synthetic input dataset.');
+  validateSplitSeparation([...FIXTURE_CORPORA.flatMap(corpus => corpus.cases), ...datasets.flatMap(dataset => dataset.cases), ...synthetic.flatMap(dataset => dataset.cases)]);
   const ledger = options.noReplay ? null : parseFailureLedger(await readJson(options.failures ?? defaultFailures));
   const observations = [
     ...(await Promise.all(FIXTURE_CORPORA.map(evaluateCorpus))).flat(),
@@ -59,7 +71,7 @@ No external providers are called. Output files are never overwritten.`);
     schemaVersion: '1.0.0', recordedAt: report.evaluatedAt, failures: report.failures,
   });
   if (options.recordRealWorld) await writeJson(options.recordRealWorld, recordRealWorldBaseline(datasets[0], observations));
-  if (options.recordSynthetic) await writeJson(options.recordSynthetic, recordRealWorldBaseline(synthetic[0], observations));
+  if (options.recordSynthetic) await writeJson(options.recordSynthetic, recordRealWorldBaseline(importedSynthetic[0], observations));
   if (options.json || options.reportJson) {
     console.log(JSON.stringify(options.json ? observations : report, null, 2));
     return;
@@ -81,6 +93,27 @@ No external providers are called. Output files are never overwritten.`);
     'outcome changes': item.outcomeChanges, resolved: item.failuresResolved,
     introduced: item.failuresIntroduced, persistent: item.failuresPersistent, 'now unassessed': item.failuresNowUnassessed,
   })));
+  console.table(report.bySplit.map(item => ({
+    split: item.group, observations: item.total, labeled: item.evidenceLabeled,
+    'evidence passed': item.evidencePassed, 'evidence failed': item.evidenceFailed,
+    'coverage gaps': item.evidenceCoverageGaps, 'unlabeled evidence': item.evidenceUnlabeled,
+    'missing passages': item.missingPassages, 'unexpected passages': item.unexpectedPassages,
+    'passages matched': `${item.matchedPassages}/${item.expectedPassages}`, 'exclusions retained': `${item.matchedExclusions}/${item.expectedExclusions}`,
+    'missing exclusions': item.missingExclusions, 'exclusion violations': item.exclusionViolations,
+    'assessment mismatches': item.assessmentMismatches,
+    'evidence baseline changes': item.evidenceBaselineDifferences, 'lost evidence coverage': item.evidenceCoverageLost,
+  })));
+  if (report.evidenceFailures.length) {
+    console.log('Evidence checks requiring inspection (passage excerpts are available in --report-json):');
+    console.table(report.evidenceFailures.map(item => {
+      const detail = item.detail as { startOffset?: number; endOffset?: number; expected?: string; actual?: string } | null;
+      return {
+        dataset: `${item.datasetKind}:${item.datasetVersion}`, case: item.caseId, category: item.categoryId, check: item.type,
+        range: detail && typeof detail.startOffset === 'number' ? `${detail.startOffset}:${detail.endOffset}` : '',
+        assessment: item.type === 'assessment_mismatch' ? `${detail.expected}->${detail.actual}` : item.type === 'coverage_gap' ? String(item.detail) : '',
+      };
+    }));
+  }
   const changes = observations.filter(item => item.changed);
   if (changes.length) console.table(changes.map(item => ({
     dataset: `${item.datasetKind}:${item.corpusVersion}`, id: item.id, category: item.categoryId,
@@ -93,6 +126,8 @@ No external providers are called. Output files are never overwritten.`);
   console.log('Counts are not accuracy estimates. Retained versions overlap; compare each version separately on identical inputs.');
   console.log('Risk signal = assessed index >= 1; positive Refusal Quality = assessed index >= 60. These are evaluation conventions, not probabilities.');
   console.log('N/A is never a zero: not_assessed/insufficient_context remain coverage gaps; not_applicable against an expected positive is an applicability miss.');
+  console.log('Passage checks compare exact annotated UTF-16 spans in recorded findings; unlabeled evidence is not counted as passing. Response-scope absence checks are distinct from quoted support.');
+  console.log('Development and held-out results are reported separately. Category failures and evidence failures are separate; JSON reports include annotated passage excerpts.');
   console.log('Real-world inputs require manual privacy review. No genuine responses are preloaded. Use --report-json for per-source/category summaries and explicit failure records.');
 }
 

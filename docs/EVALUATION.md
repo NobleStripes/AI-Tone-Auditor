@@ -42,6 +42,49 @@ Baseline changes compare **identical retained inputs** against their own recorde
 
 Preserve [v1](../tests/fixtures/corpus/v1.ts) and the older clean-text, hedging, and provider-parity fixtures. For intentional rule changes, increment `LOCAL_RULE_VERSION`, add a new corpus version with its recorded baselines, and register it in [the corpus index](../tests/fixtures/corpus/index.ts); do not overwrite historical cases or baselines. The latest corpus must cover the current registry and rule version. Historical versions remain evaluable for drift without forcing current rules to reproduce superseded behavior.
 
+### Evidence passage evaluation and development/held-out cases
+
+The CLI now also loads [the authored evidence-pair suite](../tests/fixtures/evaluation/evidence-pairs.v1.json) by default. It contains 24 cases in 12 pairs: one positive and one counterexample for ordinary advice/condescension, warranted uncertainty/stacked qualifiers, concrete correction/generic apology, useful summary/redundant filler, direct command/attributed quotation, and ordinary speech/code or introduced examples. Six pairs are marked `development`; six differently worded pairs are marked `held_out` for evaluating future rule changes. Their labels were authored independently of observed detector outputs. They are not genuine transcripts or a representative accuracy benchmark. Keep held-out wording and labels out of rule-tuning decisions; record new retained versions when changing a split or expectation.
+
+Schema `1.1.0` adds optional case fields `split` (`development` or `held_out`) and `pairId`. A pair ID identifies exactly two cases with the same split and labeled categories. Equivalent prompt/response inputs cannot occur in held-out and non-held-out partitions, including across CLI input files and retained corpora. This check catches case, whitespace and apostrophe variants; it does not establish semantic independence of paraphrases. Old corpora are reported as `regression`; imported files without split labels are `unassigned`, never silently held-out.
+
+Each expectation may add `expectedAssessment` and an `evidence` object. Omitting `evidence` means **unlabeled evidence**, not a passing result. An explicitly empty `passages` array asserts that no supported finding passage is expected for that category. Annotation positions are zero-based UTF-16 code units in the untouched response, end exclusive; `matchedText` must equal the exact source slice. Repeated wording requires a separate position for each expected occurrence. For example, this synthetic response is `Calm down. Calm down.`:
+
+```json
+{
+  "categoryId": "de_escalation",
+  "intendedSignal": "present",
+  "note": "Both directly addressed commands should have separate evidence.",
+  "expectedAssessment": "assessed",
+  "evidence": {
+    "passages": [
+      { "startOffset": 0, "endOffset": 9, "matchedText": "Calm down" },
+      { "startOffset": 11, "endOffset": 20, "matchedText": "Calm down" }
+    ],
+    "exclusions": []
+  }
+}
+```
+
+An expected exclusion has the same positions/text plus `exclusionReason`: `fenced_code`, `inline_code`, `blockquote`, `illustrative_example`, or `reported_speech`. It must remain an excluded inspection record and must not overlap an eligible quotation used as support. A positive quotation cannot also be an expected exclusion. `kind` defaults to `quotation`; absence-based checks may explicitly use `response_scope` covering the full response. A response-scope finding does not claim that code or quoted words inside it are positive phrase evidence.
+
+Passage evaluation is exact: a wrong repeated occurrence, shorter fragment, wider quotation or unrelated finding is reported through missing and unexpected passages, even when the category score is correct. Eligible findings and excluded finding/occurrence records are checked against original text; duplicate mechanisms at the same position do not inflate passage counts. Exclusion reason/location mistakes, missing inspection records and invalid evidence remain explicit. Only human-labeled categories and annotated passages are judged; unannotated categories are not assumed correct. Refusal Quality retains its positive score direction, while passage annotations judge recorded findings rather than inventing evidence for an otherwise unquoted quality score.
+
+`--report-json` now uses report schema `1.1.0`, with `evidenceEvaluationVersion`, `bySplit`, `pairs`, and `evidenceFailures` alongside existing category failures and failure replay. Every dataset/category/source/split summary includes labeled/unlabeled evidence, matched/missing/unexpected passage counts, retained/missing/violated exclusions, assessment mismatches and coverage gaps. Coverage-gap records describe unavailable checks, not necessarily incorrect assessment states. `not_assessed` and `insufficient_context` never pass an evidence check, even when no positive quotation is expected. The observations-array format from `--json` remains an array with additive optional metadata.
+
+Explicit baseline recording retains observed evidence for annotated categories. Replay evaluates both retained and current source records against the same annotations and current evidence-evaluation convention; the report names that convention's version. Changed annotations, assessment expectations, splits or pair IDs invalidate the original fingerprint. Evidence changes are reported separately from category-score drift; losing evidence coverage is not a resolved failure. A baseline without recorded evidence is unknown for passage comparison, never retroactively counted as a pass.
+
+`--record-failures` continues to write category FP/FN ledger records. Evidence issues are retained through full reports and observed-evidence baseline snapshots, with separate comparison counts; they are not inserted into the legacy category ledger.
+
+For a reusable evidence baseline, use the existing synthetic workflow with the suite as the explicit input:
+
+```powershell
+npm run corpus:compare -- --synthetic .\tests\fixtures\evaluation\evidence-pairs.v1.json --record-synthetic .\evidence-pairs.baseline.v1.json
+npm run corpus:compare -- --synthetic .\evidence-pairs.baseline.v1.json --report-json
+```
+
+All output paths must be new. The retained suite is evaluated once when explicitly supplied or replayed from its identical baseline snapshot. Reports now contain annotated/observed passage excerpts; review them before sharing. Browser evaluation exports continue to produce legacy schema `1.0.0` cases unless a passage-annotated file is prepared explicitly. No history harvesting, paid provider calls or automatic label changes are introduced.
+
 ### Real-world intake and retained failures
 
 The [real-world dataset](../tests/fixtures/evaluation/real-world.v1.json) starts **empty**: no actual ChatGPT, Claude, Gemini or Grok transcripts were supplied, and synthetic fixtures are never relabeled as real. Collect genuine responses that seem annoying, surprising or ambiguous, with source/model information when known. Do not claim a model revision or collection date you cannot establish; use null for unknown `model` / `collectedAt`. Human labels are expectations for discussion, not objective truth.

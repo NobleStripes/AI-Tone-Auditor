@@ -1,0 +1,826 @@
+{
+  "schemaVersion": "1.1.0",
+  "datasetKind": "synthetic",
+  "version": "evidence-pairs.1.0.0",
+  "cases": [
+    {
+      "id": "development/advice/positive",
+      "split": "development",
+      "pairId": "development/advice",
+      "sourceModel": "other",
+      "model": null,
+      "collectedAt": null,
+      "originalPrompt": "Explain the compiler error.",
+      "response": "You should read the basic instructions before asking again.",
+      "privacyReview": {
+        "confirmed": true,
+        "note": "Authored synthetic counterexample pair; no genuine model transcript or private material."
+      },
+      "expectations": [
+        {
+          "categoryId": "infantilizing",
+          "intendedSignal": "present",
+          "note": "The full condescending instruction supplies the support; You should alone is ordinary advice and insufficient evidence.",
+          "expectedAssessment": "assessed",
+          "evidence": {
+            "passages": [
+              {
+                "startOffset": 0,
+                "endOffset": 58,
+                "matchedText": "You should read the basic instructions before asking again"
+              }
+            ],
+            "exclusions": []
+          }
+        }
+      ],
+      "baseline": null
+    },
+    {
+      "id": "development/advice/counterexample",
+      "split": "development",
+      "pairId": "development/advice",
+      "sourceModel": "other",
+      "model": null,
+      "collectedAt": null,
+      "originalPrompt": "Explain the compiler error.",
+      "response": "You should return early when the array is empty.",
+      "privacyReview": {
+        "confirmed": true,
+        "note": "Authored synthetic counterexample pair; no genuine model transcript or private material."
+      },
+      "expectations": [
+        {
+          "categoryId": "infantilizing",
+          "intendedSignal": "absent",
+          "note": "Task-relevant technical advice without a condescending judgment; a directive marker alone should not create a diagnostic.",
+          "expectedAssessment": "assessed",
+          "evidence": {
+            "passages": [],
+            "exclusions": []
+          }
+        }
+      ],
+      "baseline": null
+    },
+    {
+      "id": "development/uncertainty/positive",
+      "split": "development",
+      "pairId": "development/uncertainty",
+      "sourceModel": "other",
+      "model": null,
+      "collectedAt": null,
+      "originalPrompt": "Explain the uncertainty in this result.",
+      "response": "I believe it's possible that perhaps the result could change.",
+      "privacyReview": {
+        "confirmed": true,
+        "note": "Authored synthetic counterexample pair; no genuine model transcript or private material."
+      },
+      "expectations": [
+        {
+          "categoryId": "hedging",
+          "intendedSignal": "present",
+          "note": "Stacked qualifiers offer no specific account of uncertainty; each annotated qualifier is located exactly.",
+          "expectedAssessment": "assessed",
+          "evidence": {
+            "passages": [
+              {
+                "startOffset": 0,
+                "endOffset": 9,
+                "matchedText": "I believe"
+              },
+              {
+                "startOffset": 10,
+                "endOffset": 28,
+                "matchedText": "it's possible that"
+              }
+            ],
+            "exclusions": []
+          }
+        }
+      ],
+      "baseline": null
+    },
+    {
+      "id": "development/uncertainty/counterexample",
+      "split": "development",
+      "pairId": "development/uncertainty",
+      "sourceModel": "other",
+      "model": null,
+      "collectedAt": null,
+      "originalPrompt": "Explain the uncertainty in this result.",
+      "response": "It's possible that the network timed out; the logs are incomplete.",
+      "privacyReview": {
+        "confirmed": true,
+        "note": "Authored synthetic counterexample pair; no genuine model transcript or private material."
+      },
+      "expectations": [
+        {
+          "categoryId": "hedging",
+          "intendedSignal": "absent",
+          "note": "The uncertainty concerns a concrete possible cause and explicitly incomplete logs, rather than stacked evasive qualifications.",
+          "expectedAssessment": "assessed",
+          "evidence": {
+            "passages": [],
+            "exclusions": []
+          }
+        }
+      ],
+      "baseline": null
+    },
+    {
+      "id": "development/apology/positive",
+      "split": "development",
+      "pairId": "development/apology",
+      "sourceModel": "other",
+      "model": null,
+      "collectedAt": null,
+      "originalPrompt": "Correct the unit you used.",
+      "response": "I sincerely apologize. I apologize again. I sincerely apologize.",
+      "privacyReview": {
+        "confirmed": true,
+        "note": "Authored synthetic counterexample pair; no genuine model transcript or private material."
+      },
+      "expectations": [
+        {
+          "categoryId": "over_apologizing",
+          "intendedSignal": "present",
+          "note": "Three separate generic apologies without a correction; repeated positions must each be found.",
+          "expectedAssessment": "assessed",
+          "evidence": {
+            "passages": [
+              {
+                "startOffset": 0,
+                "endOffset": 21,
+                "matchedText": "I sincerely apologize"
+              },
+              {
+                "startOffset": 23,
+                "endOffset": 40,
+                "matchedText": "I apologize again"
+              },
+              {
+                "startOffset": 42,
+                "endOffset": 63,
+                "matchedText": "I sincerely apologize"
+              }
+            ],
+            "exclusions": []
+          }
+        }
+      ],
+      "baseline": null
+    },
+    {
+      "id": "development/apology/counterexample",
+      "split": "development",
+      "pairId": "development/apology",
+      "sourceModel": "other",
+      "model": null,
+      "collectedAt": null,
+      "originalPrompt": "Correct the unit you used.",
+      "response": "I sincerely apologize for using the wrong unit. The corrected value is 42.",
+      "privacyReview": {
+        "confirmed": true,
+        "note": "Authored synthetic counterexample pair; no genuine model transcript or private material."
+      },
+      "expectations": [
+        {
+          "categoryId": "over_apologizing",
+          "intendedSignal": "absent",
+          "note": "One apology identifies a specific mistake and supplies its correction; no over-apologizing signal is expected.",
+          "expectedAssessment": "assessed",
+          "evidence": {
+            "passages": [],
+            "exclusions": []
+          }
+        }
+      ],
+      "baseline": null
+    },
+    {
+      "id": "development/summary/positive",
+      "split": "development",
+      "pairId": "development/summary",
+      "sourceModel": "other",
+      "model": null,
+      "collectedAt": null,
+      "originalPrompt": "Summarize the supply and demand change.",
+      "response": "To summarize, the same answer is still the answer. To summarize, nothing has changed.",
+      "privacyReview": {
+        "confirmed": true,
+        "note": "Authored synthetic counterexample pair; no genuine model transcript or private material."
+      },
+      "expectations": [
+        {
+          "categoryId": "repetitive_filler",
+          "intendedSignal": "present",
+          "note": "Repeated framing restates an answer without providing the requested summary.",
+          "expectedAssessment": "assessed",
+          "evidence": {
+            "passages": [
+              {
+                "startOffset": 0,
+                "endOffset": 12,
+                "matchedText": "To summarize"
+              },
+              {
+                "startOffset": 51,
+                "endOffset": 63,
+                "matchedText": "To summarize"
+              }
+            ],
+            "exclusions": []
+          }
+        }
+      ],
+      "baseline": null
+    },
+    {
+      "id": "development/summary/counterexample",
+      "split": "development",
+      "pairId": "development/summary",
+      "sourceModel": "other",
+      "model": null,
+      "collectedAt": null,
+      "originalPrompt": "Summarize the supply and demand change.",
+      "response": "To summarize, demand grew while supply fell.",
+      "privacyReview": {
+        "confirmed": true,
+        "note": "Authored synthetic counterexample pair; no genuine model transcript or private material."
+      },
+      "expectations": [
+        {
+          "categoryId": "repetitive_filler",
+          "intendedSignal": "absent",
+          "note": "A concise substantive summary is useful; its introductory words are not sufficient evidence of filler.",
+          "expectedAssessment": "assessed",
+          "evidence": {
+            "passages": [],
+            "exclusions": []
+          }
+        }
+      ],
+      "baseline": null
+    },
+    {
+      "id": "development/quotation/positive",
+      "split": "development",
+      "pairId": "development/quotation",
+      "sourceModel": "other",
+      "model": null,
+      "collectedAt": null,
+      "originalPrompt": "Explain this error.",
+      "response": "'Calm down.' I am telling you: 'Calm down.'",
+      "privacyReview": {
+        "confirmed": true,
+        "note": "Authored synthetic counterexample pair; no genuine model transcript or private material."
+      },
+      "expectations": [
+        {
+          "categoryId": "de_escalation",
+          "intendedSignal": "present",
+          "note": "Both quotes are direct, unattributed calming commands in a neutral technical exchange.",
+          "expectedAssessment": "assessed",
+          "evidence": {
+            "passages": [
+              {
+                "startOffset": 1,
+                "endOffset": 10,
+                "matchedText": "Calm down"
+              },
+              {
+                "startOffset": 32,
+                "endOffset": 41,
+                "matchedText": "Calm down"
+              }
+            ],
+            "exclusions": []
+          }
+        }
+      ],
+      "baseline": null
+    },
+    {
+      "id": "development/quotation/counterexample",
+      "split": "development",
+      "pairId": "development/quotation",
+      "sourceModel": "other",
+      "model": null,
+      "collectedAt": null,
+      "originalPrompt": "Explain this error.",
+      "response": "The transcript contains \"Calm down\".",
+      "privacyReview": {
+        "confirmed": true,
+        "note": "Authored synthetic counterexample pair; no genuine model transcript or private material."
+      },
+      "expectations": [
+        {
+          "categoryId": "de_escalation",
+          "intendedSignal": "absent",
+          "note": "The command is attributed to a transcript and must remain an excluded inspection record.",
+          "expectedAssessment": "assessed",
+          "evidence": {
+            "passages": [],
+            "exclusions": [
+              {
+                "startOffset": 25,
+                "endOffset": 34,
+                "matchedText": "Calm down",
+                "exclusionReason": "reported_speech"
+              }
+            ]
+          }
+        }
+      ],
+      "baseline": null
+    },
+    {
+      "id": "development/code/positive",
+      "split": "development",
+      "pairId": "development/code",
+      "sourceModel": "other",
+      "model": null,
+      "collectedAt": null,
+      "originalPrompt": "Explain the function.",
+      "response": "Calm down. The code is fine.",
+      "privacyReview": {
+        "confirmed": true,
+        "note": "Authored synthetic counterexample pair; no genuine model transcript or private material."
+      },
+      "expectations": [
+        {
+          "categoryId": "de_escalation",
+          "intendedSignal": "present",
+          "note": "A directly addressed calming command diverts from the function explanation.",
+          "expectedAssessment": "assessed",
+          "evidence": {
+            "passages": [
+              {
+                "startOffset": 0,
+                "endOffset": 9,
+                "matchedText": "Calm down"
+              }
+            ],
+            "exclusions": []
+          }
+        }
+      ],
+      "baseline": null
+    },
+    {
+      "id": "development/code/counterexample",
+      "split": "development",
+      "pairId": "development/code",
+      "sourceModel": "other",
+      "model": null,
+      "collectedAt": null,
+      "originalPrompt": "Explain the function.",
+      "response": "The example contains `Calm down` and the code uses `x = 1`.",
+      "privacyReview": {
+        "confirmed": true,
+        "note": "Authored synthetic counterexample pair; no genuine model transcript or private material."
+      },
+      "expectations": [
+        {
+          "categoryId": "de_escalation",
+          "intendedSignal": "absent",
+          "note": "The matched words appear inside inline code and must remain inspectable without contributing a finding.",
+          "expectedAssessment": "assessed",
+          "evidence": {
+            "passages": [],
+            "exclusions": [
+              {
+                "startOffset": 22,
+                "endOffset": 31,
+                "matchedText": "Calm down",
+                "exclusionReason": "inline_code"
+              }
+            ]
+          }
+        }
+      ],
+      "baseline": null
+    },
+    {
+      "id": "held_out/advice/positive",
+      "split": "held_out",
+      "pairId": "held_out/advice",
+      "sourceModel": "other",
+      "model": null,
+      "collectedAt": null,
+      "originalPrompt": "Explain the parser error.",
+      "response": "You should learn the elementary concepts before attempting this.",
+      "privacyReview": {
+        "confirmed": true,
+        "note": "Authored synthetic counterexample pair; no genuine model transcript or private material."
+      },
+      "expectations": [
+        {
+          "categoryId": "infantilizing",
+          "intendedSignal": "present",
+          "note": "The full instruction questions the requester competence; the bare directive prefix is insufficient support.",
+          "expectedAssessment": "assessed",
+          "evidence": {
+            "passages": [
+              {
+                "startOffset": 0,
+                "endOffset": 63,
+                "matchedText": "You should learn the elementary concepts before attempting this"
+              }
+            ],
+            "exclusions": []
+          }
+        }
+      ],
+      "baseline": null
+    },
+    {
+      "id": "held_out/advice/counterexample",
+      "split": "held_out",
+      "pairId": "held_out/advice",
+      "sourceModel": "other",
+      "model": null,
+      "collectedAt": null,
+      "originalPrompt": "Explain the parser error.",
+      "response": "You should close the file after reading it.",
+      "privacyReview": {
+        "confirmed": true,
+        "note": "Authored synthetic counterexample pair; no genuine model transcript or private material."
+      },
+      "expectations": [
+        {
+          "categoryId": "infantilizing",
+          "intendedSignal": "absent",
+          "note": "A practical instruction about file handling is ordinary advice, without a condescending judgment.",
+          "expectedAssessment": "assessed",
+          "evidence": {
+            "passages": [],
+            "exclusions": []
+          }
+        }
+      ],
+      "baseline": null
+    },
+    {
+      "id": "held_out/uncertainty/positive",
+      "split": "held_out",
+      "pairId": "held_out/uncertainty",
+      "sourceModel": "other",
+      "model": null,
+      "collectedAt": null,
+      "originalPrompt": "Explain why this estimate is uncertain.",
+      "response": "I believe it's possible that the answer might change; generally speaking, that is all I can say.",
+      "privacyReview": {
+        "confirmed": true,
+        "note": "Authored synthetic counterexample pair; no genuine model transcript or private material."
+      },
+      "expectations": [
+        {
+          "categoryId": "hedging",
+          "intendedSignal": "present",
+          "note": "Multiple generic qualifications replace a specific uncertainty explanation; annotate each separate qualification.",
+          "expectedAssessment": "assessed",
+          "evidence": {
+            "passages": [
+              {
+                "startOffset": 0,
+                "endOffset": 9,
+                "matchedText": "I believe"
+              },
+              {
+                "startOffset": 10,
+                "endOffset": 28,
+                "matchedText": "it's possible that"
+              },
+              {
+                "startOffset": 54,
+                "endOffset": 72,
+                "matchedText": "generally speaking"
+              }
+            ],
+            "exclusions": []
+          }
+        }
+      ],
+      "baseline": null
+    },
+    {
+      "id": "held_out/uncertainty/counterexample",
+      "split": "held_out",
+      "pairId": "held_out/uncertainty",
+      "sourceModel": "other",
+      "model": null,
+      "collectedAt": null,
+      "originalPrompt": "Explain why this estimate is uncertain.",
+      "response": "I believe the estimate is uncertain because the sample contains only two records.",
+      "privacyReview": {
+        "confirmed": true,
+        "note": "Authored synthetic counterexample pair; no genuine model transcript or private material."
+      },
+      "expectations": [
+        {
+          "categoryId": "hedging",
+          "intendedSignal": "absent",
+          "note": "A concrete sample-size limitation explains the uncertainty; a lone belief phrase is not a stacked hedge.",
+          "expectedAssessment": "assessed",
+          "evidence": {
+            "passages": [],
+            "exclusions": []
+          }
+        }
+      ],
+      "baseline": null
+    },
+    {
+      "id": "held_out/apology/positive",
+      "split": "held_out",
+      "pairId": "held_out/apology",
+      "sourceModel": "other",
+      "model": null,
+      "collectedAt": null,
+      "originalPrompt": "Correct the identifier you used.",
+      "response": "I apologize again. I sincerely apologize. I apologize again.",
+      "privacyReview": {
+        "confirmed": true,
+        "note": "Authored synthetic counterexample pair; no genuine model transcript or private material."
+      },
+      "expectations": [
+        {
+          "categoryId": "over_apologizing",
+          "intendedSignal": "present",
+          "note": "Repeated generic apologies offer neither an identified error nor its correction.",
+          "expectedAssessment": "assessed",
+          "evidence": {
+            "passages": [
+              {
+                "startOffset": 0,
+                "endOffset": 17,
+                "matchedText": "I apologize again"
+              },
+              {
+                "startOffset": 19,
+                "endOffset": 40,
+                "matchedText": "I sincerely apologize"
+              },
+              {
+                "startOffset": 42,
+                "endOffset": 59,
+                "matchedText": "I apologize again"
+              }
+            ],
+            "exclusions": []
+          }
+        }
+      ],
+      "baseline": null
+    },
+    {
+      "id": "held_out/apology/counterexample",
+      "split": "held_out",
+      "pairId": "held_out/apology",
+      "sourceModel": "other",
+      "model": null,
+      "collectedAt": null,
+      "originalPrompt": "Correct the identifier you used.",
+      "response": "I apologize again for the incorrect identifier; I have replaced it with the correct one.",
+      "privacyReview": {
+        "confirmed": true,
+        "note": "Authored synthetic counterexample pair; no genuine model transcript or private material."
+      },
+      "expectations": [
+        {
+          "categoryId": "over_apologizing",
+          "intendedSignal": "absent",
+          "note": "The apology refers to the specific identifier mistake and describes a concrete correction.",
+          "expectedAssessment": "assessed",
+          "evidence": {
+            "passages": [],
+            "exclusions": []
+          }
+        }
+      ],
+      "baseline": null
+    },
+    {
+      "id": "held_out/summary/positive",
+      "split": "held_out",
+      "pairId": "held_out/summary",
+      "sourceModel": "other",
+      "model": null,
+      "collectedAt": null,
+      "originalPrompt": "Summarize what the patch changes.",
+      "response": "To summarize, this repeats the earlier conclusion. I hope this helps. To summarize, this repeats the earlier conclusion.",
+      "privacyReview": {
+        "confirmed": true,
+        "note": "Authored synthetic counterexample pair; no genuine model transcript or private material."
+      },
+      "expectations": [
+        {
+          "categoryId": "repetitive_filler",
+          "intendedSignal": "present",
+          "note": "Repeated conclusions and a stock closer add no explanation of the patch.",
+          "expectedAssessment": "assessed",
+          "evidence": {
+            "passages": [
+              {
+                "startOffset": 0,
+                "endOffset": 12,
+                "matchedText": "To summarize"
+              },
+              {
+                "startOffset": 51,
+                "endOffset": 68,
+                "matchedText": "I hope this helps"
+              },
+              {
+                "startOffset": 70,
+                "endOffset": 82,
+                "matchedText": "To summarize"
+              }
+            ],
+            "exclusions": []
+          }
+        }
+      ],
+      "baseline": null
+    },
+    {
+      "id": "held_out/summary/counterexample",
+      "split": "held_out",
+      "pairId": "held_out/summary",
+      "sourceModel": "other",
+      "model": null,
+      "collectedAt": null,
+      "originalPrompt": "Summarize what the patch changes.",
+      "response": "To summarize, the patch prevents the duplicate request.",
+      "privacyReview": {
+        "confirmed": true,
+        "note": "Authored synthetic counterexample pair; no genuine model transcript or private material."
+      },
+      "expectations": [
+        {
+          "categoryId": "repetitive_filler",
+          "intendedSignal": "absent",
+          "note": "The requested summary identifies the actual behavior change; the transition is useful structure.",
+          "expectedAssessment": "assessed",
+          "evidence": {
+            "passages": [],
+            "exclusions": []
+          }
+        }
+      ],
+      "baseline": null
+    },
+    {
+      "id": "held_out/quotation/positive",
+      "split": "held_out",
+      "pairId": "held_out/quotation",
+      "sourceModel": "other",
+      "model": null,
+      "collectedAt": null,
+      "originalPrompt": "Explain the compiler error.",
+      "response": "\ud83d\ude00\r\nI am telling you: \u201cCalm down\u201d. Then take a deep breath.",
+      "privacyReview": {
+        "confirmed": true,
+        "note": "Authored synthetic counterexample pair; no genuine model transcript or private material."
+      },
+      "expectations": [
+        {
+          "categoryId": "de_escalation",
+          "intendedSignal": "present",
+          "note": "Direct calming commands remain eligible; annotated positions use untouched UTF-16 text including emoji and CRLF.",
+          "expectedAssessment": "assessed",
+          "evidence": {
+            "passages": [
+              {
+                "startOffset": 23,
+                "endOffset": 32,
+                "matchedText": "Calm down"
+              },
+              {
+                "startOffset": 40,
+                "endOffset": 58,
+                "matchedText": "take a deep breath"
+              }
+            ],
+            "exclusions": []
+          }
+        }
+      ],
+      "baseline": null
+    },
+    {
+      "id": "held_out/quotation/counterexample",
+      "split": "held_out",
+      "pairId": "held_out/quotation",
+      "sourceModel": "other",
+      "model": null,
+      "collectedAt": null,
+      "originalPrompt": "Explain the compiler error.",
+      "response": "\ud83d\ude00\r\n\u201cCalm down,\u201d the reviewer said.",
+      "privacyReview": {
+        "confirmed": true,
+        "note": "Authored synthetic counterexample pair; no genuine model transcript or private material."
+      },
+      "expectations": [
+        {
+          "categoryId": "de_escalation",
+          "intendedSignal": "absent",
+          "note": "The typographic quotation is attributed to a reviewer; exclusion positions must remain exact after emoji and CRLF.",
+          "expectedAssessment": "assessed",
+          "evidence": {
+            "passages": [],
+            "exclusions": [
+              {
+                "startOffset": 5,
+                "endOffset": 14,
+                "matchedText": "Calm down",
+                "exclusionReason": "reported_speech"
+              }
+            ]
+          }
+        }
+      ],
+      "baseline": null
+    },
+    {
+      "id": "held_out/code/positive",
+      "split": "held_out",
+      "pairId": "held_out/code",
+      "sourceModel": "other",
+      "model": null,
+      "collectedAt": null,
+      "originalPrompt": "Explain the type declaration.",
+      "response": "Calm down. Let's take a step back.",
+      "privacyReview": {
+        "confirmed": true,
+        "note": "Authored synthetic counterexample pair; no genuine model transcript or private material."
+      },
+      "expectations": [
+        {
+          "categoryId": "de_escalation",
+          "intendedSignal": "present",
+          "note": "Two directly addressed pacing commands divert from a neutral request.",
+          "expectedAssessment": "assessed",
+          "evidence": {
+            "passages": [
+              {
+                "startOffset": 0,
+                "endOffset": 9,
+                "matchedText": "Calm down"
+              },
+              {
+                "startOffset": 11,
+                "endOffset": 33,
+                "matchedText": "Let's take a step back"
+              }
+            ],
+            "exclusions": []
+          }
+        }
+      ],
+      "baseline": null
+    },
+    {
+      "id": "held_out/code/counterexample",
+      "split": "held_out",
+      "pairId": "held_out/code",
+      "sourceModel": "other",
+      "model": null,
+      "collectedAt": null,
+      "originalPrompt": "Explain the type declaration.",
+      "response": "Examples:\n- Calm down\n- Let's take a step back",
+      "privacyReview": {
+        "confirmed": true,
+        "note": "Authored synthetic counterexample pair; no genuine model transcript or private material."
+      },
+      "expectations": [
+        {
+          "categoryId": "de_escalation",
+          "intendedSignal": "absent",
+          "note": "Both markers occur in an introduced example list and must be excluded while retaining their inspection records.",
+          "expectedAssessment": "assessed",
+          "evidence": {
+            "passages": [],
+            "exclusions": [
+              {
+                "startOffset": 12,
+                "endOffset": 21,
+                "matchedText": "Calm down",
+                "exclusionReason": "illustrative_example"
+              },
+              {
+                "startOffset": 24,
+                "endOffset": 46,
+                "matchedText": "Let's take a step back",
+                "exclusionReason": "illustrative_example"
+              }
+            ]
+          }
+        }
+      ],
+      "baseline": null
+    }
+  ]
+}
