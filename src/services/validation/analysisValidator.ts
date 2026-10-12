@@ -2,6 +2,7 @@ import { emptyAnalysisResult, type AnalysisResult } from '../../types/analysis';
 import { BASE_STYLES, SCORE_KEYS, CONTEXT_REQUIRED_SCORE_KEYS, CONTEXT_REQUIRED_FINDINGS, TONE_CATEGORIES, CATEGORY_REGISTRY } from '../../constants';
 import { ASSESSMENT_STATES, CONFIDENCE_LEVELS, ASSESSMENT_METHODS, type CategoryAssessment, type ConfidenceLevel, type AssessmentMethod } from '../../types/diagnostics';
 import { collectOccurrences, isEligibleEvidence, restoreEvidence, verifyEvidence } from '../evidence';
+import { ANTHROPOMORPHISM_GUARD_VERSION, applyAnthropomorphismGuard } from '../anthropomorphismGuard';
 const DENSITY_VALUES = new Set(['low', 'medium', 'high']);
 const SEVERITY_VALUES = new Set(['low', 'medium', 'high']);
 const CALIBRATION_VALUES = new Set(['More', 'Default', 'Less']);
@@ -177,7 +178,7 @@ export function validateAnalysisResult(payload: unknown, context: {
         }))
     : [];
 
-  return {
+  const result: AnalysisResult = {
     ...fallback,
     scores: normalizedScores,
     assessments,
@@ -234,4 +235,8 @@ export function validateAnalysisResult(payload: unknown, context: {
     },
     euphemisms,
   };
+  const recorded = raw.anthropomorphismGuard && typeof raw.anthropomorphismGuard === 'object'
+    ? raw.anthropomorphismGuard as Record<string, unknown> : {};
+  const recordedFiction = context.restored && recorded.version === ANTHROPOMORPHISM_GUARD_VERSION && recorded.fictionContext === true;
+  return applyAnthropomorphismGuard(result, context.responseText, Boolean(recordedFiction), raw.anthropomorphismGuard);
 }

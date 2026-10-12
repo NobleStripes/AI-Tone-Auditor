@@ -41,6 +41,17 @@ function formatMarkdown(report: ReturnType<typeof createAuditExport>): string {
     '',
     `> ${result.summary}`,
     '',
+    ...(result.anthropomorphismGuard ? [
+      '## Anthropomorphism safeguard', '',
+      `- **Guard version:** ${result.anthropomorphismGuard.version}`,
+      `- **Source check version:** ${result.anthropomorphismGuard.sourceVersion ?? 'Unavailable'}`,
+      '- **Scope:** explicit wording checks; no consciousness assessment or risk score.',
+      `- **Source checked:** ${result.anthropomorphismGuard.sourceChecked}`,
+      `- **Fiction context recorded:** ${result.anthropomorphismGuard.fictionContext}`,
+      `- **Generated fields withheld:** ${result.anthropomorphismGuard.blockedFields.join(', ') || 'None'}`, '',
+      ...result.anthropomorphismGuard.sourceClaims.map(item =>
+        `- **${item.disposition === 'flagged' ? 'Review claim' : 'Context only'}**: ${JSON.stringify(item.evidence.matchedText)} at UTF-16 [${item.evidence.startOffset}, ${item.evidence.endOffset}). ${item.reason}`), '',
+    ] : []),
     '## Response Diagnostics',
     '',
     'Scores are risk/quality indices, not probabilities. Confidence is qualitative and uncalibrated; lexical-rule scores are heuristic.',

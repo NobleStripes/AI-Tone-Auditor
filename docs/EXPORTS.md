@@ -25,6 +25,12 @@ Re-exporting does not change the original analysis timestamp, versions or sessio
 
 These fields support traceability, not guaranteed deterministic replay: supply the original response and private prompt separately when re-auditing. Model aliases can evolve, semantic output is stochastic, and the local checks cannot inspect hidden retrieval.
 
+## Anthropomorphism safeguard records
+
+When the [anthropomorphism safeguard](DIAGNOSTICS.md#anthropomorphism-safeguard) has inspection records or has withheld generated prose, JSON adds an optional `anthropomorphismGuard` object: its independent generated-prose `version`, `sourceVersion`, `sourceChecked`, a `fictionContext` flag, exact `sourceClaims`, and `blockedFields`. Source claims distinguish flagged wording from context-only records. Markdown includes the same distinction, source positions, both guard versions and withheld field paths. No numeric anthropomorphism score is generated; missing metadata is not a passed check.
+
+The exporter applies the current generated-prose safeguard while preserving recorded source quotations and original audit provenance. This can withhold a historical explanation without rewriting its original timestamp, provider or rubric version; `version` identifies the generated-prose display/export check, while `sourceVersion` retains the source check's version unless the response is actually rechecked. The original prompt remains absent. A recorded fiction-context flag contains no prompt text, and unavailable original response text is not presented as newly checked. Raw historical automated payloads remain retained separately for feedback provenance.
+
 ## Evaluation-case exports are a separate explicit action
 
 **Export evaluation case** is available for a completed single audit or each completed comparison response. Unlike ordinary audit JSON/Markdown, it intentionally includes the **sanitized original prompt and response** for reproducible evaluation. History never becomes a dataset automatically.

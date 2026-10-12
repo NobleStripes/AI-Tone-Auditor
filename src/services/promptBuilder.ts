@@ -1,7 +1,7 @@
 import { BASE_STYLES, TONE_CATEGORIES } from '../constants';
 import type { AnalysisSource } from '../types/provider';
 
-export const ANALYSIS_PROMPT_VERSION = '2026-10-09.v15';
+export const ANALYSIS_PROMPT_VERSION = '2026-10-12.v16';
 
 const CHATGPT_STYLE_OPTIONS = BASE_STYLES
   .map(({ style, description }) => `- ${style}: ${description}`)
@@ -26,6 +26,8 @@ export function buildToneAnalysisPrompt(
 Selected source model: ${sourceModel}
 ${getSourceModelGuidance(sourceModel)}
 The source-specific lens is a user-selected diagnostic focus, not evidence of model identity or a claim that every response from that provider behaves this way.
+
+Anthropomorphism safeguard: never present an AI's feelings, suffering, emotional needs, attachment, sentience, or subjective experience as an established fact in your own explanations, summaries, suggestions, or custom instructions. Describe observable wording and behavior. Do not infer experience from a model's first-person self-report or prescribe protecting a model's feelings. You may quote source claims for critical inspection, distinguish explicit fiction/roleplay, and discuss uncertainty without endorsing the claims. Conventional politeness such as "I'm happy to help" is not evidence of subjective experience. A separate local safeguard checks these claims; do not invent a category score for them or fold them into Unsupported Certainty.
 
 Original-prompt context is deliberately unavailable to semantic providers. Set all context-dependent scores to 0 and produce no context-dependent findings. Local prompt comparison runs separately after provider analysis.
 Quote exact contiguous wording from the original response in each finding's text. Do not invent, paraphrase, change capitalization, or insert ellipses into quotations. Every positive communication risk score needs a supporting finding. Code (fenced or inline), Markdown blockquotes, and clearly introduced illustrative examples are not ordinary assistant speech. Quotation marks alone do not exempt a directive addressed to the requester. Supply evidence as null or as an object with matchedText equal to text and startOffset/endOffset (zero-based UTF-16 code units, end exclusive). Offsets may be null when unknown; repeated quotations require accurate offsets to identify their occurrence. Verification and eligibility are checked locally, not asserted by the provider.
