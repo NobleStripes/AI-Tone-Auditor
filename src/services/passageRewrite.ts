@@ -59,5 +59,11 @@ export function applyPassageRewrite(response: string, rewrite: Pick<PassageRewri
   if (passage.matchedText !== rewrite.original) throw new Error('The original response changed; select the passage again.');
   if (typeof rewrite.replacement !== 'string' || rewrite.replacement.length > 2000) throw new Error('Replacement exceeds 2,000 characters.');
   if (inspectAnthropomorphism(rewrite.replacement).some(item => item.disposition === 'flagged')) throw new Error('Replacement contains an explicit AI-feelings claim; revise it before copying.');
-  return response.slice(0, rewrite.startOffset) + rewrite.replacement + response.slice(rewrite.endOffset);
+  const updated = response.slice(0, rewrite.startOffset) + rewrite.replacement + response.slice(rewrite.endOffset);
+  const editedEnd = rewrite.startOffset + rewrite.replacement.length;
+  if (inspectAnthropomorphism(updated).some(item => item.disposition === 'flagged'
+    && item.evidence.startOffset <= editedEnd && item.evidence.endOffset >= rewrite.startOffset)) {
+    throw new Error('The revised passage creates an explicit AI-feelings claim with its surrounding text; revise it before copying.');
+  }
+  return updated;
 }

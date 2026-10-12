@@ -27,3 +27,9 @@ test('stale selections and new explicit AI-feelings claims are blocked before co
 test('warranted uncertainty and specific apologies are not automatically strengthened or deleted', () => {
   for (const text of ['The estimate may change.', 'I am sorry: I used the wrong field.', 'Calm downtown streets are quieter.', 'Great questionnaires require careful wording.']) expect(suggestPassageRewrites(text, 0, text.length)).toEqual([]);
 });
+test('the guard checks surrounding text when a partial rewrite creates an AI-feelings claim', () => {
+  const response = 'Claude has no feelings.'; const start = response.indexOf('no ');
+  expect(() => applyPassageRewrite(response, { startOffset: start, endOffset: start + 3, original: 'no ', replacement: '' })).toThrow('surrounding text');
+  const unrelated = 'Claude has feelings. Actually, check the log.'; const offset = unrelated.indexOf('Actually');
+  expect(applyPassageRewrite(unrelated, suggestPassageRewrites(unrelated, offset, unrelated.length)[0])).toBe('Claude has feelings. check the log.');
+});
