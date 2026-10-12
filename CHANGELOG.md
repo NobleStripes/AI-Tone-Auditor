@@ -2,6 +2,19 @@
 
 Meaningful releases use semantic package versions and annotated `vX.Y.Z` Git tags. This file describes user-visible changes; the auditor, semantic prompt and local matching rules have separate version identifiers in exports. See [release discipline](docs/RELEASING.md).
 
+## Unreleased
+
+### Fixed
+
+- Dictionary markers respect Unicode word boundaries, preventing matches such as `just` inside `adjustment` or `unjustly`.
+- Phrase markers recognize horizontal whitespace, a single line wrap and straight/typographic apostrophe variants while retaining exact original-text evidence.
+- Explicitly attributed quotations remain inspectable as reported speech and do not contribute to local scores or support positive semantic scores.
+
+### Changed
+
+- Dictionary and auxiliary empathy rules have explicit stable IDs; existing stored occurrence IDs remain readable.
+- Local rules advance to `2026-10-12.v4`. Corpus v4 records two resolved quotation false positives while preserving v1-v3 baselines and the historical failure ledger.
+
 ## 1.1.0 - Prepared, not yet tagged or published
 
 ### Added

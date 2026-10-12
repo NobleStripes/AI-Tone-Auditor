@@ -8,6 +8,19 @@ describe('TriggerHighlighter', () => {
     expect(screen.getByText(/The array has three elements/)).toBeInTheDocument();
   });
 
+  test('does not highlight a marker embedded in adjustment', () => {
+    render(<TriggerHighlighter text="The adjustment changes the return type." />);
+    expect(screen.queryByRole('button', { name: /Inspect passage/ })).not.toBeInTheDocument();
+  });
+
+  test('shows attributed quotations as excluded inspection records', () => {
+    render(<TriggerHighlighter text={'The transcript contains "Calm down".'} />);
+    const passage = screen.getByRole('button', { name: 'Inspect passage: Calm down' });
+    expect(passage).not.toHaveClass('bg-red-500/20');
+    fireEvent.click(passage);
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Excluded: Inside a quotation explicitly attributed');
+  });
+
   test('highlights known trigger phrases', () => {
     render(<TriggerHighlighter text="As an AI language model, I will help you." />);
     // The trigger phrase should be rendered in a highlighted span

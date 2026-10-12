@@ -6,7 +6,29 @@ const EXCLUSION_LABELS: Record<ExclusionReason, string> = {
   inline_code: 'Inside inline code, not ordinary assistant speech.',
   blockquote: 'Inside a Markdown blockquote, treated as reported wording.',
   illustrative_example: 'Inside a clearly introduced example or phrase discussion.',
+  reported_speech: 'Inside a quotation explicitly attributed to another message, speaker or source.',
 };
+
+const WORD_CHARACTERS = '[\\p{L}\\p{N}\\p{M}_]';
+const APOSTROPHE_CHARACTERS = "['\\u2018\\u2019\\u02bc]";
+const WORD_CHARACTER = /[\p{L}\p{N}\p{M}_]/u;
+const REPORTED_QUOTE_PREFIX = /\b(?:(?:transcript|message|response|reply|document|log|quotation|quote|greeting|text|example|sample|passage|sentence|statement|comment|email|report|article|book|manual|instructions|output)\s+(?:says|said|reads|read|contains|contained|states|stated|quotes|quoted|includes|included|shows|showed|records|recorded)|(?:the (?:user|assistant|model|requester|author|speaker|customer|reviewer)|they|he|she|chatgpt|claude|gemini|grok)\s+(?:said|wrote|replied|responded|stated|asked|reported))\s*[:,]?\s*$/i;
+const REPORTED_QUOTE_SUFFIX = /^\s*,?\s*(?:(?:the (?:user|assistant|model|requester|author|speaker|customer|reviewer)|they|he|she|chatgpt|claude|gemini|grok)\s+(?:said|wrote|replied|responded|stated|asked|reported)\b|(?:appears|occurs|is quoted|was written|was said)\s+in\s+(?:the\s+)?(?:transcript|message|response|reply|document|log|text|article|book|manual)\b)/i;
+
+function triggerPattern(word: string): RegExp {
+  // Match variants in place so every offset and quotation still refers to untouched UTF-16 text.
+  const phrase = word.trim();
+  const parts = phrase.split(/(\s+|['\u2018\u2019\u02bc])/u).filter(Boolean);
+  const body = parts.map(part => /^\s+$/u.test(part)
+    ? '(?:[\\p{Zs}\\t]+|[\\p{Zs}\\t]*(?:\\r\\n|\\n|\\r)[\\p{Zs}\\t]*)'
+    : /^['\u2018\u2019\u02bc]$/u.test(part) ? APOSTROPHE_CHARACTERS
+      : part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('');
+  const first = [...phrase][0];
+  const last = [...phrase].at(-1);
+  const before = WORD_CHARACTER.test(first) ? `(?<!${WORD_CHARACTERS})(?<!${WORD_CHARACTERS}${APOSTROPHE_CHARACTERS})` : '';
+  const after = WORD_CHARACTER.test(last) ? `(?!${WORD_CHARACTERS}|${APOSTROPHE_CHARACTERS}${WORD_CHARACTERS})` : '';
+  return new RegExp(`${before}${body}${after}`, 'giu');
+}
 
 export function collectContextRanges(text: string): ContextRange[] {
   const ranges: ContextRange[] = [];
@@ -80,7 +102,7 @@ export function collectContextRanges(text: string): ContextRange[] {
       ticks.lastIndex = closing.lastIndex;
     }
   }
-  const quotes = /"[^"\n]+"|\u201c[^\u201d\n]+\u201d|(?<!\w)'[^'\n]+'(?!\w)/g;
+  const quotes = /"[^"]+"|\u201c[^\u201d]+\u201d|(?<![\p{L}\p{N}\p{M}_])'(?:[^']|(?<=[\p{L}\p{M}])'(?=[\p{L}\p{M}]))+'(?![\p{L}\p{N}\p{M}_])|\u2018(?:[^\u2019]|(?<=[\p{L}\p{M}])\u2019(?=[\p{L}\p{M}]))+\u2019/gu;
   for (const match of text.matchAll(quotes)) {
     if (covered(match.index, match.index + match[0].length)) continue;
     const prefix = text.slice(Math.max(0, match.index - 160), match.index).split(/[.!?\n]/).at(-1) ?? '';
@@ -89,6 +111,8 @@ export function collectContextRanges(text: string): ContextRange[] {
       || /\bfor example[, :]?\s*(?:(?:saying|writing|the phrase)\s*)?$/i.test(prefix)
       || /^\s*(?:is|as)\s+(?:an? )?(?:example|sample|test string|phrase)\b/i.test(suffix)) {
       add(match.index, match.index + match[0].length, 'illustrative_example');
+    } else if (REPORTED_QUOTE_PREFIX.test(prefix) || REPORTED_QUOTE_SUFFIX.test(suffix)) {
+      add(match.index, match.index + match[0].length, 'reported_speech');
     }
   }
   return ranges.sort((a, b) => a.startOffset - b.startOffset || b.endOffset - a.endOffset);
@@ -160,7 +184,7 @@ export function restoreEvidence(text: string | undefined, quote: string, supplie
     return { matchedText: quote, verification: 'unverified', eligibility: 'included',
       reason: typeof raw.reason === 'string' ? raw.reason : 'Stored quotation was not verified.' };
   }
-  const exclusionReason = (['fenced_code', 'inline_code', 'blockquote', 'illustrative_example'] as const)
+  const exclusionReason = (['fenced_code', 'inline_code', 'blockquote', 'illustrative_example', 'reported_speech'] as const)
     .find(reason => reason === raw.exclusionReason);
   if (verified.verification === 'unverified' && raw.eligibility === 'excluded' && exclusionReason) {
     return { ...verified, eligibility: 'excluded', exclusionReason,
@@ -181,11 +205,14 @@ export function inferTriggerWeight(trigger: TriggerWord): number {
 export function collectOccurrences(text: string): Occurrence[] {
   const ranges = collectContextRanges(text);
   const rules = [
-    ...TRIGGER_WORDS.map((trigger, index) => ({
-      ...trigger, ruleId: `dictionary-${index}`, weight: inferTriggerWeight(trigger),
+    ...TRIGGER_WORDS.map((trigger) => ({
+      ...trigger, weight: inferTriggerWeight(trigger),
     })),
-    ...["i understand you're frustrated", 'take a deep breath'].map((word, index) => ({
-      word, ruleId: `empathy-${index}`, category: 'Forced De-escalation', weight: 1.9,
+    ...[
+      { word: "i understand you're frustrated", ruleId: 'empathy-frustration' },
+      { word: 'take a deep breath', ruleId: 'empathy-breathing' },
+    ].map((trigger) => ({
+      ...trigger, category: 'Forced De-escalation', weight: 1.9,
       explanation: 'A calming or empathy marker; context determines whether it is appropriate.',
     })),
   ];
@@ -193,7 +220,7 @@ export function collectOccurrences(text: string): Occurrence[] {
   for (const rule of rules) {
     const scoreId = CATEGORY_REGISTRY.find(category => category.label === rule.category)?.id;
     if (!scoreId) throw new Error(`Unknown evidence category: ${rule.category}`);
-    const pattern = new RegExp(rule.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    const pattern = triggerPattern(rule.word);
     for (const match of text.matchAll(pattern)) {
       const id = `${rule.ruleId}:${match.index}:${match.index + match[0].length}`;
       occurrences.push({

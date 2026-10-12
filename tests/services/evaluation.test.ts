@@ -75,10 +75,11 @@ test('corpus counts preserve ambiguity, coverage gaps, explicit traps and applic
   expect(summary.paraphrasesUnassessed).toBe(1);
   expect(summary.applicabilityMisses).toBe(2);
   expect(summary.baselineComparisons).toBe(75);
-  expect(summary.baselineDifferences).toBe(4);
+  expect(summary.baselineDifferences).toBe(6);
   expect(observations.filter(item => item.changed).map(item => item.id)).toEqual([
+    'gaslighting/false_positive_trap',
     'infantilizing/false_positive_trap', 'hedging/false_positive_trap',
-    'dismissive/false_positive_trap', 'over_apologizing/false_positive_trap',
+    'dismissive/false_positive_trap', 'sycophancy/false_positive_trap', 'over_apologizing/false_positive_trap',
   ]);
   expect(summary.knownPositivesDetected + summary.falseNegatives
     + observations.filter(item => item.intendedSignal === 'present' && item.outcome === 'unassessed').length).toBe(summary.knownPositives);
@@ -91,11 +92,11 @@ test('failure IDs and metadata are explicit and retain actual N/A states', async
   const observations = await evaluateCorpus(CORPUS_V2);
   const failures = collectFailures(observations);
   expect(new Set(failures.map(item => item.id)).size).toBe(failures.length);
-  const fp = failures.find(item => item.categoryId === 'gaslighting' && item.type === 'false_positive');
+  const fp = failures.find(item => item.categoryId === 'karen_trigger' && item.type === 'false_positive');
   expect(fp).toMatchObject({
     datasetKind: 'synthetic', datasetVersion: '2.0.0', sourceModel: 'other', sourceModelVersion: null,
     auditorVersion: AUDITOR_VERSION, localRuleVersion: LOCAL_RULE_VERSION,
-    expected: { signal: 'absent', signalThreshold: 1 }, actual: { status: 'assessed', score: 27 },
+    expected: { signal: 'absent', signalThreshold: 1 }, actual: { status: 'assessed', score: 21 },
     analysisProvider: { providerId: 'local', model: 'rules-v1' },
   });
   const fn = failures.find(item => item.categoryId === 'grounding_avoidance');
@@ -108,7 +109,7 @@ test('old failures replay as persistent, resolved or unassessed without counting
   const observations = await evaluateCorpus(CORPUS_V2);
   const failures = collectFailures(observations);
   expect(replayFailures(failures, observations).every(item => item.status === 'persistent')).toBe(true);
-  const failure = failures[0];
+  const failure = failures.find(item => item.type === 'false_positive');
   const original = observations.find(item => item.inputHash === failure.inputHash);
   const resolved = { ...original, current: { status: 'assessed' as const, score: 0 }, outcome: 'avoided' as const };
   expect(replayFailures([failure], [resolved])[0]).toMatchObject({ status: 'resolved', changed: true });
@@ -226,7 +227,7 @@ test('CLI creates a reusable local snapshot and never overwrites it', async () =
     const first = run('--record-failures', output, '--report-json');
     expect(first.status, first.stderr).toBe(0);
     const report = JSON.parse(first.stdout);
-    expect(report.summary.total).toBe(225);
+    expect(report.summary.total).toBe(300);
     expect(report.replay.length).toBeGreaterThan(0);
     const saved = await readFile(output, 'utf8');
     expect(parseFailureLedger(JSON.parse(saved)).failures).toEqual(report.failures);

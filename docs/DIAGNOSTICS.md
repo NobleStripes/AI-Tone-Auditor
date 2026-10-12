@@ -34,6 +34,10 @@ These are heuristic or model-derived language signals, not calibrated probabilit
 
 ## Exact passages, examples, and quotation verification
 
+Dictionary markers respect Unicode word boundaries: `just` inside `adjustment` or `unjustly` is not a match. Phrase matching accepts spaces/tabs, a single line wrap and straight/typographic apostrophe variants. The matcher operates on the original response, preserving exact quotations and UTF-16 positions. It does not join phrases across blank paragraphs or intervening code.
+
+Explicit attribution such as `The transcript contains "calm down"`, `The assistant wrote "calm down"`, or `"calm down," the reviewer said` excludes the quotation as **reported speech**. Its occurrence remains inspectable with a distinct reason and contributes no local score. A verified semantic quotation from that excluded passage cannot support a positive communication score. Directly addressed wording such as `I am telling you: "calm down"` remains eligible. Attribution uses conservative lexical patterns; unsupported or ambiguous attribution is not automatically exempt.
+
 New findings can include `evidence` with `startOffset`, `endOffset`, and `matchedText`. Positions use zero-based JavaScript UTF-16 code units in the untouched response; the end is exclusive. A verified passage must exactly equal the source slice. Verification establishes that wording exists, not that its interpretation, intent, or factual content is correct.
 
 Local analysis retains every rule occurrence, including repetitions and excluded matches, in `occurrences`. Eligible repeats each contribute their rule weight; scores still round after summing and cap at 100. The detector, counts, and dictionary highlighter use the same records. Auxiliary empathy markers and contextual comparison markers also have source records; contextual fixed indices are not repetition-weighted.

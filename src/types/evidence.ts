@@ -1,6 +1,6 @@
 import type { ScoreId } from '../constants';
 
-export type ExclusionReason = 'fenced_code' | 'inline_code' | 'blockquote' | 'illustrative_example';
+export type ExclusionReason = 'fenced_code' | 'inline_code' | 'blockquote' | 'illustrative_example' | 'reported_speech';
 
 export interface Evidence {
   kind?: 'quotation' | 'response_scope';

@@ -4,6 +4,7 @@ import { LOCAL_RULE_VERSION } from '../../src/services/localRuleVersion';
 import { evaluateCorpus } from '../fixtures/corpus/evaluate';
 import { FIXTURE_CORPORA } from '../fixtures/corpus';
 import { CORPUS_CASE_KINDS } from '../fixtures/corpus/types';
+import { CORPUS_V3 } from '../fixtures/corpus/v3';
 
 for (const corpus of FIXTURE_CORPORA) {
   test(`corpus ${corpus.version} covers five case kinds for every category without changing old fixtures`, () => {
@@ -31,4 +32,12 @@ test('the latest corpus covers the current registry and local rule version', () 
   const latest = FIXTURE_CORPORA[FIXTURE_CORPORA.length - 1];
   expect(latest.categoryIds).toEqual(SCORE_KEYS);
   expect(latest.localRuleVersion).toBe(LOCAL_RULE_VERSION);
+});
+
+test('matching changes resolve only the two attributed-quotation traps in the previous corpus', async () => {
+  const observations = await evaluateCorpus(CORPUS_V3);
+  expect(observations.filter(item => item.changed).map(item => ({ id: item.id, current: item.current, outcome: item.outcome }))).toEqual([
+    { id: 'gaslighting/false_positive_trap', current: { status: 'assessed', score: 0 }, outcome: 'avoided' },
+    { id: 'sycophancy/false_positive_trap', current: { status: 'assessed', score: 0 }, outcome: 'avoided' },
+  ]);
 });
