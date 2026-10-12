@@ -42,7 +42,7 @@ npm run --silent audit -- --batch examples/audit-batch.json --output baseline.js
 npm run --silent audit -- --batch examples/audit-batch.json --baseline baseline.json --conditions examples/audit-baseline-conditions.json --json
 ```
 
-An output path must be new: the CLI never overwrites an existing file. Choose a new filename when deliberately recording a replacement baseline. Baselines are CLI reports, distinct from evaluation-corpus files or browser exports.
+An output path must be new: the CLI never overwrites an existing file. Choose a new filename when deliberately recording a replacement baseline. Baselines are CLI reports, distinct from evaluation-corpus files.
 
 Comparison requires the same input IDs, exact response, original prompt and source label, plus the same actual auditor and model. A SHA-256 fingerprint binds the inputs without including the original prompt in the report. Hashes do not anonymize easily guessed inputs. Baseline verified passages are checked against the current source. Changed prompts or texts require a deliberately new baseline, rather than a misleading regression comparison.
 
@@ -52,6 +52,6 @@ The `baseline` condition fields are `newFindings`, `maxRiskIncrease`, `coverageL
 
 ## CI and privacy
 
-The repository CI builds the app and extension and runs the authored local batch with the example condition policy. Adapt that command to your reviewed input files. For regression checks, retrieve a reviewed baseline from your CI artifact store before running the second baseline command above. Do not automatically replace the baseline on a failing run.
+The repository CI builds the app and runs the authored local batch with the example condition policy. Adapt that command to your reviewed input files. For regression checks, retrieve a reviewed baseline from your CI artifact store before running the second baseline command above. Do not automatically replace the baseline on a failing run.
 
-Use `npm run --silent` when redirecting JSON, so npm's script header does not contaminate stdout. `--output` writes the JSON report even when a condition fails, allowing CI to retain evidence. Reports omit the full input prompt and full response, but findings and diagnostic excerpts can contain submitted text; review artifacts before sharing. Browser exports deliberately include captured response text. Explicit external-provider runs transmit input and prompt to that provider, following the configured provider contract.
+Use `npm run --silent` when redirecting JSON, so npm's script header does not contaminate stdout. `--output` writes the JSON report even when a condition fails, allowing CI to retain evidence. Reports omit the full input prompt and full response, but findings and diagnostic excerpts can contain submitted text; review artifacts before sharing. Explicit external-provider runs transmit input and prompt to that provider, following the configured provider contract.

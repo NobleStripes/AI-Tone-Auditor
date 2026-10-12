@@ -44,8 +44,5 @@ jobs:
       - name: Production build
         run: npm run build
 
-      - name: Browser extension build
-        run: npm run build:extension
-
       - name: Configured local audit example
         run: npm run --silent audit -- --batch examples/audit-batch.json --conditions examples/audit-conditions.json --json

@@ -127,7 +127,7 @@ function expectation(value: unknown, path: string, response: string, extended: b
 function recordedAudit(value: unknown, fixture: Pick<RealWorldCase, 'expectations' | 'originalPrompt' | 'response' | 'sourceModel' | 'model' | 'split' | 'pairId'>,
   path: string, extended: boolean, hashInput?: InputHasher): RecordedAudit | null {
   if (value === null) return null;
-  if (!hashInput) throw new Error(`${path}: baseline fingerprint verification is required; browser exports must use a null baseline.`);
+  if (!hashInput) throw new Error(`${path}: baseline fingerprint verification is required; interactive evaluation cases must use a null baseline.`);
   const raw = object(value, path);
   fields(raw, ['auditorVersion', 'promptVersion', 'localRuleVersion', 'analyzedAt', 'analysisProvider', 'results'], path);
   const provider = object(raw.analysisProvider, `${path}.analysisProvider`);
