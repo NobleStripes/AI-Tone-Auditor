@@ -36,6 +36,7 @@ import { RecommendationCard } from './components/RecommendationCard';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ExportButton } from './components/ExportButton';
 import { FindingList } from './components/FindingList';
+import { AnthropomorphismNotice } from './components/AnthropomorphismNotice';
 import { PersonalizationProfile } from './components/PersonalizationProfile';
 import { ResponseDiagnostics } from './components/ResponseDiagnostics';
 import { ComparisonWorkspace } from './components/ComparisonWorkspace';
@@ -523,6 +524,7 @@ function AuditApp() {
                         <AlertTriangle className="w-3 h-3" /> Pattern Detection Findings
                       </h2>
                       <div className="space-y-3">
+                        <AnthropomorphismNotice result={result} onNavigate={evidence => setSelectedEvidence({ ...evidence })} />
                         <FindingList result={result} onNavigate={evidence => setSelectedEvidence({ ...evidence })} />
                         <MissedSignalFeedback />
                       </div>

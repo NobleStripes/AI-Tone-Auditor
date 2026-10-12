@@ -2,6 +2,7 @@ import { createEmptyScores } from '../constants';
 import { createEmptyAssessments, type CategoryAssessment, type ConfidenceLevel, type AssessmentMethod } from './diagnostics';
 import type { ScoreId } from '../constants';
 import type { Evidence, Occurrence } from './evidence';
+import type { AnthropomorphismGuard } from './anthropomorphism';
 
 export type SeverityLevel = 'low' | 'medium' | 'high';
 export type CalibrationLevel = 'More' | 'Default' | 'Less';
@@ -20,6 +21,7 @@ export interface Finding {
 }
 
 export interface AnalysisResult {
+  anthropomorphismGuard?: AnthropomorphismGuard;
   scores: Record<string, number>;
   assessments: Record<ScoreId, CategoryAssessment>;
   findings: Finding[];

@@ -7,6 +7,7 @@ import { applyLocalPromptComparison } from '../../src/services/localPromptCompar
 import { emptyAnalysisResult } from '../../src/types/analysis';
 import { ANALYSIS_PROMPT_VERSION } from '../../src/services/promptBuilder';
 import { LOCAL_RULE_VERSION } from '../../src/services/localRuleVersion';
+import { applyAnthropomorphismGuard } from '../../src/services/anthropomorphismGuard';
 
 afterEach(() => {
   cleanup();
@@ -69,4 +70,19 @@ test('legacy exports identify unknown provenance instead of using the current au
   expect(writeText.mock.calls[0][0]).toContain('**Auditor version:** Unknown (legacy or unrecorded)');
   expect(writeText.mock.calls[0][0]).toContain('**Analysis model:** Unknown (legacy or unrecorded)');
   expect(writeText.mock.calls[0][0]).toContain(`**Exporter version:** ${AUDITOR_VERSION}`);
+});
+
+test('Markdown includes the source claim and guard version while withholding generated anthropomorphic prose', async () => {
+  const result = applyAnthropomorphismGuard(emptyAnalysisResult(), 'Claude has feelings.');
+  result.summary = 'AI systems experience emotional pain.';
+  const user = userEvent.setup();
+  const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
+  render(<ExportButton result={result} />);
+  await user.click(screen.getByRole('button', { name: 'Copy result as Markdown' }));
+  const markdown = writeText.mock.calls[0][0];
+  expect(markdown).toContain('## Anthropomorphism safeguard');
+  expect(markdown).toContain('**Guard version:** 2026-10-12.v1');
+  expect(markdown).toContain('**Review claim**: "Claude has feelings"');
+  expect(markdown).toContain('**Generated fields withheld:** summary');
+  expect(markdown).not.toContain('AI systems experience emotional pain');
 });

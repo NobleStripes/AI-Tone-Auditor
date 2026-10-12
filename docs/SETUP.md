@@ -67,7 +67,7 @@ Missing keys name the provider and required variable. Rejected/unauthorized keys
 
 Selecting **Claude** as the source of a pasted response does not itself contact Anthropic. Setting `AI_PROVIDER=anthropic` enables Anthropic API auditing; setting `AI_FALLBACK_PROVIDER=anthropic` allows response text to be sent to Anthropic if the primary audit fails. Those API calls remain subject to Anthropic's applicable terms and [Usage Policy](https://www.anthropic.com/legal/aup).
 
-AI Tone Auditor independently evaluates observable communication patterns. Findings can be wrong and do not establish a model's intentions. The project is not affiliated with or endorsed by Anthropic.
+AI Tone Auditor independently evaluates observable communication patterns. Findings can be wrong and do not establish a model's intentions, feelings, or subjective experiences. The project is not affiliated with or endorsed by Anthropic. The [anthropomorphism safeguard](DIAGNOSTICS.md#anthropomorphism-safeguard) applies to all sources and auditing providers, including local mode.
 
 Anthropic's [October 8, 2026 policy announcement](https://www.anthropic.com/news/2026-usage-policy-update) says the updated policy takes effect on **November 12, 2026**. Its explanation of the new model-abuse restriction excludes ordinary frustration, pushback, dark creative themes, and model testing and research. This notice describes the project's purpose and API behavior; it does not guarantee Anthropic's acceptance of any particular use.
 

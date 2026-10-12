@@ -4,6 +4,7 @@ import { CATEGORY_REGISTRY, CONTEXT_REQUIRED_FINDINGS } from '../constants';
 import type { CategoryAssessment } from '../types/diagnostics';
 import { collectContextRanges, eligibleText, evidenceAt, verifyEvidence } from './evidence';
 import type { Evidence } from '../types/evidence';
+import { applyAnthropomorphismGuard, requestsFiction } from './anthropomorphismGuard';
 
 const SOURCE_REQUEST_PATTERN = /\b(?:cite (?:your )?sources?|include citations?|provide (?:sources|references)|with sources|based on the (?:provided|attached|supplied) (?:source|document|evidence)|use the (?:provided|attached|supplied) (?:source|document|evidence))\b/i;
 const RESEARCH_REQUEST_PATTERN = /(?:^|[,;:]|\b(?:please|then|also|and|can you|could you|would you|will you|you must|you need to|i (?:want|need) you to|i(?:'m| am) asking you to)\s+)\s*(?:search (?:the )?(?:web|internet|online)\b|look (?:this|that|it) up\b|look up\b(?!\s+(?:tables?|functions?|keys?|values?)\b)|verify (?:the )?(?:current|latest|up-to-date)\s+(?:\w+\s+){0,2}(?:information|facts|details|rate|version|release|status|price|policy|law|data)\b)/i;
@@ -142,7 +143,7 @@ export function applyLocalPromptComparison(
   const occurrences = analysis.occurrences?.filter(item => !CONTEXT_REQUIRED_FINDINGS.has(item.category.toLowerCase()));
   const result = { ...analysis, scores, assessments, findings, ...(occurrences ? { occurrences } : {}) };
   if (!prompt || !response.trim()) {
-    return result;
+    return applyAnthropomorphismGuard(result, response, requestsFiction(prompt));
   }
 
   const responseText = response;
@@ -277,5 +278,5 @@ export function applyLocalPromptComparison(
     retainExcludedMatches(result, response, 'Needless Escalation', TONE_POLICING_PATTERN);
   }
 
-  return result;
+  return applyAnthropomorphismGuard(result, response, requestsFiction(prompt));
 }
