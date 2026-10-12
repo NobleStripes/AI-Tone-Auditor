@@ -1,6 +1,6 @@
 import { ANALYSIS_RESULT_JSON_SCHEMA } from '../analysisSchema';
 import { buildToneAnalysisPrompt } from '../promptBuilder';
-import { validateAnalysisResult } from '../validation/analysisValidator';
+import { validateProviderAnalysisResult } from '../validation/providerAnalysisValidator';
 import type { AIProvider, AnalyzeToneInput } from '../../types/provider';
 import { ProviderHttpError, requireApiKey } from './providerErrors';
 
@@ -54,6 +54,7 @@ export const geminiProvider: AIProvider = {
 
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', {
       method: 'POST',
+      signal: input.signal,
       headers: {
         'Content-Type': 'application/json',
         'x-goog-api-key': apiKey,
@@ -78,7 +79,7 @@ export const geminiProvider: AIProvider = {
 
     const payload = (await response.json()) as GeminiInteractionResponse;
     try {
-      return validateAnalysisResult(JSON.parse(readOutputText(payload)), { assessmentMethod: 'semantic', responseText: input.text });
+      return validateProviderAnalysisResult(JSON.parse(readOutputText(payload)), input.text);
     } catch (error) {
       console.error('Failed to parse Gemini analysis result', error);
       throw new Error('Gemini provider failed to return valid analysis data');

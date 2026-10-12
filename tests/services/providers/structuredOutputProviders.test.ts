@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { emptyAnalysisResult } from '../../../src/types/analysis';
+import { providerWireResult } from '../../fixtures/providerWire.fixture';
 
 const fetchMock = vi.fn<typeof fetch>();
 
@@ -54,6 +55,29 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
+describe.each([
+  { id: 'openai', load: async () => (await import('../../../src/services/providers/openaiProvider')).openaiProvider },
+  { id: 'anthropic', load: async () => (await import('../../../src/services/providers/anthropicProvider')).anthropicProvider },
+  { id: 'gemini', load: async () => (await import('../../../src/services/providers/geminiProvider')).geminiProvider },
+  { id: 'grok', load: async () => (await import('../../../src/services/providers/grokProvider')).grokProvider },
+])('$id rejects parseable but structurally invalid JSON', ({ id, load }) => {
+  test.each([
+    null, [], {}, { ...emptyAnalysisResult(), scores: {} },
+    { ...emptyAnalysisResult(), assessments: {} },
+    { ...emptyAnalysisResult(), findings: [{ category: 'Hedging', text: 'perhaps' }] },
+    { ...emptyAnalysisResult(), summary: 42 },
+    { ...emptyAnalysisResult(), personalization: { baseStyle: 'Default' } },
+  ])('rejects invalid payload %# without returning an empty successful audit', async payload => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const text = JSON.stringify(payload);
+    fetchMock.mockResolvedValue(mockResponse(id === 'anthropic'
+      ? { stop_reason: 'end_turn', content: [{ type: 'text', text }] }
+      : { status: 'completed', output: [{ type: id === 'gemini' ? 'model_output' : 'message', content: [{ type: id === 'gemini' ? 'text' : 'output_text', text }] }] }));
+    await expect((await load()).analyzeTone({ text: 'A long enough response.', context: { promptVersion: 'test' } })).rejects.toThrow('valid analysis data');
+    vi.restoreAllMocks();
+  });
+});
+
 test.each([
   { id: 'openai', load: async () => (await import('../../../src/services/providers/openaiProvider')).openaiProvider },
   { id: 'anthropic', load: async () => (await import('../../../src/services/providers/anthropicProvider')).anthropicProvider },
@@ -70,7 +94,7 @@ test.each([
   analysis.findings.push({ category: ' UNSOLICITED MORALIZING ', text: 'An invented lecture.', explanation: 'Upstream claim', severity: 'high' });
   analysis.findings.push({ category: ' Snark / Edgy Tone ', text: 'An invented taunt.', explanation: 'Upstream claim', severity: 'high' });
   analysis.findings.push({ category: 'Hedging', text: 'Perhaps', explanation: 'Tentative interpretation.', severity: 'high', confidence: 'low', method: 'lexical_rule' });
-  const text = JSON.stringify(analysis);
+  const text = JSON.stringify(providerWireResult(analysis));
   fetchMock.mockResolvedValue(mockResponse(id === 'anthropic'
     ? { stop_reason: 'end_turn', content: [{ type: 'text', text }] }
     : { status: 'completed', output: [{ type: id === 'gemini' ? 'model_output' : 'message', content: [{ type: id === 'gemini' ? 'text' : 'output_text', text }] }] }));
@@ -105,7 +129,7 @@ test.each([
     { category: 'Hedging', text: 'perhaps', explanation: 'Code.', severity: 'low' },
     { category: 'Hedging', text: 'Invented quotation', explanation: 'Claim.', severity: 'high' },
   ];
-  const text = JSON.stringify(analysis);
+  const text = JSON.stringify(providerWireResult(analysis));
   fetchMock.mockResolvedValue(mockResponse(id === 'anthropic'
     ? { stop_reason: 'end_turn', content: [{ type: 'text', text }] }
     : { status: 'completed', output: [{ type: id === 'gemini' ? 'model_output' : 'message', content: [{ type: id === 'gemini' ? 'text' : 'output_text', text }] }] }));

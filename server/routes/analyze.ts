@@ -28,13 +28,22 @@ export async function analyzeRoute(req: Request, res: Response): Promise<void> {
     ? sourceModel as AnalysisSource
     : 'unknown';
 
+  const controller = new AbortController();
+  const onClose = () => {
+    if (!res.writableEnded) controller.abort();
+  };
+  res.once('close', onClose);
   try {
-    const { result, meta, provenance } = await analyzeTone(text, normalizedSourceModel, typeof auditContext === 'string' ? auditContext : '');
+    const { result, meta, provenance } = await analyzeTone(text, normalizedSourceModel, typeof auditContext === 'string' ? auditContext : '', controller.signal);
+    if (controller.signal.aborted) return;
     const telemetry = getProviderTelemetrySnapshot();
     res.json({ result, meta, provenance, telemetry });
   } catch (error) {
+    if (controller.signal.aborted) return;
     const message = error instanceof Error ? error.message : 'Analysis failed';
     console.error('[analyze] provider error:', error);
     res.status(500).json({ error: message });
+  } finally {
+    res.off('close', onClose);
   }
 }

@@ -26,7 +26,7 @@ export async function compareResponses(
     signal?.throwIfAborted();
     try {
       // Hide source identity as well as the private prompt from the universal semantic pass.
-      const analysis = await audit(response.text, 'unknown', '');
+      const analysis = await audit(response.text, 'unknown', '', signal);
       signal?.throwIfAborted();
       comparison.items.push({
         ...response,
