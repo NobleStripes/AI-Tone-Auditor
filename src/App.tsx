@@ -650,6 +650,9 @@ function AuditApp() {
       </div>
 
       {/* Footer Status Bar */}
+      <p className="border-t border-zinc-800 bg-zinc-950 px-4 md:px-6 py-3 text-xs text-zinc-400">
+        AI systems are treated as tools here. Emotional wording does not, by itself, establish feelings, suffering, or a need for emotional care.
+      </p>
       <footer className="border-t border-zinc-800 bg-zinc-950 px-4 md:px-6 py-3 md:py-2 flex flex-col md:flex-row items-center justify-between gap-4 text-[10px] font-mono text-zinc-600">
         <div className="flex flex-wrap justify-center gap-4 md:gap-6">
           <AnalysisModeIndicator meta={runtimeReported || telemetry.totalAnalyses > 0 ? runtimeMeta : null} />

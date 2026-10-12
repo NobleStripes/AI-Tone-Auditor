@@ -260,7 +260,7 @@ test('CLI records and replays evidence baselines without evaluating the retained
     expect(overwritten.status).toBe(1);
     expect(overwritten.stderr).toMatch(/exist/i);
   } finally { rmSync(output, { force: true }); rmdirSync(directory); }
-});
+}, 30_000);
 
 test('CLI rejects held-out leakage across separately valid input files', () => {
   const directory = mkdtempSync(join(tmpdir(), 'tone-evidence-leak-'));

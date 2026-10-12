@@ -6,6 +6,7 @@ Meaningful releases use semantic package versions and annotated `vX.Y.Z` Git tag
 
 ### Added
 
+- An explicit AI feelings disclaimer in the application and documentation: the project treats AI as tools and does not attribute feelings or emotional needs to them; generated emotional language does not establish subjective experience.
 - A provider-independent, unscored anthropomorphism safeguard with exact source passages, context-only exclusions, and explicit withholding of generated auditor claims about AI feelings or subjective experiences. History and audit/comparison exports retain safeguard records and preserve source quotations.
 - Semantic prompt `2026-10-12.v16` requires observable-behavior explanations and avoids endorsing AI emotional self-reports; the safeguard has independent version `2026-10-12.v1` and does not change category-scoring rules.
 - Optional evaluation schema `1.1.0` annotations for exact evidence passages, retained exclusions and expected assessment states; legacy `1.0.0` files and fingerprints remain valid.
