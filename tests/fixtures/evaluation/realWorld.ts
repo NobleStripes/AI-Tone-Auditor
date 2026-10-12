@@ -4,6 +4,8 @@ import { ANALYSIS_PROMPT_VERSION } from '../../../src/services/promptBuilder';
 import { localHeuristicProvider } from '../../../src/services/providers/localHeuristicProvider';
 import { evaluateLocalResponse } from '../corpus/evaluate';
 import { classifyOutcome, hashInput, signalThreshold } from './metrics';
+import { evaluationPartition } from '../../../src/services/evaluationConventions';
+import { evaluateEvidence, observeEvidence } from '../../../src/services/evaluationEvidence';
 import type { EvaluationObservation, EvaluationDataset } from './types';
 
 export async function evaluateRealWorld(dataset: EvaluationDataset): Promise<EvaluationObservation[]> {
@@ -17,6 +19,13 @@ export async function evaluateRealWorld(dataset: EvaluationDataset): Promise<Eva
       const recorded = fixture.baseline?.results.find(item => item.categoryId === expectation.categoryId);
       const baseline = recorded ? { status: recorded.status, score: recorded.score } : null;
       const threshold = signalThreshold(expectation.categoryId);
+      const evidence = expectation.evidence ? (() => {
+        const observed = observeEvidence(result, expectation.categoryId, fixture.response);
+        const currentEvidence = evaluateEvidence(expectation.evidence, observed, current.status);
+        const baselineEvidence = recorded?.evidence ? evaluateEvidence(expectation.evidence, recorded.evidence, recorded.status) : null;
+        return { observed, current: currentEvidence, baseline: baselineEvidence,
+          changed: baselineEvidence ? JSON.stringify(currentEvidence) !== JSON.stringify(baselineEvidence) : null };
+      })() : undefined;
       observations.push({
         datasetKind,
         corpusVersion: dataset.version,
@@ -25,7 +34,7 @@ export async function evaluateRealWorld(dataset: EvaluationDataset): Promise<Eva
         sourceModel: fixture.sourceModel,
         sourceModelVersion: fixture.model,
         kind: datasetKind === 'synthetic' ? 'synthetic_import' : 'real_world',
-        inputHash: hashInput(fixture.sourceModel, fixture.model, fixture.originalPrompt, fixture.response, expectation),
+        inputHash: hashInput(fixture.sourceModel, fixture.model, fixture.originalPrompt, fixture.response, expectation, evaluationPartition(fixture)),
         intendedSignal: expectation.intendedSignal,
         signalThreshold: threshold,
         baseline,
@@ -41,6 +50,11 @@ export async function evaluateRealWorld(dataset: EvaluationDataset): Promise<Eva
         baselineOutcome: baseline ? classifyOutcome(expectation.intendedSignal, baseline, threshold) : null,
         changed: baseline ? baseline.status !== current.status || baseline.score !== current.score : null,
         note: expectation.note,
+        split: fixture.split ?? 'unassigned',
+        ...(fixture.pairId ? { pairId: fixture.pairId } : {}),
+        ...(expectation.expectedAssessment ? { expectedAssessment: expectation.expectedAssessment,
+          assessmentMatches: current.status === expectation.expectedAssessment } : {}),
+        ...(evidence ? { evidence } : {}),
       });
     }
   }
@@ -56,7 +70,7 @@ export function recordRealWorldBaseline<T extends EvaluationDataset>(dataset: T,
       const first = matches[0];
       if (!first || matches.length !== fixture.expectations.length
         || fixture.expectations.some(expectation => !matches.some(item => item.categoryId === expectation.categoryId
-          && item.inputHash === hashInput(fixture.sourceModel, fixture.model, fixture.originalPrompt, fixture.response, expectation)))) {
+          && item.inputHash === hashInput(fixture.sourceModel, fixture.model, fixture.originalPrompt, fixture.response, expectation, evaluationPartition(fixture))))) {
         throw new Error(`Case ${fixture.id}: missing or mismatched observations; cannot record baseline.`);
       }
       return {
@@ -67,7 +81,8 @@ export function recordRealWorldBaseline<T extends EvaluationDataset>(dataset: T,
           localRuleVersion: first.currentRuleVersion,
           analyzedAt: first.analyzedAt,
           analysisProvider: first.analysisProvider,
-          results: matches.map(item => ({ categoryId: item.categoryId, inputHash: item.inputHash, ...item.current })),
+          results: matches.map(item => ({ categoryId: item.categoryId, inputHash: item.inputHash, ...item.current,
+            ...(item.evidence ? { evidence: item.evidence.observed } : {}) })),
         },
       };
     }),

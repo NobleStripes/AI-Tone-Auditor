@@ -1,9 +1,11 @@
-import { collectFailures, groupSummaries, replayFailures, summarizeObservations } from './metrics';
+import { collectEvidenceFailures, collectFailures, groupSummaries, replayFailures, summarizeObservations } from './metrics';
 import type { EvaluationObservation, FailureLedger, EvaluationDataset } from './types';
+import { EVIDENCE_EVALUATION_VERSION } from '../../../src/services/evaluationEvidence';
 
 export function buildEvaluationReport(observations: EvaluationObservation[], datasets: EvaluationDataset[], ledger: FailureLedger | null) {
   return {
-    schemaVersion: '1.0.0',
+    schemaVersion: '1.1.0',
+    evidenceEvaluationVersion: EVIDENCE_EVALUATION_VERSION,
     evaluatedAt: new Date().toISOString(),
     scope: 'Local heuristic rules only; no semantic provider calls or factual verification.',
     summary: summarizeObservations(observations),
@@ -15,9 +17,17 @@ export function buildEvaluationReport(observations: EvaluationObservation[], dat
     ],
     byCategory: groupSummaries(observations, item => `${item.datasetKind}:${item.corpusVersion}:${item.categoryId}`),
     bySource: groupSummaries(observations, item => `${item.datasetKind}:${item.corpusVersion}:${item.sourceModel}`),
+    bySplit: groupSummaries(observations, item => `${item.datasetKind}:${item.corpusVersion}:${item.split ?? 'unassigned'}`),
+    pairs: [...new Set(observations.flatMap(item => item.pairId ? [`${item.datasetKind}:${item.corpusVersion}:${item.pairId}`] : []))].map(key => ({
+      pair: key,
+      cases: observations.filter(item => item.pairId && `${item.datasetKind}:${item.corpusVersion}:${item.pairId}` === key)
+        .map(item => ({ id: item.id, categoryId: item.categoryId, split: item.split, expected: item.intendedSignal,
+          outcome: item.outcome, evidencePassed: item.evidence?.current.passed ?? null, assessmentMatches: item.assessmentMatches ?? null })),
+    })),
     baselineComparisons: groupSummaries(observations.filter(item => item.baseline !== null),
       item => `${item.datasetKind}:${item.corpusVersion}:${item.baselineRuleVersion}->${item.currentRuleVersion}`),
     failures: collectFailures(observations),
+    evidenceFailures: collectEvidenceFailures(observations),
     replay: ledger ? replayFailures(ledger.failures, observations) : [],
     observations,
   };
