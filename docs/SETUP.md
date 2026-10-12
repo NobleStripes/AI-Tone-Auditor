@@ -63,6 +63,14 @@ Blank/unset fallback disables it; selecting the same provider as the primary als
 
 Missing keys name the provider and required variable. Rejected/unauthorized keys include the provider, HTTP status and key variable; when both configured providers fail, the error retains both failures. Client errors preserve non-JSON `/api/analyze` (and comparison) bodies for debugging, capped at **2,000 characters including the truncation marker**, alongside the HTTP status. Known configured keys are redacted from external-provider error details. Error bodies appear as text, never executable HTML.
 
+### Claude / Anthropic notice
+
+Selecting **Claude** as the source of a pasted response does not itself contact Anthropic. Setting `AI_PROVIDER=anthropic` enables Anthropic API auditing; setting `AI_FALLBACK_PROVIDER=anthropic` allows response text to be sent to Anthropic if the primary audit fails. Those API calls remain subject to Anthropic's applicable terms and [Usage Policy](https://www.anthropic.com/legal/aup).
+
+AI Tone Auditor independently evaluates observable communication patterns. Findings can be wrong and do not establish a model's intentions. The project is not affiliated with or endorsed by Anthropic.
+
+Anthropic's [October 8, 2026 policy announcement](https://www.anthropic.com/news/2026-usage-policy-update) says the updated policy takes effect on **November 12, 2026**. Its explanation of the new model-abuse restriction excludes ordinary frustration, pushback, dark creative themes, and model testing and research. This notice describes the project's purpose and API behavior; it does not guarantee Anthropic's acceptance of any particular use.
+
 ### Deployment
 
 Deploy the frontend and Express API together, or host the API separately and route `/api` to it. A static-only deployment cannot perform audits, including local heuristic audits. Typical flow:
