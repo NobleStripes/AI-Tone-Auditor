@@ -29,10 +29,11 @@ describe('audit history', () => {
     data.findings = [{ category: 'Karen Trigger', text: 'As an AI language model', explanation: 'Saved finding', severity: 'medium' }];
     const restored = parseAuditHistory(JSON.stringify([{ ...entry, data }]))[0];
     expect(restored.data.findings[0].category).toBe('Bureaucratic Stonewalling');
-    expect(restored.data.scores.karen_trigger).toBe(75);
+    expect(restored.data.scores.karen_trigger).toBe(0);
+    expect(restored.data.assessments.karen_trigger.status).toBe('not_assessed');
   });
 
-  test('preserves legacy remediation, evidence and scores across a save/restore cycle', () => {
+  test('withholds unsupported legacy conclusions while preserving the original snapshot across restoration', () => {
     const { stonewallingRemediation, ...personalization } = entry.data.personalization;
     const legacyData = {
       ...entry.data,
@@ -44,13 +45,14 @@ describe('audit history', () => {
       }],
     };
     const restored = parseAuditHistory(JSON.stringify([{ ...entry, data: legacyData }]))[0];
-    expect(restored.data.personalization.stonewallingRemediation).toBe(legacyData.personalization.karenRemediation);
+    expect(restored.data.personalization.stonewallingRemediation).toBe('Withheld pending evidence review.');
     expect(restored.data.personalization).not.toHaveProperty('karenRemediation');
-    expect(restored.data.scores.karen_trigger).toBe(73);
-    expect(restored.data.findings).toEqual([{
-      ...legacyData.findings[0], category: 'Bureaucratic Stonewalling',
-      confidence: 'unknown', method: 'unrecorded',
-    }]);
+    expect(restored.data.scores.karen_trigger).toBe(0);
+    expect(restored.originalResultJson).toBe(JSON.stringify(legacyData));
+    expect(restored.data.findings[0]).toMatchObject({
+      category: 'Bureaucratic Stonewalling', text: 'Calm down', confidence: 'unknown', method: 'unrecorded',
+      explanation: expect.stringContaining('Inspection only'),
+    });
     expect(parseAuditHistory(JSON.stringify([restored]))).toEqual([restored]);
   });
 
@@ -62,16 +64,17 @@ describe('audit history', () => {
       contextAnalysis: { score: 101, heatmap: [null, { text: 'perhaps', density: 'invalid' }] },
       recommendations: [null, { title: 42 }], euphemisms: 'invalid',
     } }]))[0];
-    expect(restored.data.scores.gaslighting).toBe(100);
+    expect(restored.data.scores.gaslighting).toBe(0);
+    expect(restored.data.assessments.gaslighting.status).toBe('not_assessed');
     expect(restored.data.scores.hedging).toBe(0);
     expect(restored.data.scores.unsolicited_moralizing).toBe(0);
     expect(restored.data.findings[0].severity).toBe('low');
-    expect(restored.data.personalization.baseStyle).toBe('Efficient');
+    expect(restored.data.personalization.baseStyle).toBe('Default');
     expect(restored.data.personalization.chatgptCharacteristics.warmth).toBe('Default');
-    expect(restored.data.personalization.customInstructions).toEqual(['Be direct.']);
-    expect(restored.data.contextAnalysis.score).toBe(100);
-    expect(restored.data.contextAnalysis.heatmap[0].density).toBe('low');
-    expect(restored.data.recommendations[0].title).toBe('Recommendation');
+    expect(restored.data.personalization.customInstructions).toEqual([]);
+    expect(restored.data.contextAnalysis.score).toBe(0);
+    expect(restored.data.contextAnalysis.heatmap).toEqual([]);
+    expect(restored.data.recommendations).toEqual([]);
     expect(restored.data.euphemisms).toEqual([]);
   });
 

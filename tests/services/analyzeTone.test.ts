@@ -16,8 +16,13 @@ describe('analysisValidator', () => {
         hedging: 50,
         dismissive: 50,
       },
+      assessments: {
+        ...emptyAnalysisResult().assessments,
+        gaslighting: { status: 'assessed', reason: 'A verified phrase.', confidence: 'medium', method: 'semantic' },
+      },
+      findings: [{ category: 'Gaslighting', text: 'some phrase', explanation: 'A wording signal.', severity: 'high' }],
     };
-    const result = validateAnalysisResult(payload);
+    const result = validateAnalysisResult(payload, { responseText: 'some phrase', assessmentMethod: 'semantic' });
     expect(result.scores.gaslighting).toBe(100);
     expect(result.scores.infantilizing).toBe(0);
   });
@@ -132,13 +137,14 @@ describe('analysisValidator', () => {
     expect(result.findings.map((finding) => finding.category)).toEqual(['Hedging']);
   });
 
-  test('preserves prompt-comparison scores when original prompt context is supplied', () => {
+  test('withholds context scores that have no assessment or evidence even when a prompt is supplied', () => {
     const result = validateAnalysisResult({
       ...emptyAnalysisResult(),
       scores: { ...emptyAnalysisResult().scores, grounding_avoidance: 60 },
     }, { auditContext: 'Use and cite the supplied source.' });
 
-    expect(result.scores.grounding_avoidance).toBe(60);
+    expect(result.scores.grounding_avoidance).toBe(0);
+    expect(result.assessments.grounding_avoidance.status).toBe('insufficient_context');
   });
 });
 

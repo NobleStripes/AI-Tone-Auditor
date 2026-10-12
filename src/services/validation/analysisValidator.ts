@@ -1,7 +1,8 @@
 import { emptyAnalysisResult, type AnalysisResult } from '../../types/analysis';
-import { BASE_STYLES, SCORE_KEYS, CONTEXT_REQUIRED_SCORE_KEYS, CONTEXT_REQUIRED_FINDINGS, TONE_CATEGORIES, CATEGORY_REGISTRY } from '../../constants';
+import { BASE_STYLES, SCORE_KEYS, CONTEXT_REQUIRED_SCORE_KEYS, CONTEXT_REQUIRED_FINDINGS, TONE_CATEGORIES } from '../../constants';
 import { ASSESSMENT_STATES, CONFIDENCE_LEVELS, ASSESSMENT_METHODS, type CategoryAssessment, type ConfidenceLevel, type AssessmentMethod } from '../../types/diagnostics';
-import { collectOccurrences, isEligibleEvidence, restoreEvidence, verifyEvidence } from '../evidence';
+import { collectOccurrences, restoreEvidence, verifyEvidence } from '../evidence';
+import { enforceReportIntegrity } from './reportIntegrity';
 import { ANTHROPOMORPHISM_GUARD_VERSION, applyAnthropomorphismGuard } from '../anthropomorphismGuard';
 const DENSITY_VALUES = new Set(['low', 'medium', 'high']);
 const SEVERITY_VALUES = new Set(['low', 'medium', 'high']);
@@ -79,10 +80,14 @@ export function validateAnalysisResult(payload: unknown, context: {
     ? raw.assessments as Record<string, unknown> : {};
   const assessments = { ...fallback.assessments };
   for (const key of SCORE_KEYS) {
-    if (!hasAuditContext && CONTEXT_REQUIRED_SCORE_KEYS.has(key)) continue;
     const value = rawAssessments[key];
     const assessment = value && typeof value === 'object' ? value as Record<string, unknown> : {};
     let status: CategoryAssessment['status'] = ASSESSMENT_STATES.find((state) => state === assessment.status) ?? 'not_assessed';
+    if (!hasAuditContext && CONTEXT_REQUIRED_SCORE_KEYS.has(key) && status === 'assessed') {
+      assessments[key] = { ...fallback.assessments[key] };
+      continue;
+    }
+    if (!value && !hasAuditContext && CONTEXT_REQUIRED_SCORE_KEYS.has(key)) continue;
     const validScore = typeof scores[key] === 'number' && Number.isFinite(scores[key]);
     if (status === 'assessed' && !validScore) status = 'not_assessed';
     assessments[key] = {
@@ -108,33 +113,18 @@ export function validateAnalysisResult(payload: unknown, context: {
           method: context.assessmentMethod ?? normalizeMethod(item.method),
           rlhfLogic: typeof item.rlhfLogic === 'string' ? item.rlhfLogic : undefined,
           ...(item.evidence || (context.responseText !== undefined && !context.restored) ? {
-            evidence: (context.restored ? restoreEvidence : verifyEvidence)(context.responseText, typeof item.text === 'string' ? item.text : '', item.evidence),
+            evidence: {
+              ...(context.restored || item.method === 'lexical_rule' && context.assessmentMethod !== 'semantic'
+                ? restoreEvidence : verifyEvidence)(context.responseText, typeof item.text === 'string' ? item.text : '', item.evidence),
+              ...(item.evidence && typeof item.evidence === 'object' && 'kind' in item.evidence
+                && item.evidence.kind === 'response_scope' ? { kind: 'response_scope' as const } : {}),
+            },
           } : {}),
           ...(typeof item.occurrenceId === 'string' ? { occurrenceId: item.occurrenceId } : {}),
         }))
         .filter((item) => item.text.trim().length > 0)
         .filter((item) => hasAuditContext || !CONTEXT_REQUIRED_FINDINGS.has(item.category.trim().toLowerCase()))
     : [];
-
-  if (context.assessmentMethod === 'semantic' && !context.restored && context.responseText !== undefined) {
-    for (const category of CATEGORY_REGISTRY.filter(category => category.kind === 'risk' && !category.requiresContext)) {
-      const support = findings.filter(finding => finding.category.trim().toLowerCase() === category.label.toLowerCase()
-        || (category.id === 'dismissive' && finding.category.trim().toLowerCase() === 'dismissive language'));
-      const rejected = support.some(finding => !isEligibleEvidence(finding.evidence));
-      if (normalizedScores[category.id] > 0 && !support.some(finding => isEligibleEvidence(finding.evidence))) {
-        normalizedScores[category.id] = 0;
-        assessments[category.id] = {
-          status: 'not_assessed', confidence: 'unknown', method: 'semantic',
-          reason: 'Positive diagnostic withheld: no eligible, verified quotation supports it. Inspect rejected evidence below.',
-        };
-      } else if (rejected) {
-        assessments[category.id] = {
-          ...assessments[category.id],
-          reason: `${assessments[category.id].reason} Some reported evidence was excluded or unverified; the score magnitude is not independently validated.`,
-        };
-      }
-    }
-  }
 
   const recommendations = Array.isArray(raw.recommendations)
     ? raw.recommendations
@@ -203,8 +193,7 @@ export function validateAnalysisResult(payload: unknown, context: {
           }];
         }),
       } : {}),
-    summary: `${context.assessmentMethod === 'semantic' && !context.restored && findings.some(finding => !isEligibleEvidence(finding.evidence))
-      ? 'Evidence warning: some provider quotations were excluded or could not be verified. The provider interpretation below is not confirmed by those quotations. ' : ''}${typeof raw.summary === 'string' ? raw.summary : fallback.summary}`,
+    summary: typeof raw.summary === 'string' ? raw.summary : fallback.summary,
     overallTone: typeof raw.overallTone === 'string' ? raw.overallTone : fallback.overallTone,
     recommendations,
     personalization: {
@@ -238,5 +227,9 @@ export function validateAnalysisResult(payload: unknown, context: {
   const recorded = raw.anthropomorphismGuard && typeof raw.anthropomorphismGuard === 'object'
     ? raw.anthropomorphismGuard as Record<string, unknown> : {};
   const recordedFiction = context.restored && recorded.version === ANTHROPOMORPHISM_GUARD_VERSION && recorded.fictionContext === true;
-  return applyAnthropomorphismGuard(result, context.responseText, Boolean(recordedFiction), raw.anthropomorphismGuard);
+  const contextWithheld = !hasAuditContext && (
+    [...CONTEXT_REQUIRED_SCORE_KEYS].some(key => toBoundedScore(scores[key]) > 0)
+    || Array.isArray(raw.findings) && raw.findings.some(item => item && typeof item === 'object'
+      && CONTEXT_REQUIRED_FINDINGS.has(normalizeFindingCategory(item.category).trim().toLowerCase())));
+  return enforceReportIntegrity(applyAnthropomorphismGuard(result, context.responseText, Boolean(recordedFiction), raw.anthropomorphismGuard), context.responseText, contextWithheld);
 }

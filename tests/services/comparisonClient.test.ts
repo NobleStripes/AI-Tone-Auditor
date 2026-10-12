@@ -41,7 +41,10 @@ test('single-response client preserves server-captured provenance instead of syn
   vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({
     result, meta, provenance, telemetry: getProviderTelemetrySnapshot(),
   }))));
-  expect(await analyzeTone('A technical answer.', undefined, 'claude')).toEqual({ result, meta, provenance });
+  const output = await analyzeTone('A technical answer.', undefined, 'claude');
+  expect(output).toMatchObject({ meta, provenance });
+  expect(output.result.assessments).toEqual(result.assessments);
+  expect(output.result.occurrences).toEqual([]);
 });
 
 test.each(['upstream unavailable', '<html><body>proxy unavailable</body></html>', '{"error": malformed'])('suppresses non-JSON error bodies (%s)', async (body) => {

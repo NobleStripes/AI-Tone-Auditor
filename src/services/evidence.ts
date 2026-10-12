@@ -175,7 +175,7 @@ export function verifyEvidence(text: string | undefined, quote: string, supplied
 export function restoreEvidence(text: string | undefined, quote: string, supplied: unknown): Evidence {
   const verified = verifyEvidence(text, quote, supplied);
   const raw = supplied && typeof supplied === 'object' ? supplied as Record<string, unknown> : {};
-  if (raw.kind === 'response_scope' && text && quote === text
+  if (raw.kind === 'response_scope' && raw.verification !== 'unverified' && text && quote === text
     && raw.startOffset === 0 && raw.endOffset === text.length) {
     return { kind: 'response_scope', startOffset: 0, endOffset: text.length, matchedText: text,
       verification: 'verified', eligibility: 'included', reason: 'Inspected response scope for an absence-based check, not a positive phrase match.' };

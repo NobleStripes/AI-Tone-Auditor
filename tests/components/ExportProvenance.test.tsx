@@ -1,4 +1,4 @@
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ExportButton } from '../../src/components/ExportButton';
@@ -8,6 +8,7 @@ import { emptyAnalysisResult } from '../../src/types/analysis';
 import { ANALYSIS_PROMPT_VERSION } from '../../src/services/promptBuilder';
 import { LOCAL_RULE_VERSION } from '../../src/services/localRuleVersion';
 import { applyAnthropomorphismGuard } from '../../src/services/anthropomorphismGuard';
+beforeEach(() => { vi.spyOn(window, 'confirm').mockReturnValue(true); });
 
 afterEach(() => {
   cleanup();

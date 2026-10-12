@@ -22,7 +22,7 @@ test('an assessed zero is distinct from a legacy zero with no recorded assessmen
   const legacy = validateAnalysisResult({ scores: { hedging: 0, karen_trigger: 75 } });
   expect(legacy.assessments.hedging.status).toBe('not_assessed');
   expect(legacy.assessments.karen_trigger.confidence).toBe('unknown');
-  expect(legacy.scores.karen_trigger).toBe(75);
+  expect(legacy.scores.karen_trigger).toBe(0);
 });
 
 test('does not assess a missing or non-finite score or accept invalid confidence', () => {
@@ -41,7 +41,7 @@ test('does not assess a missing or non-finite score or accept invalid confidence
   });
   expect(result.assessments.hedging.confidence).toBe('unknown');
   expect(result.assessments.hedging.method).toBe('unrecorded');
-  expect(result.findings[0]).toMatchObject({ severity: 'high', confidence: 'low' });
+  expect(result.findings[0]).toMatchObject({ severity: 'high', confidence: 'unknown', explanation: expect.stringContaining('Inspection only') });
 });
 
 test('missing original prompt invalidates all five contextual assessments, not just scores', () => {

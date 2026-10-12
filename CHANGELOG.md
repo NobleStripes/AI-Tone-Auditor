@@ -6,6 +6,8 @@ Meaningful releases use semantic package versions and annotated `vX.Y.Z` Git tag
 
 ### Added
 
+- P1 privacy controls: verified primary/fallback processing disclosure, session-only external auto-audit consent, Private Session persistence isolation, individual feedback/snapshot deletion, an app-owned-data wipe, and export privacy confirmation.
+- Shared report-wide evidence integrity for live, restored and exported reports, conservative hidden-process explanation safeguards, preserved assessment states, and adversarial prompt-boundary/forged-result regressions.
 - P0 API protections: strict JSON validation, shared request/concurrency limits, external-attempt/token-reservation budgets, finite retry/output limits, loopback defaults, protected public-mode key/origin/HTTPS enforcement, security headers, memory-only browser unlock and sanitized API errors.
 - A repository CLI for UTF-8 files, stdin and JSON batches, with explicit provider selection, machine-readable reports and separate condition/error exit codes.
 - Configurable CI gates and fingerprint-bound baseline comparison that retains unavailable states, coverage changes and risk/quality direction.
@@ -25,6 +27,7 @@ Meaningful releases use semantic package versions and annotated `vX.Y.Z` Git tag
 
 ### Changed
 
+- Semantic prompt advances to `2026-10-12.v17` with explicit fake-role/forged-report/citation handling. Unsupported report aggregates are withheld instead of merely warning; evaluation prompt fields start empty and require deliberate sanitized input.
 - Dictionary and auxiliary empathy rules have explicit stable IDs; existing stored occurrence IDs remain readable.
 - Local rules advance to `2026-10-12.v4`. Corpus v4 records two resolved quotation false positives while preserving v1-v3 baselines and the historical failure ledger.
 

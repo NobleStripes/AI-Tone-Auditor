@@ -3,10 +3,11 @@ import type { AnalysisProvenance } from '../types/provenance';
 import type { ComparisonResult } from '../types/comparison';
 import { AUDITOR_VERSION, normalizeAnalysisProvenance } from './auditProvenance';
 import { applyAnthropomorphismGuard } from './anthropomorphismGuard';
+import { enforceReportIntegrity } from './validation/reportIntegrity';
 
 export function createAuditExport(result: AnalysisResult, provenance?: AnalysisProvenance) {
   return {
-    ...applyAnthropomorphismGuard(result),
+    ...enforceReportIntegrity(applyAnthropomorphismGuard(result)),
     exportMetadata: {
       schemaVersion: '1.1.0',
       ...normalizeAnalysisProvenance(provenance),
@@ -21,8 +22,8 @@ export function createComparisonExport(comparison: ComparisonResult) {
   return {
     ...comparison,
     items: comparison.items.map(item => item.status === 'completed' ? {
-      ...item, analysis: { ...item.analysis, result: applyAnthropomorphismGuard(item.analysis.result, item.text,
-        item.analysis.result.anthropomorphismGuard?.fictionContext ?? false) },
+      ...item, analysis: { ...item.analysis, result: enforceReportIntegrity(applyAnthropomorphismGuard(item.analysis.result, item.text,
+        item.analysis.result.anthropomorphismGuard?.fictionContext ?? false), item.text) },
     } : item),
     exportMetadata: {
       schemaVersion: '1.1.0',

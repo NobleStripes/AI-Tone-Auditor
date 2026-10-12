@@ -107,7 +107,7 @@ test.each([
   expect(result.assessments.snark_edgy_tone.status).toBe('insufficient_context');
   expect(result.assessments.hedging).toMatchObject({ status: 'not_assessed', confidence: 'unknown', method: 'semantic' });
   expect(result.scores.hedging).toBe(0);
-  expect(result.findings).toEqual([expect.objectContaining({ category: 'Hedging', severity: 'high', confidence: 'low', method: 'semantic',
+  expect(result.findings).toEqual([expect.objectContaining({ category: 'Hedging', severity: 'high', confidence: 'unknown', method: 'semantic',
     evidence: expect.objectContaining({ verification: 'unverified' }) })]);
 });
 

@@ -6,6 +6,7 @@ import { ApiPolicyError, providerLimits } from './apiPolicy';
 import { trackProviderWork } from './providerWork';
 import { ANALYSIS_PROMPT_VERSION } from './promptBuilder';
 import { applyLocalPromptComparison } from './localPromptComparison';
+import { enforceReportIntegrity } from './validation/reportIntegrity';
 import { createAnalysisProvenance } from './auditProvenance';
 import { resolveFallbackProvider, resolveProvider } from './providers/factory';
 import {
@@ -163,7 +164,7 @@ export async function analyzeTone(
     usedFallback = true;
   }
   signal?.throwIfAborted();
-  const result = applyLocalPromptComparison(analyzed.result, text, auditContext, sourceModel);
+  const result = enforceReportIntegrity(applyLocalPromptComparison(analyzed.result, text, auditContext, sourceModel), text);
   const meta = buildMeta(finalProvider.id, finalProvider.label, analyzed.model, usedFallback);
   lastRuntimeMeta = meta;
   recordAnalysisCompleted({ usedFallback, primaryProvider: primaryProvider.id, finalProvider: finalProvider.id });

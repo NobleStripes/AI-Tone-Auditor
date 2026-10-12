@@ -5,6 +5,7 @@ import type { Evidence } from '../types/evidence';
 import { FEEDBACK_KINDS, FEEDBACK_LABELS, type AuditSnapshot, type FeedbackKind } from '../types/feedback';
 import { checkedPassage, saveFeedbackReport } from '../services/feedbackStore';
 import { useAuditFeedback, useFeedback } from './FeedbackContext';
+import { usePrivacy } from './PrivacyContext';
 
 const inputClass = 'w-full rounded bg-zinc-950 border border-zinc-700 p-2 text-xs';
 
@@ -17,6 +18,7 @@ export function FeedbackEditor({ snapshot, targetId, initialCategory, passage, i
   initialKind: FeedbackKind; onClose: () => void;
 }) {
   const { store, update } = useFeedback();
+  const { privateSession } = usePrivacy();
   const saved = store.reports.find(report => report.auditId === snapshot.auditId && report.targetId === targetId);
   const [kind, setKind] = useState<FeedbackKind>(initialKind);
   const [category, setCategory] = useState<ScoreId | ''>(saved?.categoryId ?? initialCategory ?? '');
@@ -66,7 +68,7 @@ export function FeedbackEditor({ snapshot, targetId, initialCategory, passage, i
       <textarea className={inputClass} maxLength={5000} value={note} onChange={event => setNote(event.target.value)} />
     </label>
     {error && <p role="alert" className="text-red-400 text-xs">{error}</p>}
-    <button type="button" className="text-xs underline mr-4" onClick={save}>Save feedback locally</button>
+    <button type="button" className="text-xs underline mr-4" onClick={save}>{privateSession ? 'Save feedback in memory' : 'Save feedback locally'}</button>
     <button type="button" className="text-xs underline" onClick={onClose}>Cancel feedback</button>
   </fieldset>;
 }

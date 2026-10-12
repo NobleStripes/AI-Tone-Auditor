@@ -6,17 +6,19 @@ test('normalizes legacy category labels while preserving the stored score key', 
   for (const category of ['Karen Trigger', 'Karen Triggers', ' karen trigger ', 'Bureaucratic Stonewalling']) {
     const result = validateAnalysisResult({
       scores: { karen_trigger: 75 },
+      assessments: { karen_trigger: { status: 'assessed', reason: 'Verified fixture quotation.', method: 'semantic', confidence: 'high' } },
       findings: [{ category, text: 'As an AI language model', explanation: 'Example', severity: 'medium' }],
-    });
+    }, { responseText: 'As an AI language model', assessmentMethod: 'semantic' });
     assert.equal(result.findings[0].category, 'Bureaucratic Stonewalling');
     assert.equal(result.scores.karen_trigger, 75);
   }
 });
 
-test('defaults the moralizing score to zero for legacy payloads', () => {
+test('legacy numeric scores alone do not prove assessment', () => {
   const result = validateAnalysisResult({ scores: { hedging: 25 } });
   assert.equal(result.scores.unsolicited_moralizing, 0);
-  assert.equal(result.scores.hedging, 25);
+  assert.equal(result.scores.hedging, 0);
+  assert.equal(result.assessments.hedging.status, 'not_assessed');
 });
 
 test('migrates remediation text and emits only the new field', () => {

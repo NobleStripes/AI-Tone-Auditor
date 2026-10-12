@@ -1,6 +1,6 @@
 import { webcrypto } from 'node:crypto';
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { emptyAnalysisResult } from '../../src/types/analysis';
 import type { AuditSnapshot } from '../../src/types/feedback';
@@ -11,6 +11,7 @@ import { EvaluationCaseExport } from '../../src/components/EvaluationCaseExport'
 import { FEEDBACK_STORAGE_KEY, parseFeedbackStore } from '../../src/services/feedbackStore';
 import * as download from '../../src/lib/download';
 import { parseSyntheticDataset } from '../../src/services/evaluationValidation';
+import * as evaluationExport from '../../src/services/evaluationExport';
 
 afterEach(() => { cleanup(); localStorage.clear(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 const result = emptyAnalysisResult();
@@ -23,8 +24,8 @@ result.findings = [
 const snapshot: AuditSnapshot = { auditId: 'single:component-test', historyId: 'component-test',
   response: 'Calm down. Calm down.', sourceModel: 'unknown', automatedResultJson: JSON.stringify(result), provenanceJson: null, runtimeMetaJson: null };
 
-function renderControls() {
-  return render(<FeedbackProvider><AuditFeedbackContext.Provider value={{ snapshot, originalPrompt: 'Private in-memory test prompt.' }}>
+function renderControls(auditSnapshot = snapshot) {
+  return render(<FeedbackProvider><AuditFeedbackContext.Provider value={{ snapshot: auditSnapshot, originalPrompt: 'Private in-memory test prompt.' }}>
     <FeedbackStorageControls /><FindingList result={result} onNavigate={() => {}} />
     <MissedSignalFeedback /><EvaluationCaseExport />
   </AuditFeedbackContext.Provider></FeedbackProvider>);
@@ -120,12 +121,30 @@ test('privacy-reviewed download uses exact dataset schema, null baseline/metadat
   await waitFor(() => expect(downloadJson).toHaveBeenCalledTimes(1));
   const dataset = parseSyntheticDataset(downloadJson.mock.calls[0][0]);
   expect(dataset.cases[0]).toMatchObject({
-    originalPrompt: 'Private in-memory test prompt.', response: snapshot.response,
+    originalPrompt: '', response: snapshot.response,
     model: null, collectedAt: null, baseline: null, expectations: [{ categoryId: 'de_escalation', intendedSignal: 'absent' }],
   });
   expect(dataset.cases[0]).not.toHaveProperty('auditId');
   await waitFor(() => expect(parseFeedbackStore(localStorage.getItem(FEEDBACK_STORAGE_KEY)).receipts).toHaveLength(1));
   expect(localStorage.getItem(FEEDBACK_STORAGE_KEY)).not.toContain('Private in-memory');
+  await user.click(screen.getByRole('button', { name: `Delete feedback record: ${snapshot.auditId}` }));
+  expect(parseFeedbackStore(localStorage.getItem(FEEDBACK_STORAGE_KEY))).toMatchObject({ audits: [], reports: [], receipts: [] });
+});
+
+test('deleting a comparison-only snapshot cancels a pending evaluation export without recreating its data', async () => {
+  let finish!: (hash: string) => void;
+  vi.spyOn(evaluationExport, 'evaluationContentHash').mockImplementation(() => new Promise(resolve => { finish = resolve; }));
+  const downloadJson = vi.spyOn(download, 'downloadJson').mockImplementation(() => {});
+  const comparisonSnapshot = { ...snapshot, auditId: 'comparison:one', historyId: undefined };
+  renderControls(comparisonSnapshot);
+  await saveSecondFeedback();
+  const user = await completePreview();
+  await user.click(screen.getByRole('button', { name: 'Download evaluation case' }));
+  await user.click(screen.getByRole('button', { name: `Delete feedback record: ${comparisonSnapshot.auditId}` }));
+  await act(async () => finish('a'.repeat(64)));
+  expect(downloadJson).not.toHaveBeenCalled();
+  expect(screen.getByRole('alert')).toHaveTextContent('canceled');
+  expect(parseFeedbackStore(localStorage.getItem(FEEDBACK_STORAGE_KEY))).toMatchObject({ audits: [], reports: [], receipts: [] });
 });
 
 test('edits invalidate privacy review and full-response labels; cancel never persists a draft', async () => {

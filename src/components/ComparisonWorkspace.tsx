@@ -13,7 +13,7 @@ import { DIAGNOSTIC_GROUPS, formatDiagnosticScore } from '../types/diagnostics';
 import { ResponseDiagnostics } from './ResponseDiagnostics';
 import { ResponseEvidence } from './ResponseEvidence';
 import { ExportButton } from './ExportButton';
-import { downloadJson } from '../lib/download';
+import { confirmReportExport, downloadJson } from '../lib/download';
 import { createComparisonExport } from '../services/exportReport';
 import { normalizeAnalysisProvenance } from '../services/auditProvenance';
 import { AnalysisModeIndicator } from './AnalysisModeIndicator';
@@ -21,6 +21,7 @@ import { ResultSectionNavigation } from './ResultSectionNavigation';
 import { AuditFeedbackContext, FeedbackProvider, FeedbackStorageControls, useFeedback, useOptionalFeedback } from './FeedbackContext';
 import { EvaluationCaseExport } from './EvaluationCaseExport';
 import type { AuditSnapshot } from '../types/feedback';
+import { usePrivacy } from './PrivacyContext';
 
 interface ComparisonWorkspaceProps {
   active: boolean;
@@ -36,6 +37,7 @@ export function ComparisonWorkspace({ active, onBusyChange, onCompleted }: Compa
 
 function ComparisonBody({ active, onBusyChange, onCompleted }: ComparisonWorkspaceProps) {
   const access = useApiAccess();
+  const privacy = usePrivacy();
   const feedback = useFeedback();
   const [batchId, setBatchId] = useState('');
   const [auditedPrompt, setAuditedPrompt] = useState('');
@@ -55,6 +57,7 @@ function ComparisonBody({ active, onBusyChange, onCompleted }: ComparisonWorkspa
     if (!active || access.locked) controller.current?.abort();
   }, [active, access.locked]);
   useEffect(() => () => controller.current?.abort(), []);
+  useEffect(() => privacy.cancelOnChange(() => controller.current?.abort()), [privacy.cancelOnChange]);
 
   const invalidate = () => {
     setComparison(null);
@@ -66,6 +69,7 @@ function ComparisonBody({ active, onBusyChange, onCompleted }: ComparisonWorkspa
   };
   const runComparison = async () => {
     if (access.locked) { setError('Unlock API access before comparing.'); return; }
+    if (!privacy.processing) { setError('Verify data-processing information before comparing.'); return; }
     const validated = validateComparisonRequest({ originalPrompt, responses });
     if (validated.valid === false) {
       setError(validated.error);
@@ -111,7 +115,7 @@ function ComparisonBody({ active, onBusyChange, onCompleted }: ComparisonWorkspa
         <p className="text-xs text-zinc-400">
           Paste 2 to 5 responses. Every response uses the same model-agnostic universal rubric;
           eligible Claude and Grok lenses run locally. No overall ranking is calculated.
-          Response texts go to the configured auditor; the original prompt stays local to the app/server comparison path.
+          Response texts go to the disclosed configured auditor; the original prompt stays on the app/server comparison path.
           Comparison drafts are not saved in audit history.
         </p>
       </div>
@@ -153,7 +157,7 @@ function ComparisonBody({ active, onBusyChange, onCompleted }: ComparisonWorkspa
             setResponses((items) => [...items, { id: `response-${nextId.current++}`, sourceModel: COMPARISON_SOURCES[items.length], text: '' }]);
           }}
           className="px-4 py-2 border border-zinc-700 rounded text-xs disabled:opacity-40">Add response</button>
-        <button disabled={busy || access.locked} onClick={runComparison} className="px-4 py-2 bg-red-600 rounded text-sm disabled:opacity-40">Compare responses</button>
+        <button disabled={busy || access.locked || !privacy.processing} onClick={runComparison} className="px-4 py-2 bg-red-600 rounded text-sm disabled:opacity-40">Compare responses</button>
         {busy && <button onClick={() => controller.current?.abort()} className="text-sm text-zinc-400">Cancel comparison</button>}
         {busy && <p role="status" className="text-xs text-zinc-400">Auditing responses sequentially with the shared rubric...</p>}
       </div>
@@ -176,7 +180,9 @@ function ComparisonBody({ active, onBusyChange, onCompleted }: ComparisonWorkspa
           />
           <div className="flex flex-wrap justify-between items-center gap-3">
             <h3 id="comparison-differences" tabIndex={-1} className="text-lg font-semibold">Observed differences</h3>
-            <button onClick={() => downloadJson(createComparisonExport(comparison), `tone-comparison-${Date.now()}.json`)}
+            <button onClick={() => {
+              if (confirmReportExport(true)) downloadJson(createComparisonExport(comparison), `tone-comparison-${Date.now()}.json`);
+            }}
               className="text-xs px-3 py-2 border border-zinc-700 rounded">Export comparison JSON</button>
           </div>
           <p className="text-xs text-zinc-400">

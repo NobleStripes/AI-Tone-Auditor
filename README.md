@@ -27,6 +27,9 @@ The core intent of this tool is to:
 ## Key Features
 
 - **Optional Semantic Deep Scan**: External providers can interpret subtler tone shifts and bureaucratic patterns beyond the local phrase catalog.
+- **Session privacy and consent**: See the configured primary/fallback recipients before calls, explicitly allow external auto-auditing for the page session, and use Private Session to keep new history and feedback out of browser storage.
+- **Retention and export controls**: Delete individual history/feedback records or all app-owned stored data. Confirm sensitive response material before report export; evaluation prompts start empty.
+- **Report integrity**: Unsupported evidence cannot justify positive risk scores or report-wide conclusions. Non-assessed states remain distinct from assessed zero scores; human feedback never rewrites automated evidence.
 - **Trigger Word Analysis**: Retains individual occurrences with exact positions, separates code/examples from ordinary speech, and scores eligible repetitions.
 - **Exact evidence navigation**: Jump from a finding to its passage and surrounding sentence; inspect excluded matches and unverified semantic quotations without treating them as confirmed evidence. Older history remains readable.
 - **Local human feedback**: Record Supported, False positive, Ambiguous, Wrong category, or an exact selected missed-signal passage without changing automated results.
@@ -42,7 +45,7 @@ The core intent of this tool is to:
 
 ## Getting Started
 
-1. Paste an AI response (at least 10 characters) into the auditor. Auto-audit runs after typing stops once the configured threshold is reached; you can also run an audit manually.
+1. Review the data-processing notice, then paste an AI response (at least 10 characters) into the auditor. Auto-audit runs after typing stops once the configured threshold is reached; external auto-audit additionally requires explicit page-session consent. Manual auditing remains available after processing information is verified.
 2. Use **Jump to** to move between result sections, then review Response Diagnostics and the evidence behind each finding. If you edit the response or audit settings afterward, the app marks the displayed results as belonging to the earlier version.
 3. Review the tone recommendations and custom instructions.
 4. Copy the suggested instructions to tune your AI's system prompt.

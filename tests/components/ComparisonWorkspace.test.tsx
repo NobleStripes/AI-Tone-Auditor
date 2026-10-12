@@ -15,7 +15,12 @@ vi.mock('recharts', () => ({
   ResponsiveContainer: () => null, RadarChart: () => null,
   PolarGrid: () => null, PolarAngleAxis: () => null, Radar: () => null,
 }));
+vi.mock('../../src/components/PrivacyContext', async importOriginal => {
+  const original = await importOriginal<typeof import('../../src/components/PrivacyContext')>();
+  return { ...original, usePrivacy: () => ({ ...original.usePrivacy(), processing: { primary: 'local', fallback: null }, autoAllowed: true }) };
+});
 beforeEach(() => {
+  vi.spyOn(window, 'confirm').mockReturnValue(true);
   vi.mocked(compareToneResponses).mockReset();
 });
 afterEach(() => {
@@ -59,7 +64,7 @@ test('identical comparison passages keep feedback attached to their original ses
   await user.click(screen.getByText('Inspect ChatGPT response #1'));
   expect(within(document.getElementById('comparison-response-1')).queryByText(/Saved human feedback/)).not.toBeInTheDocument();
   await user.click(within(second).getByRole('button', { name: 'Export evaluation case' }));
-  expect(within(second).getByRole('textbox', { name: /Sanitized original prompt/ })).toHaveValue(request.originalPrompt);
+  expect(within(second).getByRole('textbox', { name: /Sanitized original prompt/ })).toHaveValue('');
 });
 
 const input: ComparisonRequest = {

@@ -23,6 +23,11 @@ vi.mock('recharts', () => ({
   PolarAngleAxis: () => null,
   Radar: () => null,
 }));
+vi.mock('../../src/components/PrivacyContext', async importOriginal => {
+  const original = await importOriginal<typeof import('../../src/components/PrivacyContext')>();
+  return { ...original, PrivacyProvider: ({ children }: { children: ReactNode }) => children, PrivacyControls: () => null,
+    usePrivacy: () => ({ ...original.usePrivacy(), processing: { primary: 'local', fallback: null }, autoAllowed: true }) };
+});
 
 afterEach(() => {
   cleanup();
@@ -242,6 +247,7 @@ describe('saved audit presentation', () => {
   });
 
   test('exports the captured audit source, not edited inputs, and resets context when loading a fresh history entry', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
     const meta = { providerId: 'local' as const, providerLabel: 'Local Heuristic', model: 'rules-v1', usedFallback: false };
     const provenance = createAnalysisProvenance(meta, 'chatgpt');
     const text = 'You should look this up yourself.';

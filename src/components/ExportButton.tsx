@@ -4,7 +4,7 @@ import { cn } from '../lib/utils';
 import type { AnalysisResult } from '../types/analysis';
 import { CATEGORY_REGISTRY } from '../constants';
 import { DIAGNOSTIC_GROUPS, METHOD_LABELS, formatDiagnosticScore } from '../types/diagnostics';
-import { downloadJson } from '../lib/download';
+import { confirmReportExport, downloadJson } from '../lib/download';
 import type { AnalysisProvenance } from '../types/provenance';
 import { createAuditExport } from '../services/exportReport';
 
@@ -115,21 +115,26 @@ function formatMarkdown(report: ReturnType<typeof createAuditExport>): string {
 
 export function ExportButton({ result, provenance }: ExportButtonProps) {
   const [copiedMd, setCopiedMd] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const exportJson = () => {
+    if (!confirmReportExport()) return;
     downloadJson(createAuditExport(result, provenance), `tone-audit-${Date.now()}.json`);
   };
 
   const copyMarkdown = () => {
+    if (!confirmReportExport()) return;
+    setError(null);
     const md = formatMarkdown(createAuditExport(result, provenance));
     navigator.clipboard.writeText(md).then(() => {
       setCopiedMd(true);
       setTimeout(() => setCopiedMd(false), 2000);
-    });
+    }).catch(() => setError('Could not copy the report. Check browser clipboard permissions.'));
   };
 
   return (
     <div className="flex items-center gap-2">
+      {error && <p role="alert">{error}</p>}
       <button
         onClick={exportJson}
         aria-label="Export result as JSON"

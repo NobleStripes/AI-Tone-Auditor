@@ -1,4 +1,4 @@
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
@@ -8,6 +8,7 @@ import { ExportButton } from '../../src/components/ExportButton';
 import { emptyAnalysisResult } from '../../src/types/analysis';
 import { applyLocalPromptComparison } from '../../src/services/localPromptComparison';
 import { localHeuristicProvider } from '../../src/services/providers/localHeuristicProvider';
+beforeEach(() => { vi.spyOn(window, 'confirm').mockReturnValue(true); });
 
 vi.mock('recharts', () => ({
   ResponsiveContainer: ({ children }: { children: ReactNode }) => <div>{children}</div>,

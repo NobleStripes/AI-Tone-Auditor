@@ -41,7 +41,16 @@ Local mode provides dictionary-based communication findings, heuristic severity/
 
 All local scores/findings are heuristic wording signals. They can match legitimate or quoted language, miss paraphrases and nuance, and cannot establish intent, hidden retrieval, citation relevance, factual accuracy or whether a refusal is warranted. Source labels select appropriate local checks; they do not call ChatGPT/Claude/Gemini/Grok to generate responses.
 
-The UI distinguishes **Local heuristic** from **Semantic provider** using each reported result's provider metadata. Before a successful audit it says the provider has not yet been reported, rather than claiming the server's configuration is known. A local fallback result does not mean the primary external provider was never attempted; fallback is marked separately.
+The privacy panel verifies the configured primary/fallback provider before enabling either audit mode. Result indicators separately identify the **actual** successful auditor. A local fallback result does not mean the primary external provider was never attempted; fallback is marked separately.
+
+### Session privacy and retention
+
+- **External auto-audit consent:** if either the primary or fallback is external, automatic auditing stays paused until you check the separate consent box. This allows possible paid calls for the current page session only; it is never saved. Manual audits remain available after processing information is displayed. Local-only auto-auditing requires no external consent. Unknown/unavailable processing information disables both audit modes.
+- **Private Session:** a session-only toggle prevents new history, response text, feedback snapshots, reports and evaluation receipts from being written to browser storage. Feedback may be reviewed in memory. Switching modes cancels active work and discards drafts/results/private feedback, without later saving them when normal mode resumes. Existing saved records remain unchanged and can still be deleted.
+- **Deletion:** individual history deletion also removes its associated feedback, snapshots and export receipts. Feedback records, including comparison-only records, have their own deletion controls. **Delete all stored app data** removes the app's history and feedback keys and cancels pending audits; unrelated browser-origin storage is untouched. Storage errors are reported explicitly. Downloads, clipboard contents, provider records and server logs cannot be deleted by these browser controls.
+- **Processing:** response text always reaches the configured server. External primary/fallback recipients are named before auditing; their retention policies and potential charges apply. Private original prompts reach the server for local context checks, not semantic providers. Selecting a response's source model does not select an auditor.
+
+Private Session is not an incognito-network or provider-non-retention guarantee. Operator logging, reverse proxies and third-party retention are outside its control. Ordinary report exports require confirmation because quotations and derived material may be sensitive; comparison exports contain full responses. See [export privacy](EXPORTS.md).
 
 ### Optional external auditing and fallback
 

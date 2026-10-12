@@ -49,6 +49,7 @@ afterEach(async () => {
     server = undefined;
   }
   vi.restoreAllMocks();
+  vi.unstubAllEnvs();
 });
 async function start(env: Record<string, string | undefined> = {}) {
   server = createApp(readServerPolicy(env)).listen(0, '127.0.0.1');
@@ -275,6 +276,19 @@ test('access discovery contains no credentials and key verification is authentic
   expect(await response.json()).toEqual({ requiresKey: true });
   expect((await fetch(`${base}/api/access/check`)).status).toBe(401);
   expect((await fetch(`${base}/api/access/check`, { headers: { Authorization: `Bearer ${key}` } })).status).toBe(204);
+});
+
+test('processing information is authenticated, uncached, and discloses primary/fallback recipients without keys or model settings', async () => {
+  vi.stubEnv('AI_PROVIDER', 'openai');
+  vi.stubEnv('AI_FALLBACK_PROVIDER', 'anthropic');
+  vi.stubEnv('OPENAI_MODEL', 'sensitive-test-config-value');
+  const base = await start({ API_ACCESS_KEY: key });
+  expect((await fetch(`${base}/api/processing`)).status).toBe(401);
+  const response = await fetch(`${base}/api/processing`, { headers: { Authorization: `Bearer ${key}` } });
+  expect(response.status).toBe(200);
+  expect(response.headers.get('Cache-Control')).toBe('no-store');
+  expect(await response.json()).toEqual({ primary: 'openai', fallback: 'anthropic' });
+  expect(analyzeTone).not.toHaveBeenCalled();
 });
 
 test('both API modes sanitize errors and logs instead of exposing arbitrary secrets and internals', async () => {

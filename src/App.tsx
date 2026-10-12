@@ -48,9 +48,9 @@ import { validateAnalysisResult } from './services/validation/analysisValidator'
 import { AuditFeedbackContext, FeedbackProvider, FeedbackStorageControls, useFeedback } from './components/FeedbackContext';
 import { MissedSignalFeedback } from './components/FindingFeedback';
 import { EvaluationCaseExport } from './components/EvaluationCaseExport';
-import { removeHistoryFeedback } from './services/feedbackStore';
 import type { AuditSnapshot } from './types/feedback';
 import { ApiAccessPanel, ApiAccessProvider, useApiAccess } from './components/ApiAccess';
+import { PrivacyControls, PrivacyProvider, usePrivacy } from './components/PrivacyContext';
 
 const MIN_RESPONSE_LENGTH = 10;
 
@@ -60,6 +60,7 @@ function createAuditKey(responseText: string, sourceModel: AnalysisSource, audit
 
 function AuditApp() {
   const access = useApiAccess();
+  const privacy = usePrivacy();
   const feedback = useFeedback();
   const [auditSnapshot, setAuditSnapshot] = useState<AuditSnapshot | null>(null);
   const [auditMode, setAuditMode] = useState<'single' | 'comparison'>('single');
@@ -101,12 +102,20 @@ function AuditApp() {
   feedbackRef.current = feedback;
   const changeHistory = (change: (previous: HistoryEntry[]) => HistoryEntry[]) => {
     const next = change(historyRef.current);
+    try {
+      localStorage.setItem('audit-history', JSON.stringify(next.slice(0, 50)));
+      setHistoryStorageError(null);
+    } catch {
+      setHistoryStorageError('Audit history could not be updated locally. Stored records may remain; retry after checking browser storage.');
+      return;
+    }
     historyRef.current = next;
     setHistory(next);
   };
 
   const handleAnalyze = async (textToAnalyze: string = inputText) => {
     if (access.locked) { setAnalysisError('Unlock API access before auditing.'); return; }
+    if (!privacy.processing) { setAnalysisError('Verify data-processing information before auditing.'); return; }
     if (!textToAnalyze.trim() || textToAnalyze.trim().length < MIN_RESPONSE_LENGTH) return;
 
     const sourceModelForAudit = sourceModel;
@@ -156,6 +165,7 @@ function AuditApp() {
         automatedResultJson: JSON.stringify(data), provenanceJson: provenance ? JSON.stringify(provenance) : null,
         runtimeMetaJson: JSON.stringify(meta),
       });
+      if (privacy.privateSession) return;
       const latestHistory = historyRef.current;
       const retained = latestHistory.length > 0 && latestHistory[0].responseText === newEntry.responseText && latestHistory[0].sourceModel === newEntry.sourceModel
         ? [newEntry, ...latestHistory.slice(1)] : [newEntry, ...latestHistory].slice(0, 50);
@@ -181,8 +191,7 @@ function AuditApp() {
   const removeFeedbackFor = (ids: string[]) => {
     if (!ids.length) return true;
     const currentFeedback = feedbackRef.current;
-    if (!currentFeedback.error && !currentFeedback.store.audits.some(audit => audit.historyId && ids.includes(audit.historyId))) return true;
-    return currentFeedback.update(previous => removeHistoryFeedback(previous, ids));
+    return currentFeedback.removeHistory(ids);
   };
 
   // Auto Audit Logic
@@ -191,6 +200,7 @@ function AuditApp() {
     if (
       auditMode === 'single' &&
       !access.locked &&
+      privacy.autoAllowed &&
       isAutoAudit &&
       !isAnalyzing &&
       inputText.trim().length >= minAuditLength &&
@@ -206,7 +216,7 @@ function AuditApp() {
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
-  }, [inputText, isAutoAudit, isAnalyzing, minAuditLength, sourceModel, auditContext, auditMode, access.locked]);
+  }, [inputText, isAutoAudit, isAnalyzing, minAuditLength, sourceModel, auditContext, auditMode, access.locked, privacy.autoAllowed]);
 
   useEffect(() => {
     if (access.locked) abortControllerRef.current?.abort();
@@ -214,14 +224,10 @@ function AuditApp() {
 
   useEffect(() => () => abortControllerRef.current?.abort(), []);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('audit-history', JSON.stringify(history.slice(0, 50)));
-      setHistoryStorageError(null);
-    } catch {
-      setHistoryStorageError('Audit history could not be saved locally. Check available browser storage; the displayed audit is still available.');
-    }
-  }, [history]);
+  useEffect(() => privacy.cancelOnChange(() => {
+    abortControllerRef.current?.abort();
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+  }), [privacy.cancelOnChange]);
 
   return (
     <ErrorBoundary>
@@ -285,6 +291,21 @@ function AuditApp() {
 
         <main className="flex-1 overflow-y-auto p-4 md:p-8 max-w-6xl mx-auto w-full">
           <ApiAccessPanel />
+          <PrivacyControls />
+          <button className="mb-4 text-xs underline" onClick={() => {
+            if (!window.confirm('Delete all app-owned audit history, feedback, snapshots and export receipts? Downloads and clipboard data are not removed.')) return;
+            handleCancel();
+            if (debounceTimer.current) clearTimeout(debounceTimer.current);
+            try {
+              localStorage.removeItem('audit-history');
+              historyRef.current = [];
+              setHistory([]);
+              if (!feedback.clearSaved()) return;
+              privacy.resetSession();
+            } catch {
+              setHistoryStorageError('Could not delete all stored data. Some records may remain; retry after checking browser storage.');
+            }
+          }}>Delete all stored app data</button>
           <div className="mb-4"><FeedbackStorageControls /></div>
           {historyStorageError && <p role="alert" className="text-xs text-red-400 mb-4">{historyStorageError}</p>}
           <div role="tablist" aria-label="Audit mode" className="flex gap-3 mb-6" onKeyDown={(event) => {
@@ -346,8 +367,8 @@ function AuditApp() {
                     )}
                   >
                     <Cpu className={cn("w-3 h-3", isAutoAudit && "animate-pulse")} />
-                    <span className="hidden xs:inline">Auto Audit: {isAutoAudit ? 'Always On' : 'Standby'}</span>
-                    <span className="xs:hidden">{isAutoAudit ? 'Auto: ON' : 'Auto: OFF'}</span>
+                    <span className="hidden xs:inline">Auto Audit: {isAutoAudit ? privacy.autoAllowed ? 'Always On' : 'Paused' : 'Standby'}</span>
+                    <span className="xs:hidden">{isAutoAudit ? privacy.autoAllowed ? 'Auto: ON' : 'Auto: PAUSED' : 'Auto: OFF'}</span>
                   </button>
                 </div>
               </div>
@@ -412,7 +433,7 @@ function AuditApp() {
                 )}
                 <button
                   onClick={isAnalyzing ? handleCancel : () => handleAnalyze()}
-                  disabled={!isAnalyzing && (access.locked || inputText.trim().length < MIN_RESPONSE_LENGTH)}
+                  disabled={!isAnalyzing && (access.locked || !privacy.processing || inputText.trim().length < MIN_RESPONSE_LENGTH)}
                   aria-label={isAnalyzing ? 'Cancel audit' : 'Run Audit'}
                   className={cn(
                     "absolute bottom-4 right-4 px-4 md:px-6 py-2 rounded font-mono text-[10px] md:text-xs uppercase tracking-widest flex items-center gap-2 transition-all",
@@ -439,6 +460,10 @@ function AuditApp() {
               <p id="audit-run-status" role="status" aria-live="polite" className="text-xs text-zinc-400">
                 {access.locked
                   ? 'API access is locked. Unlock it before auditing.'
+                  : !privacy.processing
+                  ? 'Verify data-processing information before auditing.'
+                  : isAutoAudit && !privacy.autoAllowed && !isAnalyzing
+                  ? 'Automatic external auditing is paused until you explicitly consent. Manual auditing is available.'
                   : isAnalyzing
                   ? 'Audit in progress...'
                   : analysisError
@@ -703,5 +728,10 @@ function AuditApp() {
 }
 
 export default function App() {
-  return <ApiAccessProvider><FeedbackProvider><AuditApp /></FeedbackProvider></ApiAccessProvider>;
+  return <ApiAccessProvider><PrivacyProvider><SessionApp /></PrivacyProvider></ApiAccessProvider>;
+}
+
+function SessionApp() {
+  const privacy = usePrivacy();
+  return <FeedbackProvider key={privacy.generation}><AuditApp /></FeedbackProvider>;
 }

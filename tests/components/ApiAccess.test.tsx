@@ -8,6 +8,7 @@ import { emptyAnalysisResult } from '../../src/types/analysis';
 import { DEFAULT_LOCAL_RUNTIME_META } from '../../src/types/provider';
 import App from '../../src/App';
 import { getProviderTelemetrySnapshot } from '../../src/services/analyzeClient';
+import { PrivacyProvider } from '../../src/components/PrivacyContext';
 
 vi.mock('../../src/services/analyzeClient', async importOriginal => ({
   ...await importOriginal<typeof import('../../src/services/analyzeClient')>(), compareToneResponses: vi.fn(),
@@ -85,9 +86,10 @@ test('bad unlock keys stay locked and authentication rejection clears a previous
 });
 
 test('comparison starts disabled while locked and renders budget partials without reporting successful completion', async () => {
-  vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ requiresKey: false }))));
+  vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockImplementation(async url =>
+    new Response(JSON.stringify(String(url) === '/api/processing' ? { primary: 'local', fallback: null } : { requiresKey: false }))));
   const completed = vi.fn();
-  render(<ApiAccessProvider><ApiAccessPanel /><ComparisonWorkspace active onBusyChange={vi.fn()} onCompleted={completed} /></ApiAccessProvider>);
+  render(<ApiAccessProvider><PrivacyProvider><ApiAccessPanel /><ComparisonWorkspace active onBusyChange={vi.fn()} onCompleted={completed} /></PrivacyProvider></ApiAccessProvider>);
   const run = screen.getByRole('button', { name: 'Compare responses' });
   expect(run).toBeDisabled();
   await waitFor(() => expect(run).toBeEnabled());
@@ -116,6 +118,7 @@ test('the real application suppresses auto/manual audits until explicit unlock a
   const fetchMock = vi.fn<typeof fetch>()
     .mockResolvedValueOnce(new Response(JSON.stringify({ requiresKey: true })))
     .mockResolvedValueOnce(new Response(null, { status: 204 }))
+    .mockResolvedValueOnce(new Response(JSON.stringify({ primary: 'local', fallback: null })))
     .mockResolvedValueOnce(new Response(JSON.stringify({
       result: emptyAnalysisResult(), meta: DEFAULT_LOCAL_RUNTIME_META, telemetry: getProviderTelemetrySnapshot(),
     })));
@@ -129,9 +132,9 @@ test('the real application suppresses auto/manual audits until explicit unlock a
   expect(fetchMock).toHaveBeenCalledOnce();
   fireEvent.change(screen.getByLabelText('API access key'), { target: { value: 'in-memory-key' } });
   fireEvent.click(screen.getByRole('button', { name: 'Unlock API' }));
-  await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3), { timeout: 3000 });
-  expect(fetchMock.mock.calls[2][0]).toBe('/api/analyze');
-  expect(fetchMock.mock.calls[2][1]?.headers).toMatchObject({ Authorization: 'Bearer in-memory-key' });
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(4), { timeout: 3000 });
+  expect(fetchMock.mock.calls[3][0]).toBe('/api/analyze');
+  expect(fetchMock.mock.calls[3][1]?.headers).toMatchObject({ Authorization: 'Bearer in-memory-key' });
   expect(JSON.stringify(localStorage)).not.toContain('in-memory-key');
   view.unmount();
   expect(apiHeaders()).not.toHaveProperty('Authorization');

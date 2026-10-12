@@ -4,6 +4,7 @@ import type { ComparisonRequest, ComparisonResult } from '../types/comparison';
 import { applyAnthropomorphismGuard, requestsFiction } from './anthropomorphismGuard';
 import { accessWasRejected, apiHeaders, rejectApiAccess } from './apiAccess';
 import { PROVIDER_IDS } from '../types/provider';
+import { validateAnalysisResult } from './validation/analysisValidator';
 
 const DEFAULT_TELEMETRY: ProviderTelemetrySnapshot = {
   totalAnalyses: 0,
@@ -79,7 +80,7 @@ async function readAnalysisResponse<T>(response: Response, input?: ComparisonReq
       if (errorData && typeof errorData === 'object' && 'code' in errorData && typeof errorData.code === 'string') {
         code = errorData.code;
         if (response.status === 429 && code === 'BUDGET_EXHAUSTED' && input && 'comparison' in errorData && isPartialComparison(errorData.comparison, input)) {
-          partial = errorData.comparison;
+          partial = normalizeComparison(errorData.comparison, input.originalPrompt);
         }
       }
     } catch {
@@ -125,7 +126,7 @@ export async function analyzeTone(
   lastMeta = data.meta;
   lastTelemetry = data.telemetry;
 
-  return { result: applyAnthropomorphismGuard(data.result, text, requestsFiction(auditContext)), meta: data.meta, provenance: data.provenance };
+  return { result: applyAnthropomorphismGuard(validateAnalysisResult(data.result, { responseText: text, auditContext }), text, requestsFiction(auditContext)), meta: data.meta, provenance: data.provenance };
 }
 
 export async function compareToneResponses(input: ComparisonRequest, signal?: AbortSignal): Promise<ComparisonResult> {
@@ -140,8 +141,12 @@ export async function compareToneResponses(input: ComparisonRequest, signal?: Ab
   lastTelemetry = data.telemetry;
   const completed = data.comparison.items.find((item) => item.status === 'completed');
   if (completed?.status === 'completed') lastMeta = completed.analysis.meta;
-  return { ...data.comparison, items: data.comparison.items.map(item => item.status === 'completed' ? {
+  return normalizeComparison(data.comparison, input.originalPrompt);
+}
+
+function normalizeComparison(comparison: ComparisonResult, originalPrompt: string): ComparisonResult {
+  return { ...comparison, items: comparison.items.map(item => item.status === 'completed' ? {
     ...item, analysis: { ...item.analysis,
-      result: applyAnthropomorphismGuard(item.analysis.result, item.text, requestsFiction(input.originalPrompt)) },
+      result: applyAnthropomorphismGuard(validateAnalysisResult(item.analysis.result, { responseText: item.text, auditContext: originalPrompt }), item.text, requestsFiction(originalPrompt)) },
   } : item) };
 }

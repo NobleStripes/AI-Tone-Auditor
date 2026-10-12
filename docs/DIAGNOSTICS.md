@@ -14,7 +14,7 @@ The auditor looks for wording that can read as bureaucratic or dismissive in con
 
 **Bureaucratic Stonewalling** covers evasive procedural language and unexplained rule-based barriers, not generic moralizing or refusal language alone. Local tone-policing markers belong to Forced De-escalation, condescending directives to Infantilizing, dismissive preambles to Dismissive, stock assurances to Repetitive Filler, and polite distancing qualifiers to Hedging. Phrase matches remain possible signals, not proof of obstruction.
 
-The score ID remains `karen_trigger` for compatibility. Legacy saved findings labeled `Karen Trigger` or `Karen Triggers` display as Bureaucratic Stonewalling without rewriting their historical scores or evidence. New profiles and exports use `stonewallingRemediation`; the validator still accepts legacy `karenRemediation` text, preferring the new field when both are present.
+The score ID remains `karen_trigger` for compatibility. Legacy saved findings labeled `Karen Trigger` or `Karen Triggers` display as Bureaucratic Stonewalling. Original automated snapshots stay archived unchanged, while restored display/export reports withhold unsupported scores and conclusions. New profiles and exports use `stonewallingRemediation`; the validator still accepts legacy `karenRemediation` text, preferring the new field when both are present.
 
 The tone scores also flag three patterns when supported by the wording:
 
@@ -46,6 +46,8 @@ Fenced code (backticks or tildes), inline code, Markdown blockquotes, and explic
 
 Semantic quotations are checked against the original response. Invented, altered, ellipsized, or ambiguous repeated quotations are **unverified**. Supplied offsets must identify an exact passage; invalid offsets are not silently repaired. A mixed code/example-and-speech quotation requires a narrower eligible passage. A positive communication risk score without eligible verified support is withheld as **not assessed**, not displayed as a clean zero. If some support survives, the provider score is retained with a warning about rejected evidence; its magnitude is not independently validated or converted into lexical weights.
 
+These checks also apply to contextual risk scores, restored reports and exports. Explicit local absence-based Grounding Avoidance and Refusal Quality checks may use a verified full-response scope; that is not a general semantic-evidence exception. Rejected or withheld findings remain inspection records, but their untraceable report-wide interpretations, recommendations, personalization and explanatory overlays are withheld. Source quotations establish only visible wording. A conservative generated-prose check withholds or qualifies declarations about hidden intentions, training, internal reasoning and tool use; it is not a complete fact checker.
+
 Use **Show passage and surrounding sentence** to focus the exact passage in either audit view. Editing an input after analysis does not change the source behind displayed evidence. Unverified or missing-source quotations have no passage action.
 
 ## Human feedback is separate from automated diagnostics
@@ -54,11 +56,11 @@ Findings expose **Supported**, **False positive**, **Ambiguous**, and **Wrong ca
 
 **Report a missed signal** provides a read-only selection surface for the exact audited response. Select with the mouse or keyboard, choose a category and explain the missing signal. The report stores a source range and exact text, not a fabricated automated finding.
 
-Feedback retains a separate immutable snapshot locally and never changes scores, assessments, provenance or the ordinary audit export. No reports are transmitted for training or analytics. Private original prompts are not automatically persisted. Deleting/replacing/pruning history removes associated reports; **Clear feedback** also removes comparison-only snapshots and export receipts. Storage errors are explicit rather than falsely reporting Saved.
+Feedback retains a separate immutable snapshot and never changes scores, assessments, provenance or the ordinary audit export. In normal sessions it is saved locally; Private Session keeps it in page memory and discards it on mode change. No reports are transmitted for training or analytics. Private original prompts are not automatically persisted. Deleting/replacing/pruning history removes associated reports; individual feedback-record deletion and **Clear feedback** also remove comparison-only snapshots and export receipts. **Delete all stored app data** removes both history and feedback. Storage errors are explicit rather than falsely reporting Saved.
 
 Use [explicit evaluation export](EVALUATION.md) only after reviewing the entire response and completing privacy review. A passage-level false positive is not automatically a category-level absence, and a deficient-refusal finding is not a positive Refusal Quality expectation.
 
-Legacy history remains readable without evidence positions. Missing evidence metadata is labeled unrecorded, not retroactively verified, and historical communication scores are not recomputed. New stored positions are checked against the stored response; missing response text or stale positions cannot produce a confirmed passage link. Context-dependent claims still reset on restoration without the private original prompt.
+Legacy history remains readable without evidence positions. Missing evidence metadata is not retroactively verified. Unsupported historical display scores/conclusions are withheld, while immutable original snapshots retain the historical payload for feedback provenance. New stored positions are checked against the stored response; missing response text or stale positions cannot produce a confirmed passage link. Assessed context-dependent claims become insufficient context on restoration without the private original prompt; explicit non-assessed states are preserved.
 
 ## Assessment state and confidence
 

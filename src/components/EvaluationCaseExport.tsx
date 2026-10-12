@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { usePrivacy } from './PrivacyContext';
 import { CATEGORY_REGISTRY, type ScoreId } from '../constants';
 import { COMPARISON_SOURCES, MAX_ORIGINAL_PROMPT_LENGTH, MAX_RESPONSE_LENGTH, type ComparisonSource } from '../types/comparison';
 import { SOURCE_MODEL_LABELS } from '../types/provider';
@@ -16,6 +17,12 @@ function EvaluationPreview({ snapshot, originalPrompt, onClose }: {
   snapshot: AuditSnapshot; originalPrompt: string; onClose: () => void;
 }) {
   const { store, update } = useFeedback();
+  const privacy = usePrivacy();
+  const exportGeneration = useRef(0);
+  useEffect(() => {
+    const unsubscribe = privacy.cancelOnChange(() => { exportGeneration.current += 1; });
+    return () => { exportGeneration.current += 1; unsubscribe(); };
+  }, [privacy.cancelOnChange, store]);
   const reports = store.reports.filter(report => report.auditId === snapshot.auditId);
   const [caseId, setCaseId] = useState(() => store.receipts.find(receipt => receipt.auditId === snapshot.auditId)?.caseId ?? `case-${crypto.randomUUID()}`);
   const [version, setVersion] = useState(newVersion);
@@ -23,7 +30,7 @@ function EvaluationPreview({ snapshot, originalPrompt, onClose }: {
   const [source, setSource] = useState<ComparisonSource | ''>(snapshot.sourceModel === 'unknown' ? '' : snapshot.sourceModel);
   const [model, setModel] = useState('');
   const [collectedAt, setCollectedAt] = useState('');
-  const [prompt, setPrompt] = useState(originalPrompt);
+  const [prompt, setPrompt] = useState('');
   const [response, setResponse] = useState(snapshot.response);
   const [expectations, setExpectations] = useState<ExpectationDraft[]>(() => suggestExpectations(reports));
   const [categoryToAdd, setCategoryToAdd] = useState<ScoreId | ''>('');
@@ -55,9 +62,11 @@ function EvaluationPreview({ snapshot, originalPrompt, onClose }: {
     setError(null);
     if (!origin || !source) { setError('Select the example origin and response source explicitly.'); return; }
     setBusy(true);
+    const generation = exportGeneration.current;
     try {
       const dataset = validateEvaluationExport(payload, origin, expectations);
       const contentHash = await evaluationContentHash(dataset);
+      if (generation !== exportGeneration.current) throw new Error('Evaluation export canceled because the session changed.');
       const previous = store.receipts.find(receipt => receipt.origin === origin && receipt.version === version);
       if (previous && previous.contentHash !== contentHash) {
         throw new Error('This dataset version was already exported with different content. Use a new version and retain the old file for replay.');
@@ -83,8 +92,9 @@ function EvaluationPreview({ snapshot, originalPrompt, onClose }: {
 
   return <section aria-label="Evaluation case preview" className="space-y-3 border border-zinc-700 rounded p-4">
     <h3 className="font-semibold">Privacy-reviewed evaluation case</h3>
-    <p className="text-xs">Draft stays in memory. Nothing is collected automatically. Download intentionally includes the sanitized prompt and response.
-      Local feedback retains the original response/snapshot; exported cases never change automated scores.</p>
+    <p className="text-xs">Draft stays in memory. The private original prompt is never prefilled; enter a sanitized prompt explicitly if needed. Download intentionally includes the sanitized prompt and response.
+      {privacy.privateSession ? ' Private feedback and export receipts retain the original snapshot only in page memory.' : ' Local feedback retains the original response/snapshot and export receipt.'}
+      {' '}Exported cases never change automated scores.</p>
     <p className="text-xs">Audit reference: {snapshot.auditId}. Reports: {reports.map(report => report.id).join(', ') || 'none'}.
       These references are not added to the strict dataset payload.</p>
     {edited && <p role="status" className="text-xs text-amber-300">Reviewed derivative: original evidence offsets apply only to the original audit, not this edited case.</p>}

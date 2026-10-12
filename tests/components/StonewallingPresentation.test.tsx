@@ -11,11 +11,13 @@ afterEach(() => {
 });
 
 test.each(['karenRemediation', 'stonewallingRemediation'])('displays and exports %s as stonewalling remediation', async (field) => {
+  vi.spyOn(window, 'confirm').mockReturnValue(true);
   const result = validateAnalysisResult({
     scores: { karen_trigger: 70 },
+    assessments: { karen_trigger: { status: 'assessed', reason: 'Verified wording.', confidence: 'medium', method: 'semantic' } },
     personalization: { [field]: 'Explain the concrete limit and offer a useful next step.' },
     findings: [{ category: 'Karen Trigger', text: 'Per policy', severity: 'medium', explanation: 'An unexplained barrier.' }],
-  });
+  }, { responseText: 'Per policy', assessmentMethod: 'semantic' });
   const user = userEvent.setup();
   const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
   render(<>

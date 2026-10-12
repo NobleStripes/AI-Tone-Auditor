@@ -164,7 +164,7 @@ describe('comparison and history integration', () => {
     expect(JSON.stringify(restored)).not.toContain('auditContext');
   });
 
-  test('keeps unverified stored evidence unverified and rejects stale offsets without rewriting scores', () => {
+  test('keeps unverified stored evidence unverified and withholds stale unsupported scores', () => {
     const data = emptyAnalysisResult();
     data.scores.de_escalation = 75;
     data.findings = [{ category: 'Forced De-escalation', text: 'Calm down', explanation: 'Old claim', severity: 'high',
@@ -173,7 +173,8 @@ describe('comparison and history integration', () => {
     expect(stored('Calm down.').data.findings[0].evidence.verification).toBe('unverified');
     data.findings[0].evidence = { matchedText: 'Calm down', verification: 'verified', eligibility: 'included', startOffset: 0, endOffset: 9 };
     expect(stored('Different response.').data.findings[0].evidence.verification).toBe('unverified');
-    expect(stored('Different response.').data.scores.de_escalation).toBe(75);
+    expect(stored('Different response.').data.scores.de_escalation).toBe(0);
+    expect(stored('Different response.').data.assessments.de_escalation.status).toBe('not_assessed');
     expect(stored('').data.findings[0].evidence.reason).toContain('unavailable');
   });
 });
