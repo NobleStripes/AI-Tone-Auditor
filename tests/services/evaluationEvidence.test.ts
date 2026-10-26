@@ -249,13 +249,13 @@ test('CLI records and replays evidence baselines without evaluating the retained
     const first = run('--synthetic', 'tests/fixtures/evaluation/evidence-pairs.v1.json', '--record-synthetic', output, '--report-json');
     expect(first.status, first.stderr).toBe(0);
     const firstReport = JSON.parse(first.stdout);
-    expect(firstReport.summary.total).toBe(324);
+    expect(firstReport.summary.total).toBe(399);
     const recorded = parseSyntheticDataset(JSON.parse(readFileSync(output, 'utf8')), hashInput);
     expect(recorded.cases.every(item => item.baseline.results[0].evidence !== undefined)).toBe(true);
     const replay = run('--synthetic', output, '--report-json');
     expect(replay.status, replay.stderr).toBe(0);
     const report = JSON.parse(replay.stdout);
-    expect(report.summary).toMatchObject({ total: 324, evidenceBaselineComparisons: 24, evidenceBaselineDifferences: 0 });
+    expect(report.summary).toMatchObject({ total: 399, evidenceBaselineComparisons: 24, evidenceBaselineDifferences: 0 });
     const overwritten = run('--synthetic', output, '--record-synthetic', output);
     expect(overwritten.status).toBe(1);
     expect(overwritten.stderr).toMatch(/exist/i);
