@@ -12,8 +12,17 @@ const EXCLUSION_LABELS: Record<ExclusionReason, string> = {
 const WORD_CHARACTERS = '[\\p{L}\\p{N}\\p{M}_]';
 const APOSTROPHE_CHARACTERS = "['\\u2018\\u2019\\u02bc]";
 const WORD_CHARACTER = /[\p{L}\p{N}\p{M}_]/u;
-const REPORTED_QUOTE_PREFIX = /\b(?:(?:transcript|message|response|reply|document|log|quotation|quote|greeting|text|example|sample|passage|sentence|statement|comment|email|report|article|book|manual|instructions|output)\s+(?:says|said|reads|read|contains|contained|states|stated|quotes|quoted|includes|included|shows|showed|records|recorded)|(?:the (?:user|assistant|model|requester|author|speaker|customer|reviewer)|they|he|she|chatgpt|claude|gemini|grok)\s+(?:said|wrote|replied|responded|stated|asked|reported))\s*[:,]?\s*$/i;
-const REPORTED_QUOTE_SUFFIX = /^\s*,?\s*(?:(?:the (?:user|assistant|model|requester|author|speaker|customer|reviewer)|they|he|she|chatgpt|claude|gemini|grok)\s+(?:said|wrote|replied|responded|stated|asked|reported)\b|(?:appears|occurs|is quoted|was written|was said)\s+in\s+(?:the\s+)?(?:transcript|message|response|reply|document|log|text|article|book|manual)\b)/i;
+const REPORTED_SPEAKER = '(?:the (?:user|assistant|model|requester|author|speaker|customer|reviewer|(?:fictional |human )?character|human assistant)|(?:my|our|the) (?:human )?(?:friend|colleague|coworker|brother|sister|father|mother)|they|he|she|chatgpt|claude|gemini|grok)';
+const REPORTING_VERB = '(?:says|said|writes|wrote|replies|replied|responds|responded|states|stated|asks|asked|reports|reported)';
+const REPORTED_QUOTE_PREFIX = new RegExp(`\\b(?:(?:transcript|message|response|reply|document|log|quotation|quote|greeting|text|example|sample|passage|sentence|statement|comment|email|report|article|book|manual|instructions|output)\\s+(?:says|said|reads|read|contains|contained|states|stated|quotes|quoted|includes|included|shows|showed|records|recorded)|${REPORTED_SPEAKER}\\s+${REPORTING_VERB})\\s*[:,]?\\s*$`, 'i');
+const REPORTED_QUOTE_SUFFIX = new RegExp(`^\\s*,?\\s*(?:${REPORTED_SPEAKER}\\s+${REPORTING_VERB}\\b|(?:appears|occurs|is quoted|was written|was said)\\s+in\\s+(?:the\\s+)?(?:transcript|message|response|reply|document|log|text|article|book|manual)\\b)`, 'i');
+// Capitalized names require a reporting verb; first-person/direct-address pronouns are not names.
+const REPORTED_NAME = "(?!(?:[Ww][Ee]|[Yy][Oo][Uu])\\b)\\p{Lu}[\\p{L}\\p{M}'\\u2019\\u02bc-]+(?:[ \\t]+\\p{Lu}[\\p{L}\\p{M}'\\u2019\\u02bc-]+){0,2}";
+const NAMED_QUOTE_PREFIX = new RegExp(`(?:^|[^\\p{L}\\p{N}\\p{M}_])${REPORTED_NAME}\\s+${REPORTING_VERB}\\s*[:,]?\\s*$`, 'u');
+const NAMED_QUOTE_SUFFIX = new RegExp(`^\\s*,?\\s*(?:${REPORTED_NAME}\\s+${REPORTING_VERB}\\b|${REPORTING_VERB}\\s+${REPORTED_NAME}(?![\\p{L}\\p{N}\\p{M}_]))`, 'u');
+const EXAMPLE_INTRODUCTION = '(?:(?:bad |good |sample |illustrative )?examples?(?: of [^:\\n]+)?|for example|(?:fictional|roleplay|role-play) (?:dialogue|scene|excerpt))';
+const EXAMPLE_BLOCK_INTRO = new RegExp(`^\\s*(?:#{1,6}\\s+)?${EXAMPLE_INTRODUCTION}:\\s*$`, 'i');
+const EXAMPLE_INLINE_INTRO = new RegExp(`^\\s*(?:[-*+]\\s+)?${EXAMPLE_INTRODUCTION}:\\s*\\S`, 'i');
 
 function triggerPattern(word: string): RegExp {
   // Match variants in place so every offset and quotation still refers to untouched UTF-16 text.
@@ -71,7 +80,7 @@ export function collectContextRanges(text: string): ContextRange[] {
       continue;
     }
     quoteContinuation = false;
-    if (/^\s*(?:#{1,6}\s+)?(?:(?:bad |good |sample |illustrative )?examples?(?: of [^:\n]+)?|for example):\s*$/i.test(value)) {
+    if (EXAMPLE_BLOCK_INTRO.test(value)) {
       exampleBlock = 'pending';
       continue;
     }
@@ -82,7 +91,7 @@ export function collectContextRanges(text: string): ContextRange[] {
       continue;
     }
     exampleBlock = undefined;
-    if (/^\s*(?:[-*+]\s+)?(?:(?:bad |good |sample |illustrative )?example|for example):\s*\S/i.test(value)) {
+    if (EXAMPLE_INLINE_INTRO.test(value)) {
       add(start, start + value.length, 'illustrative_example');
     }
   }
@@ -111,7 +120,8 @@ export function collectContextRanges(text: string): ContextRange[] {
       || /\bfor example[, :]?\s*(?:(?:saying|writing|the phrase)\s*)?$/i.test(prefix)
       || /^\s*(?:is|as)\s+(?:an? )?(?:example|sample|test string|phrase)\b/i.test(suffix)) {
       add(match.index, match.index + match[0].length, 'illustrative_example');
-    } else if (REPORTED_QUOTE_PREFIX.test(prefix) || REPORTED_QUOTE_SUFFIX.test(suffix)) {
+    } else if (REPORTED_QUOTE_PREFIX.test(prefix) || REPORTED_QUOTE_SUFFIX.test(suffix)
+      || NAMED_QUOTE_PREFIX.test(prefix) || NAMED_QUOTE_SUFFIX.test(suffix)) {
       add(match.index, match.index + match[0].length, 'reported_speech');
     }
   }
@@ -204,7 +214,7 @@ export function inferTriggerWeight(trigger: TriggerWord): number {
 
 export function collectOccurrences(text: string): Occurrence[] {
   const ranges = collectContextRanges(text);
-  const rules = [
+  const rules: (TriggerWord & { weight: number })[] = [
     ...TRIGGER_WORDS.map((trigger) => ({
       ...trigger, weight: inferTriggerWeight(trigger),
     })),
@@ -212,7 +222,7 @@ export function collectOccurrences(text: string): Occurrence[] {
       { word: "i understand you're frustrated", ruleId: 'empathy-frustration' },
       { word: 'take a deep breath', ruleId: 'empathy-breathing' },
     ].map((trigger) => ({
-      ...trigger, category: 'Forced De-escalation', weight: 1.9,
+      ...trigger, category: 'Forced De-escalation' as const, weight: 1.9,
       explanation: 'A calming or empathy marker; context determines whether it is appropriate.',
     })),
   ];
@@ -220,7 +230,9 @@ export function collectOccurrences(text: string): Occurrence[] {
   for (const rule of rules) {
     const scoreId = CATEGORY_REGISTRY.find(category => category.label === rule.category)?.id;
     if (!scoreId) throw new Error(`Unknown evidence category: ${rule.category}`);
-    const pattern = triggerPattern(rule.word);
+    // Alternatives share one identity/weight and produce at most one record per source span.
+    const phrases = [rule.word, ...(rule.variants ?? [])].sort((a, b) => b.length - a.length);
+    const pattern = new RegExp(phrases.map(phrase => triggerPattern(phrase).source).join('|'), 'giu');
     for (const match of text.matchAll(pattern)) {
       const id = `${rule.ruleId}:${match.index}:${match.index + match[0].length}`;
       occurrences.push({

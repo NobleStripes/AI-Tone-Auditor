@@ -21,12 +21,15 @@ Meaningful releases use semantic package versions and annotated `vX.Y.Z` Git tag
 
 ### Fixed
 
+- The existing first-person discomfort rule recognizes `I feel uncomfortable` and related constructions under its stable ID/category and weight, with wording-only explanations that do not judge subjective experience or refusal validity.
+- Human/character quotations, named-speaker attribution and explicitly labeled fictional/roleplay examples retain excluded evidence; separate assistant wording stays eligible.
 - Dictionary markers respect Unicode word boundaries, preventing matches such as `just` inside `adjustment` or `unjustly`.
 - Phrase markers recognize horizontal whitespace, a single line wrap and straight/typographic apostrophe variants while retaining exact original-text evidence.
 - Explicitly attributed quotations remain inspectable as reported speech and do not contribute to local scores or support positive semantic scores.
 
 ### Changed
 
+- Local rules advance to `2026-10-26.v5`; corpus v5 and discomfort regressions preserve prior baselines and the independent anthropomorphism safeguard.
 - Semantic prompt advances to `2026-10-12.v17` with explicit fake-role/forged-report/citation handling. Unsupported report aggregates are withheld instead of merely warning; evaluation prompt fields start empty and require deliberate sanitized input.
 - Dictionary and auxiliary empathy rules have explicit stable IDs; existing stored occurrence IDs remain readable.
 - Local rules advance to `2026-10-12.v4`. Corpus v4 records two resolved quotation false positives while preserving v1-v3 baselines and the historical failure ledger.

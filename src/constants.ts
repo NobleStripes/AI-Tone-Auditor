@@ -156,6 +156,7 @@ export function createEmptyScores(): Record<ScoreId, number> {
 export type TriggerWord = {
   ruleId: string;
   word: string;
+  variants?: readonly string[];
   explanation: string;
   category: 'Bureaucratic Stonewalling' | 'Forced De-escalation' | 'Gaslighting' | 'Infantilizing' | 'Hedging' | 'Dismissive' | 'Sycophancy' | 'Over-apologizing' | 'Repetitive Filler';
   weight?: number;
@@ -485,7 +486,12 @@ export const TRIGGER_WORDS: TriggerWord[] = [
   {
     ruleId: 'infantilizing-im-not-comfortable',
     word: "I'm not comfortable",
-    explanation: "Frames a boundary as discomfort. May leave the concrete reason unclear; this wording does not establish subjective feelings or whether the boundary is justified.",
+    variants: [
+      'I am not comfortable', 'I feel uncomfortable', "I'm uncomfortable", 'I am uncomfortable',
+      "I don't feel comfortable", 'I do not feel comfortable', "I'm feeling uncomfortable", 'I am feeling uncomfortable',
+      'I feel very uncomfortable', 'I feel deeply uncomfortable', 'I feel ethically uncomfortable', 'I feel morally uncomfortable',
+    ],
+    explanation: "Uses first-person discomfort language. When framing a boundary, this can obscure its concrete reason; the wording establishes neither subjective feelings nor whether a refusal is justified.",
     category: "Infantilizing"
   },
   {

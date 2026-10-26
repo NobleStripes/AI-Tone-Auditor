@@ -227,7 +227,7 @@ test('CLI creates a reusable local snapshot and never overwrites it', async () =
     const first = run('--record-failures', output, '--report-json');
     expect(first.status, first.stderr).toBe(0);
     const report = JSON.parse(first.stdout);
-    expect(report.summary.total).toBe(324);
+    expect(report.summary.total).toBe(399);
     expect(report.replay.length).toBeGreaterThan(0);
     const saved = await readFile(output, 'utf8');
     expect(parseFailureLedger(JSON.parse(saved)).failures).toEqual(report.failures);

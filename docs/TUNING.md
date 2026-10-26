@@ -24,6 +24,8 @@ Dictionary rules match whole tokens using Unicode letters, numbers, combining ma
 
 Each dictionary entry has an explicit `ruleId`. Keep that ID when adjusting wording or weights for the same rule; assign a new unique ID for a distinct rule. IDs do not depend on dictionary order. Auxiliary empathy rules also have explicit IDs. Older stored `dictionary-N` and `empathy-N` references are retained, not remapped to the current catalog.
 
+Optional `variants` are literal phrase alternatives for the same rule. They share its category, explanation and weight (inferred from the canonical `word` unless explicit); matching selects one alternative per source occurrence, preserving exact original text. Use this for constructions such as `I'm not comfortable` and `I feel uncomfortable` rather than duplicating a rule ID or giving equivalent wording a different weight. Attribution and explicitly labeled fictional/roleplay examples use the shared evidence exclusions, so counts, highlights, semantic evidence verification and restored evidence agree.
+
 Recommended tuning workflow:
 
 1. Start by lowering noisy one-word triggers before raising high-impact phrases.
